@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Nuevo Administrador</title>
+    <link rel="stylesheet" th:href="@{/css/form_nuevo_admin.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<header class="top-navbar">
+    <div id="logoToggle" class="logo">HS</div>
+    <div class="navbar-title">Panel de Administrador</div>
+    <div class="user-info">
+    </div>
+</header>
+
+<div class="wrapper">
+    <aside id="sidebar" class="sidebar">
+        <ul>
+            <li><a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+            <li><a th:href="@{/admin/usuarios}"><i class="fas fa-users"></i> <span>Usuarios</span></a></li>
+            <li class="active"><a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a></li>
+            <li>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Salir</span></button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="dashboard-main">
+        <h1>Agregar Nuevo Administrador</h1>
+
+        <p th:if="${error}" th:text="${error}" class="error-message"></p>
+        <form th:action="@{/admin/usuarios/nuevo-admin}" th:object="${usuario}" method="post">
+
+            <div class="form-group">
+                <input type="text" th:field="*{username}" placeholder="Nombre de Usuario">
+                <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="email" th:field="*{email}" placeholder="correo@ejemplo.com">
+                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="password" th:field="*{password}" placeholder="Contraseña">
+                <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="password" th:field="*{confirmPassword}" placeholder="Confirmar Contraseña">
+                <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="text" th:field="*{phone}" placeholder="Teléfono">
+                <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="error-message"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="text" th:field="*{address}" placeholder="Dirección">
+                <span th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="error-message"></span>
+            </div>
+            <button type="submit">Crear Admin</button>
+        </form>
+    </main>
+</div>
+
+<script>
+    const logo = document.getElementById('logoToggle');
+    const sidebar = document.getElementById('sidebar');
+    let expanded = false;
+
+    logo.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        expanded = !expanded;
+        logo.textContent = expanded ? 'HS' : 'Hana Servizi';
+    });
+</script>
+
+</body>
+</html>

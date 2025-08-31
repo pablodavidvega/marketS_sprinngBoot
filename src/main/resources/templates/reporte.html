@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        h1 {
+            text-align: center;
+            color: #2E8B57;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 6px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>Reporte de Productos</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Fecha Agregación</th>
+        <th>Estado</th>
+        <th>Descripción</th>
+        <th>Marca</th>
+        <th>Categoría</th>
+        <th>Imagen</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${productos}">
+        <td th:text="${p.id}"></td>
+        <td th:text="${p.nombre}"></td>
+        <td th:text="${p.precio}"></td>
+        <td th:text="${#dates.format(p.fechaAgregacion, 'yyyy-MM-dd')}"></td>
+        <td th:text="${p.estadoProducto}"></td>
+        <td th:text="${p.descripcion}"></td>
+        <td th:text="${p.marca != null ? p.marca.nombreMarca : 'Sin marca'}"></td>
+        <td th:text="${p.categorias != null ? p.categorias.nombreCategoria : 'Sin categoría'}"></td>
+        <td th:text="${p.imagen}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

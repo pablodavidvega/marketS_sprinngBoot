@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project MarketS</title>
+    <link rel="stylesheet" th:href="@{/CSS/style2.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+<header class="header">
+    <div class="header_container">
+        <div class="bars">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <div class="logo">
+            <img th:src="@{/img/icon.png}" alt="Logo De MarketS" class="logo-img">
+            <h2 class="name-project"> MarketS</h2>
+        </div>
+        <nav class="nav-menu">
+            <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>
+
+            <a th:if="${nombreUsuario != null}"
+               th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+               class="btn-icon">
+                <i class="fa-solid fa-user"></i>
+                <span th:text="${nombreUsuario}"></span>
+            </a>
+
+            <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+            <a th:href="@{/carrito}" class="btn-icon"><i class="fa-solid fa-cart-shopping"></i></a>
+
+            <a th:if="${nombreUsuario == null}" th:href="@{/login}">
+                <button class="btn6"><strong>Iniciar Sesión</strong></button>
+            </a>
+            <a th:if="${nombreUsuario == null}" th:href="@{/register}">
+                <button class="btn6"><strong>Registrarse</strong></button>
+            </a>
+            <button id="toggle-dark-mode" class="modo-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span class="modo-text">Modo Oscuro</span>
+            </button>
+        </nav>
+    </div>
+</header>
+<div class="container">
+    <form class="search-bar" th:action="@{/filtros}" method="get">
+    <input type="text" name="search" placeholder="Buscar por nombre..." th:value="${param.search}">
+        <button type="submit">Buscar</button>
+    </form>
+    <div class="category-menu">
+        <span>Filtrar por categoría:</span>
+        <ul>
+            <li><a th:href="@{/filtros(category='Tecnología')}">Tecnología</a></li>
+            <li><a th:href="@{/filtros(category='Moda')}">Moda</a></li>
+            <li><a th:href="@{/filtros(category='Deportes')}">Deportes y Aire Libre</a></li>
+            <li><a th:href="@{/filtros(category='Muebles')}">Muebles</a></li>
+            <li><a th:href="@{/filtros(category='Accesorios')}">Accesorios y Joyería</a></li>
+            <li><a th:href="@{/filtros}">Mostrar todos</a></li>
+        </ul>
+    </div>
+    <div class="productos">
+        <div class="producto" th:each="producto : ${productos}">
+            <img th:src="${producto.imagen}" alt="Imagen del producto">
+            <h3 th:text="${producto.nombre}">Nombre del producto</h3>
+            <p th:text="'Precio: $' + ${producto.precio}">Precio</p>
+            <p th:text="${producto.descripcion}">Descripción</p>
+            <p th:text="'Marca: ' + ${producto.marca.nombreMarca}">Marca</p>
+            <a th:href="@{/carrito/agregar(
+                    id=${producto.id},
+                    nombre=${producto.nombre},
+                    precio=${producto.precio},
+                    cantidad=1
+                )}" class="btn-carrito">
+                <i class="fa-solid fa-cart-shopping"></i> Agregar al carrito
+            </a>
+
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="footer-col">
+        <h4>Nuestras Redes</h4>
+        <div class="links">
+            <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+    </div>
+    <div class="footer-col">
+        <h4> Acerca De MarketS</h4>
+        <ul>
+            <li> <a href="#">Sobre Nosotros</a></li>
+            <li> <a href="#">Nuestras Políticas</a></li>
+            <li> <a href="#">Términos De Servicio</a></li>
+            <li> <a href="#">Políticas De Privacidad</a></li>
+            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Contacto </h4>
+        <ul class="info">
+            <li>
+                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>
+            </li>
+            <li>
+                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>
+            </li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Métodos De Pago</h4>
+        <ul>
+            <img th:src="@{/img/pay.png}" alt="">
+            <img class="img3" th:src="@{/img/Nequi.webp}" alt="">
+        </ul>
+    </div>
+</footer>
+<div class="copyright">
+    <p>©2024 MarketS. ALL Rights Reserved.</p>
+</div>
+<script th:src="@{/JS/cambioColor.js}" defer></script>
+
+</body>
+</html>

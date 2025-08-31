@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos por Categoría</title>
+    <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+
+        body{
+            font-family: "Poppins", monospace;
+            height: 263vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            color: black;
+            transition: 0.3s ease;
+        }
+        .modo-btn {
+            background-color: #fff;
+            color: #000 !important;
+            padding: 12px 13px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .modo-btn .modo-text {
+            color: #000 ;
+        }
+
+        .modo-btn i {
+            font-size: 15px;
+            color: #f4c542;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+
+
+        body.dark-mode .modo-btn {
+            background-color: #222;
+            color: #fff ;
+        }
+
+        body.dark-mode .modo-btn .modo-text {
+            color: #fff ;
+        }
+
+        body.dark-mode #hero2 h2,
+        body.dark-mode #hero2 p{
+            color: black;
+        }
+        body.dark-mode .sidebar {
+            background-color: #1a1a1a;
+        }
+
+
+        body.dark-mode .btn-3,
+        body.dark-mode .btn-4,
+        body.dark-mode .select-btn {
+            background: #333;
+            color: white;
+            border: 1px solid white;
+            text-decoration: none;
+        }
+
+
+        body.dark-mode .name-project {
+            color: white;
+        }
+
+
+        body.dark-mode .product-card {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        body.dark-mode .product-title,
+        body.dark-mode .product-subtitle,
+        body.dark-mode .product-price {
+            color: white;
+        }
+
+
+        body.dark-mode span,
+        body.dark-mode h4,
+        body.dark-mode h5 {
+            color: white !important;
+        }
+
+        body.dark-mode .select-menu span {
+            color: black !important;
+        }
+
+        body.dark-mode .select-menu h2 {
+            color: white !important;
+        }
+
+        body.dark-mode .promo-box {
+            background: #292929;
+            color: white;
+        }
+
+        body.dark-mode .promo-box p {
+            color: white;
+        }
+
+        body.dark-mode .promo-box button {
+            background: white;
+            color: black;
+        }
+
+        /* Footer */
+        body.dark-mode .footer-col .info p {
+            color: white !important;
+        }
+
+        /* header start*/
+
+        .header{
+            position: relative;
+            background-color: #ff0000;
+            height: 105px;
+            padding: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+        }
+
+        .header_container{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .name-project{
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+
+        .bars{
+            display: none;
+        }
+
+        .nav-menu a .active{
+            color: #1a1a1a;
+            background-color: #FFFFFF;
+        }
+        .logo{
+            display: flex;
+            align-items: center;
+        }
+        .logo img{
+            height: 70px;
+            margin-left: 10px;
+        }
+
+        .nav-menu{
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .nav-menu > a.btn-icon {
+            color: #ffffff;
+            font-size: 0.95em;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-menu > a.btn-icon:hover {
+            background-color: #7a0c0c;
+            box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+            color: #fff;
+        }
+        .nav-logged a.btn-icon,
+        .nav-not-logged a.btn-icon {
+            color: #ffffff;
+            font-size: 1.1em;
+            padding: 8px 10px;
+            text-decoration: none;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            width: 40px;
+            background-color: rgba(255,255,255,0.15);
+        }
+
+        .nav-logged a.btn-icon:hover,
+        .nav-not-logged a.btn-icon:hover {
+            background-color: #7a0c0c;
+            box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+            color: #fff;
+        }
+        /* Bloque contenedor si está logueado */
+        .nav-logged {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-logged .nav-user {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 0.95em;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-logged .nav-user strong {
+            color: #ffdd00; /* Color distinto para el nombre */
+        }
+
+        .nav-logged .nav-user:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: default;
+        }
+
+        /* Si no está logueado */
+        .nav-not-logged {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        button{
+            background: red;
+            border: 2px;
+            border-radius: 20px;
+            color: #FFF;
+            text-transform: uppercase;
+            position: relative;
+            border: none;
+            height: 40px;
+            width: 100px;
+            transition: .3s linear;
+            cursor: pointer;
+        }
+        button:hover{
+            background: white;
+            color: #000;
+        }
+
+        .btn6:hover{
+            background-color: #FFFFFF;
+            box-shadow: 0 0 5px #FFFFFF, 0 0 25px #FFFFFF,
+            0 0 50px #FFFFFF, 0 0 100px #FFFFFF, 0 0 300px #FFFFFF;
+        }
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+        footer{
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: auto;
+            background-color: #000000;
+            padding: 25px 0;
+
+        }
+
+        ul{
+            list-style: none;
+        }
+
+        .footer-col {
+            width: 25%;
+            padding: 0 15px;
+        }
+
+        .footer-col h4{
+            position: relative;
+            margin-bottom: 35px;
+            font-weight: 500;
+            font-size: 22px;
+            color: #FFFFFF;
+            text-transform: capitalize;
+        }
+
+        .footer-col h4:before{
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            background-color: #FFFFFF;
+            height: 2px;
+            width: 40px;
+        }
+
+        ul li:not(:last-child){
+            margin-bottom: 10px;
+        }
+
+        ul li a{
+            display: block;
+            font-size: 16px;
+            text-transform: capitalize;
+            color: white;
+            text-decoration: none;
+            transition: all 0.4s ease;
+        }
+
+        ul li a:hover{
+            color: white;
+            padding-left: 8px ;
+        }
+
+        .links a{
+            display: inline-block;
+            height: 40px;
+            width: 40px;
+            color: #f8f8f8;
+            background-color: rgba(40, 130, 214, 0.8);
+            margin: 0 8pc 8px 0;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+        }
+
+        .links a:hover{
+            color: #000000;
+            background-color: #f8f8f8;
+        }
+
+        footer .sec-contact .info{
+            position: relative;
+        }
+
+        .footer-col .info li{
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            margin-bottom: 16px;
+        }
+
+        .footer-col .info li span{
+            color: #FFFFFF;
+            font-size: 20px;
+        }
+        .footer-col p{
+            color: #FFFFFF;
+        }
+
+        .footer-col .info li a{
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .img3{
+            position: absolute;
+            width: 32px;
+            margin-top: 0;
+            right: 59px;
+        }
+
+        .copyright{
+            width: 100%;
+            background: #000000;
+            padding: 10px 100px 20px;
+            text-align: center;
+            color: #f8f8f8;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+        h2 {
+            font-weight: 600;
+        }
+
+        .card-img-top {
+            height: 120px;
+            object-fit: contain;
+            background-color: #f8f9fa;
+            padding: 10px;
+        }
+        .card {
+            border: none;
+            transition: transform 0.3s ease;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .brand {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .stars {
+            color: #ffc107;
+            margin-bottom: 5px;
+        }
+        .price-badge {
+            background: linear-gradient(135deg, #ff8c42, #ff3c83);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .btn-back {
+            margin-bottom: 20px;
+        }
+
+        body.dark-mode .alert-warning {
+            background-color: #333333;
+            color: #ffffff;
+            border-color: #555555;
+        }
+
+        body.dark-mode .card {
+            background-color: #292929;
+            color: #ffffff;
+            border: 1px solid #444444;
+        }
+
+        body.dark-mode .card-footer {
+            background-color: #222222;
+            border-top: 1px solid #444444;
+        }
+
+        body.dark-mode .price-badge {
+            background: linear-gradient(135deg, #ffa500, #ff69b4);
+            color: #ffffff;
+        }
+
+        body.dark-mode .btn-outline-primary {
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        body.dark-mode .btn-outline-primary:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        body.dark-mode .btn-outline-secondary {
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="header_container">
+        <div class="bars">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <div class="logo">
+            <img th:src="@{/img/icon.png}" alt="Logo De MarketS">
+            <h2 class="name-project"> MarketS</h2>
+        </div>
+        <nav class="nav-menu">
+            <div th:if="${nombreUsuario}" class="nav-logged">
+                <span class="nav-user">
+                    ¡Hola, <strong th:text="${nombreUsuario}">Usuario</strong>!
+                </span>
+                <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+                   class="btn-icon"
+                   th:if="${nombreUsuario != null}">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+                <a th:href="@{/carrito}" class="btn-icon">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </a>
+            </div>
+            <div th:unless="${nombreUsuario}" class="nav-not-logged">
+                <a href="#" class="btn-icon"><i class="fa-solid fa-user"></i></a>
+                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+                <a th:href="@{/login}"><button class="btn6"><strong>Iniciar Sesión</strong></button></a>
+                <a th:href="@{/usuarios/registro}"><button class="btn6"><strong>Registrarse</strong></button></a>
+            </div>
+
+            <button id="toggle-dark-mode" class="modo-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span class="modo-text">Modo Oscuro</span>
+            </button>
+        </nav>
+    </div>
+</header>
+<div class="container mt-5">
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-back">
+        <i class="fa-solid fa-arrow-left"></i> Volver
+    </a>
+    <h2 class="mb-4 text-center" th:text="'Productos de la categoría: ' + ${categoriaNombre}"></h2>
+
+    <div th:if="${#lists.isEmpty(productos)}" class="alert alert-warning text-center">
+        <h4>No se encontraron productos para esta categoría.</h4>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4" th:if="${!#lists.isEmpty(productos)}">
+        <div class="col" th:each="producto : ${productos}">
+            <div class="card h-100">
+                <img th:src="@{${producto.imagen}}" class="card-img-top" alt="Imagen producto" width="100" height="100">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${producto.nombre}"></h5>
+                    <span th:text="${producto.marca.nombreMarca}"></span>
+                    <p class="card-text mt-2" th:text="${producto.descripcion ?: 'Sin descripción'}"></p>
+                    <div class="stars">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-regular fa-star"></i>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <span class="price-badge"
+                               th:text="${producto.precio}">
+                          </span>
+                        <a th:href="@{/carrito/agregar(
+                                 id=${producto.id},
+                                 nombre=${producto.nombre},
+                                 precio=${producto.precio},
+                                 cantidad=1
+                            )}" class="btn btn-sm btn-outline-primary">
+                            <i class="fa-solid fa-cart-shopping"></i> Comprar
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/JS/cambioColor.js}" defer></script>
+<footer>
+    <div class="footer-col">
+        <h4>Nuestras Redes</h4>
+        <div class="links">
+            <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+    </div>
+    <div class="footer-col">
+        <h4> Acerca De MarketS</h4>
+        <ul>
+            <li> <a href="#">Sobre Nosotros</a></li>
+            <li> <a href="#">Nuestras Políticas</a></li>
+            <li> <a href="#">Términos De Servicio</a></li>
+            <li> <a href="#">Políticas De Privacidad</a></li>
+            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Contacto </h4>
+        <ul class="info">
+            <li>
+                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>
+            </li>
+            <li>
+                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>
+            </li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Métodos De Pago</h4>
+        <ul>
+            <img th:src="@{/img/pay.png}" alt="">
+            <img class="img3" th:src="@{/img/Nequi.webp}" alt="">
+        </ul>
+    </div>
+</footer>
+<div class="copyright">
+    <p>©2024 MarketS. ALL Rights Reserved.</p>
+</div>
+</body>
+</html>

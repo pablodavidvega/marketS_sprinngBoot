@@ -1,0 +1,204 @@
+/* FORM NUEVO ADMIN - CSS PROPIO */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+}
+
+.top-navbar {
+    background: rgba(241, 6, 6, 0.8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 1rem;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.navbar-title {
+    font-size: 1.1rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-info span {
+    margin-right: 8px;
+}
+
+/* Sidebar */
+.wrapper {
+    display: flex;
+    margin-top: 60px;
+}
+
+.sidebar {
+    width: 200px;
+    background: rgba(241, 6, 6, 0.8);
+    color: #fff;
+    height: calc(100vh - 60px);
+    position: fixed;
+    top: 60px;
+    left: 0;
+    overflow: hidden;
+    transition: width 0.3s;
+    padding-top: 1rem;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    margin-bottom: 0.7rem;
+}
+
+.sidebar li a,
+.logout-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.sidebar li a:hover,
+.logout-btn:hover {
+    background: rgba(169, 50, 38, 0.8);
+}
+
+.sidebar i {
+    font-size: 1.2rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+.sidebar span {
+    margin-left: 10px;
+    white-space: nowrap;
+    transition: opacity 0.3s;
+}
+
+.sidebar.collapsed span {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.dashboard-main {
+    margin-left: 200px;
+    padding: 2rem;
+    width: 100%;
+    transition: margin-left 0.3s;
+}
+
+.sidebar.collapsed ~ .dashboard-main {
+    margin-left: 60px;
+}
+
+/* Título */
+.dashboard-main h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+/* Formulario */
+.dashboard-main form {
+    max-width: 500px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Grupo de campo */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+
+
+/* Input */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #dc3545;
+    outline: none;
+}
+
+/* Etiqueta */
+.dashboard-main form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+/* Mensaje de error */
+.error-message {
+    color: #d9534f;
+    font-size: 0.83rem;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Botón */
+.dashboard-main form button {
+    width: 100%;
+    padding: 10px;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.dashboard-main form button:hover {
+    background-color: #b02a37;
+}

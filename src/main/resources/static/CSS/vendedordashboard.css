@@ -1,0 +1,163 @@
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #f4f6f8;
+}
+
+/* Navbar superior */
+.top-navbar {
+    background: rgba(241, 6, 6, 0.8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 1rem;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.navbar-title {
+    font-size: 1.1rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Layout */
+.wrapper {
+    display: flex;
+    margin-top: 60px;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 200px;
+    background: rgba(241, 6, 6, 0.8);
+    color: #fff;
+    height: calc(100vh - 60px);
+    position: fixed;
+    top: 60px;
+    left: 0;
+    overflow-x: hidden;
+    transition: width 0.3s;
+    padding-top: 1rem;
+}
+
+/* Colapsado: solo muestra íconos */
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    margin-bottom: 0.7rem;
+}
+
+.sidebar li a,
+.logout-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.2s;
+    width: 100%;
+    font-family: inherit;
+    font-size: 1rem;              /* Igual tamaño de letra */
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.sidebar li a:hover,
+.logout-btn:hover {
+    background: rgba(169, 50, 38, 0.8);
+}
+
+.sidebar i {
+    font-size: 1.2rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Texto del sidebar */
+.sidebar span {
+    margin-left: 10px;
+    white-space: nowrap;
+    transition: opacity 0.3s;
+}
+
+/* Oculta el texto cuando colapsa */
+.sidebar.collapsed span {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+/* Contenido principal */
+.dashboard-main {
+    margin-left: 200px;
+    padding: 1.5rem;
+    width: 100%;
+    transition: margin-left 0.3s;
+}
+
+.sidebar.collapsed ~ .dashboard-main {
+    margin-left: 60px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.card i {
+    font-size: 1.8rem;
+    color: #c0392b;
+}
+
+.card h3 {
+    margin: 0.5rem 0;
+}
+
+.card p {
+    font-size: 0.9rem;
+    color: #555;
+}

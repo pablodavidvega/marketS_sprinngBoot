@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Vendedor - MarketS</title>
+  <link rel="stylesheet" th:href="@{/css/vendedordashboard.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<header class="top-navbar">
+  <div id="logoToggle" class="logo">HS</div>
+  <div class="navbar-title">Panel de Vendedor</div>
+  <div class="user-info">
+    <!--Informacion del vendedor a futuro-->
+  </div>
+</header>
+
+<div class="wrapper">
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar collapsed">
+    <ul>
+      <li><a th:href="@{/productos/index}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+      <li><a th:href="@{/vendedor/productos}"><i class="fas fa-box"></i> <span>Mis Productos</span></a></li>
+      <li><a th:href="@{/vendedor/productos/agregar}"><i class="fas fa-plus-circle"></i> <span>Agregar Producto</span></a></li>
+      <li><a th:href="@{/vendedor/pedidos}"><i class="fas fa-shopping-basket"></i> <span>Pedidos</span></a></li>
+      <li><a th:href="@{/vendedor/estadisticas}"><i class="fas fa-chart-bar"></i> <span>Estadísticas</span></a></li>
+      <li><form th:action="@{/logout}" method="post">
+        <button type="submit" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
+        </button>
+      </form>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="dashboard-main">
+    <h1>Hola, <span th:text="${usuario.username}">Usuario</span></h1>
+    <div class="cards">
+      <a th:href="@{/vendedor/productos}" class="card">
+        <i class="fas fa-box"></i>
+        <h3>Mis Productos</h3>
+        <p>Gestiona tus productos.</p>
+      </a>
+      <a th:href="@{/vendedor/productos/agregar}" class="card">
+        <i class="fas fa-plus-circle"></i>
+        <h3>Agregar Producto</h3>
+        <p>Sube un nuevo producto.</p>
+      </a>
+      <a th:href="@{/vendedor/pedidos}" class="card">
+        <i class="fas fa-shopping-basket"></i>
+        <h3>Pedidos</h3>
+        <p>Revisa tus pedidos.</p>
+      </a>
+      <a th:href="@{/vendedor/estadisticas}" class="card">
+        <i class="fas fa-chart-bar"></i>
+        <h3>Estadísticas</h3>
+        <p>Ve el rendimiento de ventas.</p>
+      </a>
+    </div>
+  </main>
+</div>
+
+<script>
+  const logo = document.getElementById('logoToggle');
+  const sidebar = document.getElementById('sidebar');
+  let expanded = false;
+
+  logo.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    expanded = !expanded;
+    logo.textContent = expanded ? 'Hana Servizi' : 'HS';
+  });
+</script>
+
+</body>
+</html>

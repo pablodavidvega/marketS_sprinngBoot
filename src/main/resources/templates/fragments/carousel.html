@@ -1,0 +1,172 @@
+<div th:fragment="carrusel">
+  <style>
+    .mi-carrusel {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      height: 600px;
+    }
+
+    .slides {
+      display: flex;
+      transition: transform 0.6s ease-in-out;
+      height: 100%;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+      border-radius: inherit;
+    }
+    .slide {
+      flex: 0 0 100%;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      height: 100%;
+    }
+
+    .slide-content {
+      position: absolute;
+      top:200px;
+      left: 200px;
+      color: white;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+      background: none;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .slide-content h1 {
+      font-size: 36px;
+      margin: 10px 0;
+    }
+
+    .slide-content h2 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .slide-content p {
+      font-size: 14px;
+      margin: 10px 0 20px;
+    }
+
+    .btn-carrusel {
+      display: inline-block;
+      padding: 10px 22px;
+      background-color: transparent;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .btn-carrusel:hover {
+      background-color: #a80000;
+      box-shadow: 0 0 5px #a80000, 0 0 10px #a80000,
+      0 0 15px #a80000, 0 0 20px #a80000;
+    }
+
+    .controles {
+      position: absolute;
+      width: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10;
+    }
+
+    .controles button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      padding: 5px 15px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .controles button:hover {
+      transform: scale(1.2);
+    }
+
+    .overlay {
+      display: none;
+    }
+  </style>
+
+  <div class="mi-carrusel">
+    <div class="slides">
+      <div class="slide" style="background-image: url('/img/hero4.png');">
+        <div class="slide-content">
+          <h2>Aquí Encontrarás</h2>
+          <h1>Grandes Ofertas</h1>
+          <p>Además de múltiples productos</p>
+          <a class="btn-carrusel" th:href="@{/filtros}">Descúbrelo ahora</a>
+        </div>
+      </div>
+
+      <div class="slide" style="background-image: url('/img/ofertasREL.jpeg');">
+        <div class="overlay"></div>
+        <div class="slide-content light">
+          <h2>¡Oferta Relámpago!</h2>
+          <h1>Solo por 24 Horas</h1>
+          <p>50% de descuento en productos seleccionados</p>
+          <a class="btn-carrusel" href="#">Comprar ya</a>
+        </div>
+      </div>
+
+      <div class="slide" style="background-image: url('/img/hombreSorp.webp');">
+        <div class="slide-content">
+          <h2>Nuevas Colecciones</h2>
+          <h1>Lo último en</h1>
+          <p>Moda y Tecnología</p>
+          <a class="btn-carrusel" href="#">Explorar</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="controles">
+      <button class="prev">❮</button>
+      <button class="next">❯</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const slides = document.querySelectorAll('.slide');
+      const total = slides.length;
+      let index = 0;
+
+      const updateSlides = () => {
+        const container = document.querySelector('.slides');
+        container.style.transform = `translateX(-${index * 100}%)`;
+      };
+
+      document.querySelector('.prev').addEventListener('click', () => {
+        index = (index - 1 + total) % total;
+        updateSlides();
+      });
+
+      document.querySelector('.next').addEventListener('click', () => {
+        index = (index + 1) % total;
+        updateSlides();
+      });
+
+      setInterval(() => {
+        index = (index + 1) % total;
+        updateSlides();
+      }, 5000);
+    });
+  </script>
+</div>

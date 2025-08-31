@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Usuarios</title>
+  <link rel="stylesheet" th:href="@{/css/admindashboard.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<header class="top-navbar">
+  <div id="logoToggle" class="logo">HS</div>
+  <div class="navbar-title">Panel de Administrador</div>
+  <div class="user-info">
+  </div>
+</header>
+
+<div class="wrapper">
+  <aside id="sidebar" class="sidebar">
+    <ul>
+      <li><a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+
+      <li class="active"><a th:href="@{/admin/usuarios}"><i class="fas fa-users"></i> <span>Usuarios</span></a></li>
+      <li><a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a></li>
+      <li>
+        <form th:action="@{/logout}" method="post">
+          <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Salir</span></button>
+        </form>
+      </li>
+    </ul>
+  </aside>
+
+  <main class="dashboard-main">
+    <h1>Lista de Usuarios</h1>
+
+    <form th:action="@{/admin/usuarios/filtrar}" method="get" class="filtro-form">
+      <input type="text" name="valor" placeholder="Buscar..." style="flex:1;">
+      <select name="tipo">
+        <option value="todos">Todos</option>
+        <option value="nombre">Nombre</option>
+        <option value="email">Email</option>
+        <option value="direccion">Dirección</option>
+        <option value="rol">Rol</option>
+      </select>
+      <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+    </form>
+
+    <p th:if="${mensaje}" th:text="${mensaje}"></p>
+    <a th:href="@{/admin/usuarios/reporte-pdf}"
+       style="display: inline-block; margin-bottom: 10px; background: #28a745; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none;">
+      <i class="fas fa-file-pdf"></i> Descargar PDF
+    </a>
+
+    <table>
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Dirección</th>
+        <th>Rol</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="usuario : ${usuarios}">
+        <td th:text="${usuario.id}"></td>
+        <td th:text="${usuario.username}"></td>
+        <td th:text="${usuario.email}"></td>
+        <td th:text="${usuario.phone}"></td>
+        <td th:text="${usuario.address}"></td>
+        <td th:text="${usuario.rol.rolname}"></td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+
+<script>
+  const logo = document.getElementById('logoToggle');
+  const sidebar = document.getElementById('sidebar');
+  let expanded = false;
+  logo.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    expanded = !expanded;
+    logo.textContent = expanded ? 'HS' : 'Hana Servizi';
+  });
+</script>
+</body>
+</html>

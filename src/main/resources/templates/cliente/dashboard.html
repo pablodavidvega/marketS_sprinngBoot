@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Cliente - MarketS</title>
+    <link rel="stylesheet" th:href="@{/css/clientedashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Navbar superior -->
+<header class="top-navbar">
+    <div id="logoToggle" class="logo">HS</div>
+    <div class="navbar-title">Panel de Clienteeeeee</div>
+    <div class="user-info">
+    </div>
+</header>
+
+<div class="wrapper">
+    <!-- Sidebar lateral (inicialmente oculto) -->
+    <aside id="sidebar" class="sidebar collapsed">
+        <ul>
+            <li><a th:href="@{/productos/index}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+            <li><a th:href="@{/cliente/perfil}"><i class="fas fa-user"></i> <span>Perfil</span></a></li>
+            <li><a th:href="@{/cliente/compras}"><i class="fas fa-shopping-bag"></i> <span>Mis Compras</span></a></li>
+            <li>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="dashboard-main">
+        <h1>Hola, <span th:text="${usuario.username}">Usuario</span></h1>
+        <div class="cards">
+            <a th:href="@{/carrito}" class="card">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Mis Compras</h3>
+                <p>Revisa tus compras recientes.</p>
+            </a>
+            <a th:href="@{/cliente/editar-perfil}" class="card">
+                <i class="fas fa-user-cog"></i>
+                <h3>Editar Perfil</h3>
+                <p>Modifica tu información personal.</p>
+            </a>
+            <a th:href="@{/soporte}" class="card">
+                <i class="fas fa-life-ring"></i>
+                <h3>Soporte</h3>
+                <p>¿Necesitas ayuda? Contáctanos.</p>
+            </a>
+        </div>
+    </main>
+</div>
+
+<script>
+    const logo = document.getElementById('logoToggle');
+    const sidebar = document.getElementById('sidebar');
+    let expanded = false;
+
+    logo.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        expanded = !expanded;
+        logo.textContent = expanded ? 'Hana Servizi' : 'HS';
+    });
+</script>
+
+</body>
+</html>

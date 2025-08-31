@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project MarketS</title>
+    <link rel="stylesheet" th:href="@{/CSS/style.css}">
+    <link rel="icon" type="image" th:href="@{/img/logo.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+<header class="header">
+    <div class="header_container">
+        <div class="bars">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <div class="logo">
+            <img th:src="@{/img/icon.png}" alt="Logo De MarketS">
+            <h2 class="name-project"> MarketS</h2>
+        </div>
+        <nav class="nav-menu">
+            <div th:if="${nombreUsuario}" class="nav-logged">
+                <span class="nav-user">
+                    ¡Hola, <strong th:text="${nombreUsuario}">Usuario</strong>!
+                </span>
+                <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+                   class="btn-icon"
+                   th:if="${nombreUsuario != null}">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+                <a th:href="@{/carrito}" class="btn-icon">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </a>
+            </div>
+            <div th:unless="${nombreUsuario}" class="nav-not-logged">
+                <a href="#" class="btn-icon"><i class="fa-solid fa-user"></i></a>
+                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+                <a th:href="@{/login}"><button class="btn6"><strong>Iniciar Sesión</strong></button></a>
+                <a th:href="@{/usuarios/registro}"><button class="btn6"><strong>Registrarse</strong></button></a>
+            </div>
+
+            <button id="toggle-dark-mode" class="modo-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span class="modo-text">Modo Oscuro</span>
+            </button>
+        </nav>
+    </div>
+</header>
+<form th:action="@{/filtros}" method="get" class="search-overlay">
+    <input type="text" name="search" placeholder="Buscar Productos">
+    <button class="btn1" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+</form>
+
+
+<div th:replace="fragments/carousel :: carrusel"></div>
+<script th:src="@{/JS/script.js}" defer></script>
+<!-- barra lateral -->
+<div class="sidebar">
+    <div class="select-menu">
+        <div class="select-btn">
+            <h2 class="sBtn-text">Categorías</h2>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <ul class="options">
+            <li class="option">
+                <a th:href="@{'/productos/categoria/2'}">
+                <i class="fa-solid fa-laptop"></i><span class="option-text"> Tecnología</span>
+                </a>
+            </li>
+            <li class="option">
+                <a th:href="@{'/productos/categoria/3'}">
+                <i class="fa-solid fa-shirt"></i><span class="option-text"> Moda</span>
+                </a>
+            </li>
+            <li class="option">
+                <a th:href="@{'/productos/categoria/4'}">
+                <i class="fa-solid fa-couch"></i><span class="option-text"> Muebles</span>
+                </a>
+            </li>
+            <li class="option">
+                <a th:href="@{'/productos/categoria/1'}">
+                <i class="fa-solid fa-hat-wizard"></i><span class="option-text"> Accesorios</span>
+                </a>
+            </li>
+            <li class="option">
+                <a th:href="@{'/productos/categoria/5'}">
+                <i class="fa-solid fa-medal"></i><span class="option-text"> Deportes</span>
+                </a>
+            </li>
+        </ul>
+
+    </div>
+
+    <a href="#" class="btn-3"><h2>Servicio Al Cliente</h2></a>
+    <a href="#" class="btn-4"><h2>Tarjetas De Regalo</h2></a>
+
+    <div class="promo-box">
+        <h3>🎉 10% de descuento</h3>
+        <p>En tu primera compra</p>
+        <button>Ver más</button>
+    </div>
+</div>
+
+<!-- end barra lateral-->
+<section id="product-1">
+    <div class="productos2">
+        <div class="pro" th:each="prod : ${productos}">
+            <a th:href="@{'/productos/ver/' + ${prod.id}}">
+                <img th:src="@{'/uploads/' + ${prod.imagen}}" alt="Imagen producto">
+            </a>
+            <div class="content-container">
+                <span th:text="${prod.marca.nombreMarca}">Marca</span>
+                <h5>
+                    <a th:href="@{'/productos/ver/' + ${prod.id}}" th:text="${prod.nombre}">Nombre producto</a>
+                </h5>
+                <div class="star">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <h4 th:text="${prod.precio}"></h4>
+            </div>
+            <div class="shop">
+                <a th:href="@{'/carrito/agregar'(id=${prod.id}, nombre=${prod.nombre}, precio=${prod.precio}, cantidad=1)}">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-col">
+        <h4>Nuestras Redes</h4>
+        <div class="links">
+            <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+    </div>
+    <div class="footer-col">
+        <h4> Acerca De MarketS</h4>
+        <ul>
+            <li> <a href="#">Sobre Nosotros</a></li>
+            <li> <a href="#">Nuestras Políticas</a></li>
+            <li> <a href="#">Términos De Servicio</a></li>
+            <li> <a href="#">Políticas De Privacidad</a></li>
+            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Contacto </h4>
+        <ul class="info">
+            <li>
+                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>
+            </li>
+            <li>
+                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>
+            </li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Métodos De Pago</h4>
+        <ul>
+            <img th:src="@{/img/pay.png}" alt="">
+            <img class="img3" th:src="@{/img/Nequi.webp}" alt="">
+        </ul>
+    </div>
+</footer>
+<div class="copyright">
+    <p>©2024 MarketS. ALL Rights Reserved.</p>
+</div>
+<script th:src="@{/JS/cambioColor.js}" defer></script>
+</body>
+</html>

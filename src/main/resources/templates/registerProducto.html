@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MarketS</title>
+    <link rel="icon" th:href="@{/images/icon.png}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header">
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+
+        body{
+            font-family: "Poppins", monospace;
+            height: 235vh;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            color: black;
+            transition: 0.3s ease;
+        }
+        .modo-btn {
+            background-color: #fff;
+            color: #000 !important;
+            padding: 12px 13px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .modo-btn .modo-text {
+            color: #000 ;
+        }
+
+        .modo-btn i {
+            font-size: 15px;
+            color: #f4c542;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+
+
+        body.dark-mode .modo-btn {
+            background-color: #222;
+            color: #fff ;
+        }
+
+        body.dark-mode .modo-btn .modo-text {
+            color: #fff ;
+        }
+
+        a{
+            text-decoration: none;
+        }
+        .header{
+            position: relative;
+            background-color: #ff0000;
+            height: 105px;
+            padding: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+        }
+
+        .header_container{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .name-project{
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+
+        .bars{
+            display: none;
+        }
+
+        .nav-menu a .active{
+            color: #1a1a1a;
+            background-color: #FFFFFF;
+        }
+        .logo{
+            display: flex;
+            align-items: center;
+        }
+        .logo img{
+            height: 70px;
+            margin-left: 10px;
+        }
+
+        .nav-menu{
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .nav-menu > a.btn-icon {
+            color: #ffffff;
+            font-size: 0.95em;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-menu > a.btn-icon:hover {
+            background-color: #7a0c0c;
+            box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            padding: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 8px rgba(13, 110, 253, 0.4);
+        }
+
+        .mb-3 {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #0d6efd;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background: #0a58ca;
+        }
+
+        .btn-success {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .text-danger {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        .input-rojo {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        }
+
+        footer{
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: auto;
+            background-color: #000000;
+            padding: 25px 0;
+
+        }
+
+        ul{
+            list-style: none;
+        }
+
+        .footer-col {
+            width: 25%;
+            padding: 0 15px;
+        }
+
+        .footer-col h4{
+            position: relative;
+            margin-bottom: 35px;
+            font-weight: 500;
+            font-size: 22px;
+            color: #FFFFFF;
+            text-transform: capitalize;
+        }
+
+        .footer-col h4:before{
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            background-color: #FFFFFF;
+            height: 2px;
+            width: 40px;
+        }
+
+        ul li:not(:last-child){
+            margin-bottom: 10px;
+        }
+
+        ul li a{
+            display: block;
+            font-size: 16px;
+            text-transform: capitalize;
+            color: white;
+            text-decoration: none;
+            transition: all 0.4s ease;
+        }
+
+        ul li a:hover{
+            color: white;
+            padding-left: 8px ;
+        }
+
+        .links a{
+            display: inline-block;
+            height: 40px;
+            width: 40px;
+            color: #f8f8f8;
+            background-color: rgba(40, 130, 214, 0.8);
+            margin: 0 8pc 8px 0;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+        }
+
+        .links a:hover{
+            color: #000000;
+            background-color: #f8f8f8;
+        }
+
+        footer .sec-contact .info{
+            position: relative;
+        }
+
+        .footer-col .info li{
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            margin-bottom: 16px;
+        }
+
+        .footer-col .info li span{
+            color: #FFFFFF;
+            font-size: 20px;
+        }
+        .footer-col p{
+            color: #FFFFFF;
+        }
+
+        .footer-col .info li a{
+            color: #FFFFFF;
+            text-decoration: none;
+        }
+
+        .img3{
+            position: absolute;
+            width: 32px;
+            margin-top: 0;
+            right: 59px;
+        }
+
+        .copyright{
+            width: 100%;
+            background: #000000;
+            padding: 10px 100px 20px;
+            text-align: center;
+            color: #f8f8f8;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+        .input-rojo {
+            background-color: #fff;
+            border: 2px solid #cc0000;
+            border-radius: 4px;
+            color: #600000;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .input-rojo::placeholder {
+            color: #990000;
+        }
+
+        .input-rojo:focus {
+            border-color: #cc0000;
+            box-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+            outline: none;
+        }
+        /* Fondo general del section y container en dark-mode */
+        body.dark-mode section {
+            background-color: #1a1a1a;
+            color: #f8f8f8;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        /* Fondo de .container (opcional, para contraste) */
+        body.dark-mode .container {
+            background-color: #222;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Títulos y labels en modo oscuro */
+        body.dark-mode h1,
+        body.dark-mode label,
+        body.dark-mode .form-label {
+            color: #f8f8f8;
+        }
+
+        /* Textos generales */
+        body.dark-mode p,
+        body.dark-mode span,
+        body.dark-mode .form-text {
+            color: #e0e0e0;
+        }
+
+        /* Inputs, selects y textareas en modo oscuro */
+        body.dark-mode input.form-control,
+        body.dark-mode textarea.form-control,
+        body.dark-mode select.form-select {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+
+        /* Placeholder en modo oscuro */
+        body.dark-mode input.form-control::placeholder,
+        body.dark-mode textarea.form-control::placeholder {
+            color: #aaa;
+        }
+
+        /* Mensajes de error */
+        body.dark-mode .text-danger {
+            color: #ff6b6b;
+        }
+
+        /* Botón primario (Crear Producto) */
+        body.dark-mode .btn-primary {
+            background-color: #4e9fff;
+            border-color: #4e9fff;
+            color: #fff;
+        }
+
+        body.dark-mode .btn-primary:hover {
+            background-color: #1a73e8;
+            border-color: #1a73e8;
+            color: #fff;
+        }
+
+        /* Botón success (Volver) */
+        body.dark-mode .btn-success {
+            background-color: #00c46e;
+            border-color: #00c46e;
+            color: #fff;
+        }
+
+        body.dark-mode .btn-success:hover {
+            background-color: #009f58;
+            border-color: #009f58;
+            color: #fff;
+        }
+
+    </style>
+    <div class="header_container">
+        <div class="bars">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <div class="logo">
+            <img th:src="@{/img/icon.png}" alt="Logo De MarketS" class="logo-img">
+            <h2 class="name-project"> MarketS</h2>
+        </div>
+        <nav class="nav-menu">
+            <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+               class="btn-icon"
+               th:if="${nombreUsuario != null}">
+                <i class="fa-solid fa-user"></i>
+            </a>
+            <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
+            <button id="toggle-dark-mode" class="modo-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span class="modo-text">Modo Oscuro</span>
+            </button>
+        </nav>
+    </div>
+</header>
+<section>
+    <div class="container">
+        <h1>Crear Producto</h1>
+
+        <form th:action="@{/vendedor/productos/guardar}"
+              th:object="${productoDto}"
+              method="POST"
+              enctype="multipart/form-data">
+
+        <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" id="nombre"
+                       th:field="*{nombre}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('nombre')} ? ' input-rojo' : ''"
+                       placeholder="Nombre del producto">
+                <p th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="precio" class="form-label">Precio</label>
+                <input type="number" id="precio"
+                       th:field="*{precio}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('precio')} ? ' input-rojo' : ''"
+                       placeholder="Precio" step="0.01">
+                <p th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="fecha_agregacion" class="form-label">Fecha de Agregación</label>
+                <input type="date" id="fecha_agregacion"
+                       th:field="*{fechaAgregacion}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('fechaAgregacion')} ? ' input-rojo' : ''">
+                <p th:if="${#fields.hasErrors('fechaAgregacion')}" th:errors="*{fechaAgregacion}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="estadoProducto" class="form-label">Estado del Producto</label>
+                <select id="estadoProducto"
+                        th:field="*{estadoProducto}"
+                        class="form-select"
+                        th:classappend="${#fields.hasErrors('estadoProducto')} ? ' input-rojo' : ''">
+                    <option value="">Seleccione un estado</option>
+                    <option value="Disponible">Disponible</option>
+                    <option value="No disponible">No disponible</option>
+                </select>
+                <p th:if="${#fields.hasErrors('estadoProducto')}" th:errors="*{estadoProducto}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <textarea id="descripcion"
+                          th:field="*{descripcion}"
+                          class="form-control"
+                          th:classappend="${#fields.hasErrors('descripcion')} ? ' input-rojo' : ''"
+                          placeholder="Descripción del producto"></textarea>
+                <p th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="nombreMarca" class="form-label">Marca</label>
+                <input type="text" id="nombreMarca"
+                       th:field="*{nombreMarca}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('nombreMarca')} ? ' input-rojo' : ''"
+                       placeholder="Marca del producto">
+                <p th:if="${#fields.hasErrors('nombreMarca')}" th:errors="*{nombreMarca}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="categoriaId" class="form-label">Categoría</label>
+                <select id="categoriaId"
+                        th:field="*{categoriaId}"
+                        class="form-select"
+                        th:classappend="${#fields.hasErrors('categoriaId')} ? ' input-rojo' : ''">
+                    <option value="">Selecciona una categoría</option>
+                    <option th:each="cat : ${categorias}"
+                            th:value="${cat.id}"
+                            th:text="${cat.nombreCategoria}">
+                    </option>
+                </select>
+                <p th:if="${#fields.hasErrors('categoriaId')}" th:errors="*{categoriaId}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3">
+                <label for="stock" class="form-label">Stock General</label>
+                <input type="number" id="stock"
+                       th:field="*{stock}"
+                       class="form-control"
+                       th:classappend="${#fields.hasErrors('stock')} ? ' input-rojo' : ''"
+                       placeholder="Cantidad total en stock">
+                <p th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}" class="text-danger"></p>
+            </div>
+
+            <div class="mb-3" id="tallasSection" style="display: none;">
+                <label class="form-label">Tallas y Stock</label>
+                <div id="tallasContainer">
+                    <div class="d-flex mb-2">
+                        <input type="text" name="tallas[0].talla" class="form-control me-2" placeholder="Talla (ej. M)">
+                        <input type="number" name="tallas[0].stock" class="form-control" placeholder="Stock">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addTalla()">+ Añadir talla</button>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="imagenes" class="form-label">Carga imágenes</label>
+                <input type="file" id="imagenes"
+                       th:field="*{imagenes}"
+                       class="form-control"
+                       multiple
+                       accept="image/*">
+                <p th:if="${#fields.hasErrors('imagenes')}" th:errors="*{imagenes}" class="text-danger"></p>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear Producto</button>
+            <a th:href="@{/vendedor/productos}" class="btn btn-success w-100 mt-2">Volver</a>
+        </form>
+    </div>
+</section>
+<footer>
+    <div class="footer-col">
+        <h4>Nuestras Redes</h4>
+        <div class="links">
+            <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+    </div>
+    <div class="footer-col">
+        <h4> Acerca De MarketS</h4>
+        <ul>
+            <li> <a href="#">Sobre Nosotros</a></li>
+            <li> <a href="#">Nuestras Políticas</a></li>
+            <li> <a href="#">Términos De Servicio</a></li>
+            <li> <a href="#">Políticas De Privacidad</a></li>
+            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Contacto </h4>
+        <ul class="info">
+            <li>
+                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>
+            </li>
+            <li>
+                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>
+            </li>
+        </ul>
+    </div>
+    <div class="footer-col">
+        <h4> Métodos De Pago</h4>
+        <ul>
+            <img th:src="@{/img/pay.png}" alt="Logo">
+            <img class="img3" th:src="@{/img/nequi.webp}" alt="">
+        </ul>
+    </div>
+</footer>
+<div class="copyright">
+    <p>©2024 MarketS. ALL Rights Reserved.</p>
+</div>
+<script th:src="@{/JS/cambioColor.js}" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const categoriaSelect = document.getElementById("categoriaId");
+        const tallasSection = document.getElementById("tallasSection");
+
+        function toggleTallas() {
+            // Obtiene el texto de la opción seleccionada
+            const selectedOption = categoriaSelect.options[categoriaSelect.selectedIndex].text;
+
+            if (selectedOption.toLowerCase() === "moda") {
+                tallasSection.style.display = "block";
+            } else {
+                tallasSection.style.display = "none";
+            }
+        }
+
+        // Al cargar la página (para edición)
+        toggleTallas();
+
+        // Al cambiar categoría
+        categoriaSelect.addEventListener("change", toggleTallas);
+    });
+
+    function addTalla() {
+        const container = document.getElementById("tallasContainer");
+        const index = container.children.length;
+
+        const div = document.createElement("div");
+        div.classList.add("d-flex", "mb-2");
+        div.innerHTML = `
+            <input type="text" name="tallas[${index}].talla" class="form-control me-2" placeholder="Talla (ej. M)">
+            <input type="number" name="tallas[${index}].stock" class="form-control" placeholder="Stock">
+        `;
+        container.appendChild(div);
+    }
+</script>
+
+
+</body>
+</html>
