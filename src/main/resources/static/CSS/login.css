@@ -92,6 +92,7 @@ a{
 .logo img{
     height: 70px;
     margin-left: 10px;
+    padding: 10px
 }
 
 .nav-menu{
@@ -148,7 +149,7 @@ button:hover{
     position: relative;
     right: 130px;
     align-items: center;
-    width: 100%;
+    width: 400px;
 }
 
 .icon h1 {
