@@ -329,10 +329,21 @@ public class VendedorController {
 
 
     @GetMapping("/productos/reporte-pdf")
-    public ResponseEntity<ByteArrayResource> generarReportePdf(Authentication authentication) {
+    public ResponseEntity<ByteArrayResource> generarReportePdf(
+            Authentication authentication,
+            @RequestParam(value = "keyword", required = false) String keyword) {
+
         String email = authentication.getName();
         User usuario = userService.buscarPorEmail(email).orElse(null);
-        List<Producto> productos = productoRepository.findByVendedor(usuario);
+
+        List<Producto> productos;
+        if (keyword != null && !keyword.isBlank()) {
+            productos = productoService
+                    .buscarPorTodosLosCampos(keyword, usuario.getId(), PageRequest.of(0, 1000))
+                    .getContent();
+        } else {
+            productos = productoRepository.findByVendedor(usuario);
+        }
 
         byte[] pdf = pdfThymeleafService.generarPdfDesdeHtml(productos);
 
@@ -341,6 +352,8 @@ public class VendedorController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new ByteArrayResource(pdf));
     }
+
+
     @GetMapping("/productos/editar/{id}")
     public String mostrarFormularioEdicion(
             @PathVariable Long id,
