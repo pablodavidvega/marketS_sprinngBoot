@@ -1,12 +1,14 @@
 package com.example.MarketS.service.impl;
 
+import com.example.MarketS.model.Rol;
+import com.example.MarketS.model.User;
 import com.example.MarketS.repository.RolRepository;
+import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.UserService;
+
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.example.MarketS.service.UserService;
-import com.example.MarketS.model.User;
-import com.example.MarketS.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -88,6 +90,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void actualizar(User user) {
-        guardar(user); // Puedes delegar a guardar si el comportamiento es igual
+        guardar(user); // delega en guardar
+    }
+
+    // 🔹 Nuevo método: cambiar rol
+    @Override
+    public void cambiarRol(Long userId, Long rolId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        Rol nuevoRol = rolRepository.findById(rolId)
+                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con id " + rolId));
+
+        user.setRol(nuevoRol);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+
+    // 🔹 Nuevo método: eliminar usuario
+    @Override
+    public void eliminarUsuario(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new IllegalArgumentException("Usuario no encontrado con ID " + id);
+        }
+        userRepository.deleteById(id);
     }
 }

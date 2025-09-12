@@ -31,5 +31,9 @@ public interface UserService {
     void guardar(User user); // guarda cambios y actualiza updatedAt
 
     void actualizar(User user); // opcionalmente igual a guardar()
+
+    void cambiarRol(Long userId, Long rolId);
+
+    void eliminarUsuario(Long id);
 }
 

@@ -49,8 +49,10 @@ public class AdminUserController {
         agregarAdminAlModelo(authentication, model);
         List<User> usuarios = userService.listarTodos();
         model.addAttribute("usuarios", usuarios);
+        model.addAttribute("roles", rolRepository.findAll()); // necesario para el select
         return "admin/lista_usuarios";
     }
+
     //Filtrar usuarios//
     @GetMapping("/filtrar")
     public String filtrarUsuario(@RequestParam String tipo,
@@ -150,6 +152,29 @@ public class AdminUserController {
             e.printStackTrace();
         }
     }
+
+    @GetMapping("/editar/{id}")
+    public String mostrarFormularioEditar(@PathVariable Long id, Authentication authentication, Model model) {
+        agregarAdminAlModelo(authentication, model);
+        User usuario = userService.buscarPorId(id).orElse(null);
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("roles", rolRepository.findAll());
+        return "admin/form_editar_usuario";
+    }
+
+    @PostMapping("/editar/{id}")
+    public String actualizarRol(@PathVariable Long id, @RequestParam Long rolId) {
+        userService.cambiarRol(id, rolId);
+        return "redirect:/admin/usuarios";
+    }
+
+    @PostMapping("/eliminar/{id}")
+    public String eliminarUsuario(@PathVariable Long id) {
+        userService.eliminarUsuario(id);
+        return "redirect:/admin/usuarios";
+    }
+
+
 
 
 }
