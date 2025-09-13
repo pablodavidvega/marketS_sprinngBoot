@@ -26,7 +26,7 @@ body{
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     box-shadow: 0 0 10px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
 }
@@ -128,7 +128,7 @@ body.dark-mode .footer-col .info p {
 
 .header{
     position: relative;
-    background-color: #ff0000;
+    background-color: #0000;
     height: 105px;
     padding: 20px 0;
     box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -180,8 +180,8 @@ body.dark-mode .footer-col .info p {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 40px;
-    width: 40px;
+    height: 50px;
+    width: 50px;
     background-color: rgba(255,255,255,0.15);
 }
 
@@ -221,7 +221,7 @@ body.dark-mode .footer-col .info p {
 .nav-not-logged {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 30px;
 }
 
 
@@ -233,8 +233,8 @@ button{
     text-transform: uppercase;
     position: relative;
     border: none;
-    height: 40px;
-    width: 100px;
+    height: 50px;
+    width: 120px;
     transition: .3s linear;
     cursor: pointer;
 }
@@ -263,7 +263,6 @@ button:hover{
 .search-overlay {
     position: absolute;
     top: 130px;
-    right: 10px;
     display: flex;
     align-items: center;
     z-index: 10;
