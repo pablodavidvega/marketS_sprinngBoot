@@ -61,7 +61,7 @@ a{
 
 .header{
     position: relative;
-    background-color: #ff0000;
+    background-color: #0000;
     height: 105px;
     padding: 20px 0;
     box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -73,7 +73,7 @@ a{
     align-items: center;
 }
 .name-project{
-    color: #FFFFFF;
+    color: #444552;
     font-weight: 500;
 }
 
@@ -98,7 +98,7 @@ a{
     display: flex;
     align-items: center;
     padding: 10px;
-    gap: 10px;
+    gap: 30px;
 }
 
 .nav-menu > a.btn-icon {
@@ -110,6 +110,7 @@ a{
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
+    background-color: #444552;
 }
 
 .nav-menu > a.btn-icon:hover {

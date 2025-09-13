@@ -140,7 +140,7 @@ body.dark-mode .footer-col .info p {
     align-items: center;
 }
 .name-project{
-    color: #FFFFFF;
+    color: #444552;
     font-weight: 500;
 }
 
@@ -166,7 +166,7 @@ body.dark-mode .footer-col .info p {
     display: flex;
     align-items: center;
     padding: 10px;
-    gap: 10px;
+    gap: 20px;
 }
 
 .nav-logged a.btn-icon,
@@ -182,7 +182,7 @@ body.dark-mode .footer-col .info p {
     justify-content: center;
     height: 50px;
     width: 50px;
-    background-color: rgba(255,255,255,0.15);
+    background-color: #444552;
 }
 
 .nav-logged a.btn-icon:hover,
