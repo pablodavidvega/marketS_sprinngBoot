@@ -294,11 +294,7 @@ button:hover{
 /*contenido*/
 
 .sidebar {
-    position: absolute;
-    top: 710px;
-    left: 0;
-    height: 105.1vh;
-    width: 398px;
+    width: 100%;
     background-color: #FF0000;
     display: flex;
     flex-direction: column;
@@ -431,9 +427,6 @@ button:hover{
 
 #product-1{
     text-align: center;
-    position: absolute;
-    left: 380px;
-    top: 650px;
 }
 #product-1 .productos2{
     display: flex;

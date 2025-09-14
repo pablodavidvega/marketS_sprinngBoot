@@ -61,55 +61,56 @@
 <div th:replace="fragments/carousel :: carrusel"></div>
 <script th:src="@{/JS/script.js}" defer></script>
 <!-- barra lateral -->
-<div class="sidebar">
-    <div class="select-menu">
-        <div class="select-btn">
-            <h2 class="sBtn-text">Categorías</h2>
-            <i class="fa-solid fa-chevron-down"></i>
+<div class="container-producto-categories">
+    <div class="sidebar">
+        <div class="select-menu">
+            <div class="select-btn">
+                <h2 class="sBtn-text">Categorías</h2>
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <ul class="options">
+                <li class="option">
+                    <a th:href="@{'/productos/categoria/2'}">
+                    <i class="fa-solid fa-laptop"></i><span class="option-text"> Tecnología</span>
+                    </a>
+                </li>
+                <li class="option">
+                    <a th:href="@{'/productos/categoria/3'}">
+                    <i class="fa-solid fa-shirt"></i><span class="option-text"> Moda</span>
+                    </a>
+                </li>
+                <li class="option">
+                    <a th:href="@{'/productos/categoria/4'}">
+                    <i class="fa-solid fa-couch"></i><span class="option-text"> Muebles</span>
+                    </a>
+                </li>
+                <li class="option">
+                    <a th:href="@{'/productos/categoria/1'}">
+                    <i class="fa-solid fa-hat-wizard"></i><span class="option-text"> Accesorios</span>
+                    </a>
+                </li>
+                <li class="option">
+                    <a th:href="@{'/productos/categoria/5'}">
+                    <i class="fa-solid fa-medal"></i><span class="option-text"> Deportes</span>
+                    </a>
+                </li>
+            </ul>
+
         </div>
-        <ul class="options">
-            <li class="option">
-                <a th:href="@{'/productos/categoria/2'}">
-                <i class="fa-solid fa-laptop"></i><span class="option-text"> Tecnología</span>
-                </a>
-            </li>
-            <li class="option">
-                <a th:href="@{'/productos/categoria/3'}">
-                <i class="fa-solid fa-shirt"></i><span class="option-text"> Moda</span>
-                </a>
-            </li>
-            <li class="option">
-                <a th:href="@{'/productos/categoria/4'}">
-                <i class="fa-solid fa-couch"></i><span class="option-text"> Muebles</span>
-                </a>
-            </li>
-            <li class="option">
-                <a th:href="@{'/productos/categoria/1'}">
-                <i class="fa-solid fa-hat-wizard"></i><span class="option-text"> Accesorios</span>
-                </a>
-            </li>
-            <li class="option">
-                <a th:href="@{'/productos/categoria/5'}">
-                <i class="fa-solid fa-medal"></i><span class="option-text"> Deportes</span>
-                </a>
-            </li>
-        </ul>
 
+        <a href="#" class="btn-3"><h2>Servicio Al Cliente</h2></a>
+        <a href="#" class="btn-4"><h2>Tarjetas De Regalo</h2></a>
+
+        <div class="promo-box">
+            <h3>🎉 10% de descuento</h3>
+            <p>En tu primera compra</p>
+            <button>Ver más</button>
+        </div>
     </div>
-
-    <a href="#" class="btn-3"><h2>Servicio Al Cliente</h2></a>
-    <a href="#" class="btn-4"><h2>Tarjetas De Regalo</h2></a>
-
-    <div class="promo-box">
-        <h3>🎉 10% de descuento</h3>
-        <p>En tu primera compra</p>
-        <button>Ver más</button>
-    </div>
-</div>
 
 <!-- end barra lateral-->
-<section id="product-1">
-    <div class="productos2">
+    <section id="product-1">
+     <div class="productos2">
         <div class="pro" th:each="prod : ${productos}">
             <a th:href="@{'/productos/ver/' + ${prod.id}}">
                 <img th:src="@{'/uploads/' + ${prod.imagen}}" alt="Imagen producto">
@@ -135,8 +136,8 @@
             </div>
         </div>
     </div>
-</section>
-
+    </section>
+</div>
 <footer>
     <div class="footer-col">
         <h4>Nuestras Redes</h4>
