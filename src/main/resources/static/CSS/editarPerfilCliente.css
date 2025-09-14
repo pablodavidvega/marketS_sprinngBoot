@@ -55,7 +55,7 @@ body.dark-mode .modo-btn .modo-text {
     position: fixed;
     top: 0;
     width: 100%;
-    background-color: #ff0000;
+    background-color: #000000;
     height: 105px;
     padding: 20px 0;
     box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -84,13 +84,14 @@ body.dark-mode .modo-btn .modo-text {
 .logo img {
     height: 70px;
     margin-left: 10px;
+    padding:10px
 }
 
 .nav-menu {
     display: flex;
     align-items: center;
     padding: 10px;
-    gap: 10px;
+    gap: 30px;
 }
 
 .nav-menu a.btn-icon {

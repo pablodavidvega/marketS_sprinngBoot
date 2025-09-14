@@ -657,7 +657,7 @@ footer .sec-contact .info{
     color: #000;
 }
 
-.slide-content {
+. {
     z-index: 2;
     background-color: rgba(255,255,255,0.7);
     padding: 20px;
@@ -665,7 +665,7 @@ footer .sec-contact .info{
     max-width: 400px;
 }
 
-.slide-content.light {
+..light {
     background-color: transparent;
     color: #fff;
 }
