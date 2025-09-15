@@ -72,14 +72,14 @@
 
           <td>
               <form th:action="@{'/admin/usuarios/editar/' + ${usuario.id}}" method="post" style="display: inline;">
-                  <select name="rolId">
+                  <select class="select-rol-admin" name="rolId">
                       <option th:each="rol : ${roles}"
                               th:value="${rol.id}"
                               th:text="${rol.rolname}"
                               th:selected="${rol.id == usuario.rol.id}">
                       </option>
                   </select>
-                  <button type="submit" style="background:#007bff; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">
+                  <button class="btn-save-admin" type="submit" style="background:#007bff; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">
                       Guardar
                   </button>
               </form>
@@ -87,7 +87,7 @@
               <!-- Botón eliminar -->
               <form th:action="@{|/admin/eliminar/${usuario.id}|}" method="post"
                     onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?');">
-                  <button type="submit" style="background:red; color:white;">Eliminar</button>
+                  <button class="btn-delete-admin" type="submit" style="background:red; color:white;">Eliminar</button>
               </form>
           </td>
       </tr>

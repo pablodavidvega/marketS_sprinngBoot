@@ -6,7 +6,7 @@ body {
 
 /* Navbar superior */
 .top-navbar {
-    background: rgba(241, 6, 6, 0.8);
+    background: #000000;
     color: #fff;
     display: flex;
     align-items: center;
@@ -48,7 +48,7 @@ body {
 /* Sidebar */
 .sidebar {
     width: 200px;
-    background: rgba(241, 6, 6, 0.8);
+    background: #000000;
     color: #fff;
     height: calc(100vh - 60px);
     position: fixed;
@@ -216,4 +216,23 @@ table tbody td {
 
 table tbody tr:nth-child(even) {
     background: #fafafa;
+}
+
+.select-rol-admin {
+    background-color: yellow;
+    width: 120px;
+    height: 20px;
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+
+.btn-save-admin {
+    width: 120px;
+    height: 25px;
+    margin-bottom: 10px;
+}
+
+.btn-delete-admin {
+    width: 120px;
+    height: 25px;
 }
