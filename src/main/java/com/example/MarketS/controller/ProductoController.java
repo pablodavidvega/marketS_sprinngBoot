@@ -43,7 +43,7 @@ public class ProductoController {
         Collections.shuffle(todos);
 
         List<Producto> productosAleatorios = todos.stream()
-                .limit(6)
+                .limit(30)
                 .toList();
 
         model.addAttribute("productos", productosAleatorios);

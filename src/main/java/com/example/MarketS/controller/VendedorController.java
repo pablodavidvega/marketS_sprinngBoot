@@ -72,7 +72,7 @@ public class VendedorController {
         User usuario = userService.buscarPorEmail(email).orElse(null);
 
         Page<Producto> productosPage = productoService.listarProductosPorVendedor(
-                usuario.getId(), PageRequest.of(page, size));
+                usuario.getId(), PageRequest.of(page, 30));
 
         model.addAttribute("productos", productosPage.getContent());
         model.addAttribute("page", productosPage);
@@ -98,9 +98,9 @@ public class VendedorController {
 
         if (keyword != null && !keyword.isBlank()) {
             productosPage = productoService.buscarPorTodosLosCampos(
-                    keyword, usuario.getId(), PageRequest.of(page, size));
+                    keyword, usuario.getId(), PageRequest.of(page, 30));
         } else {
-            productosPage = productoService.listarProductosPorVendedor(usuario.getId(), PageRequest.of(page, size));
+            productosPage = productoService.listarProductosPorVendedor(usuario.getId(), PageRequest.of(page, 30));
         }
 
         model.addAttribute("productos", productosPage.getContent());
