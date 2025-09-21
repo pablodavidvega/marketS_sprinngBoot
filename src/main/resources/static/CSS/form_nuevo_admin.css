@@ -7,7 +7,7 @@ body {
 }
 
 .top-navbar {
-    background: rgba(241, 6, 6, 0.8);
+    background: #000000;
     color: #fff;
     display: flex;
     align-items: center;
@@ -48,7 +48,7 @@ body {
 
 .sidebar {
     width: 200px;
-    background: rgba(241, 6, 6, 0.8);
+    background: #000000;
     color: #fff;
     height: calc(100vh - 60px);
     position: fixed;

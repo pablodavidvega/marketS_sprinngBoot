@@ -1,3 +1,50 @@
 body{
-background-color: red;
+background-color: #000000;
+}
+
+.title-my-products {
+    color: #ffffff;
+}
+
+.container-tabs {
+    justify-content: space-between;
+}
+
+.btn-back-dash {
+    background-color: #1592ff;
+        color: #fff;
+        font-weight: bold;
+        width: 200px;
+        height: 50px;
+        align-content: center;
+        font-size: 18px;
+}
+
+.btn-new-product {
+    background-color: #427641;
+    color: #000000;
+    font-weight: bold;
+    width: 200px;
+    height: 50px;
+    align-content: center;
+    font-size: 18px;
+}
+
+.form1-search-products {
+    color: #fff;
+    font-weight: bold;
+    width: 300px;
+    height: 50px;
+    align-content: center;
+    font-size: 18px;
+}
+
+.btn-export-pdf {
+    background-color: #0c6150;
+    color: #000000;
+    font-weight: bold;
+    width: 200px;
+    height: 50px;
+    align-content: center;
+    font-size: 18px;
 }
