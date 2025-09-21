@@ -112,8 +112,8 @@
     <section id="product-1">
      <div class="productos2">
         <div class="pro" th:each="prod : ${productos}">
-            <a th:href="@{'/productos/ver/' + ${prod.id}}">
-                <img th:src="@{'/uploads/' + ${prod.imagen}}" alt="Imagen producto">
+            <a th:href="@{/productos/ver/{id}(id=${prod.id})}">
+            <img th:src="@{/uploads/{file}(file=${prod.imagen})}" alt="Imagen producto">
             </a>
             <div class="content-container">
                 <span th:text="${prod.marca.nombreMarca}">Marca</span>
