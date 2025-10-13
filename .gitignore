@@ -21,6 +21,7 @@ target/
 *.ipr
 /uploads/
 C:/uploads/
+src/main/resources/static/img/
 
 ### NetBeans ###
 /nbproject/private/
