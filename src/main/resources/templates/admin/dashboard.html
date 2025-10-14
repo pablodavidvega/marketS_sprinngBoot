@@ -25,6 +25,14 @@
             <li th:class="'menu-item ' + (${activePage} == 'nuevoAdmin' ? 'active' : '')">
                 <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
             </li>
+
+            <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
+                <a th:href="@{/admin/enviar-correos}">
+                    <i class="fas fa-envelope"></i> <span>Enviar correos</span>
+                </a>
+            </li>
+
+
             <li>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="logout-btn">
@@ -46,6 +54,10 @@
             <a th:href="@{/admin/usuarios/nuevo-admin}" class="card">
                 <i class="fas fa-user-plus"></i>
                 <h3>Agregar Admin</h3>
+            </a>
+            <a th:href="@{/admin/enviar-correos}" class="card">
+                <i class="fas fa-envelope"></i>
+                <h3>Enviar correos</h3>
             </a>
         </div>
     </main>

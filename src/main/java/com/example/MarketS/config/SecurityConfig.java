@@ -24,29 +24,28 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Configuramos el AuthenticationManager usando AuthenticationConfiguration
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // SecurityFilterChain actualizado
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 🔹 Desactiva CSRF solo para las rutas de correo (para Postman)
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/usuarios/registro")
+                        .ignoringRequestMatchers("/usuarios/registro", "/enviar-correo/**")
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/login", "/usuarios/registro", "/usuarios/registro/**",
-                                "/CSS/**", "/JS/**", "/img/**", "/fondos/**", "/error", "/redireccionar-por-rol", "/productos/**",
-                                "/uploads/**", "/filtros"
+                                "/CSS/**", "/JS/**", "/img/**", "/fondos/**", "/error",
+                                "/redireccionar-por-rol", "/productos/**", "/uploads/**",
+                                "/filtros", "/enviar-correo/**" // 🟢 Permite acceso libre a correo
                         ).permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/vendedor/**").hasAnyAuthority("ROLE_VENDEDOR", "ROLE_ADMIN")
                         .requestMatchers("/cliente/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_VENDEDOR", "ROLE_ADMIN")
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

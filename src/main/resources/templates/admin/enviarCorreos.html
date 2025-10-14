@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar Correos</title>
+    <link rel="stylesheet" th:href="@{/css/admindashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<header class="top-navbar">
+    <div id="logoToggle" class="logo">MS</div>
+    <div class="navbar-title">Panel de Administrador</div>
+    <div></div>
+</header>
+
+<div class="wrapper">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar collapsed">
+        <ul>
+            <li th:class="'menu-item ' + (${activePage} == 'dashboard' ? 'active' : '')">
+                <a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'usuarios' ? 'active' : '')">
+                <a th:href="@{/admin/usuarios}"><i class="fas fa-users"></i> <span>Usuarios</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'nuevoAdmin' ? 'active' : '')">
+                <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
+                <a th:href="@{/admin/enviar-correos}"><i class="fas fa-envelope"></i> <span>Enviar Correos</span></a>
+            </li>
+            <li>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Contenido principal -->
+    <main class="dashboard-main">
+        <h1><i class="fas fa-envelope"></i> Enviar Correos Masivos</h1>
+
+        <div class="cards">
+            <div class="card-form">
+                <form th:action="@{/enviar-correo/masivo}" method="post" enctype="multipart/form-data" class="form-correo">
+                    <div class="form-group">
+                        <label for="asunto">Asunto</label>
+                        <input type="text" id="asunto" name="asunto" placeholder="Escribe el asunto del correo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensaje">Mensaje</label>
+                        <textarea id="mensaje" name="mensaje" rows="6" placeholder="Escribe el mensaje aquí" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="archivo">Archivo CSV</label>
+                        <input type="file" id="archivo" name="archivo" accept=".csv" required>
+                        <small>El archivo debe contener la lista de correos.</small>
+                    </div>
+
+                    <button type="submit" class="btn-enviar">
+                        <i class="fas fa-paper-plane"></i> Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <a th:href="@{/admin/dashboard}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
+    </main>
+</div>
+
+<script>
+    const logo = document.getElementById('logoToggle');
+    const sidebar = document.getElementById('sidebar');
+    let expanded = false;
+    logo.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        expanded = !expanded;
+        logo.textContent = expanded ? 'MarketS' : 'MS';
+    });
+</script>
+</body>
+</html>

@@ -38,5 +38,12 @@ public class AdminController {
         return "admin/dashboard";
     }
 
+    @GetMapping("/enviar-correos")
+    public String mostrarFormularioCorreos(Model model) {
+        model.addAttribute("activePage", "enviarCorreos");
+        return "admin/enviarCorreos";
+    }
+
+
 
 }

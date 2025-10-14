@@ -31,7 +31,13 @@
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-		<!-- https://mvnrepository.com/artifact/com.github.librepdf/openpdf -->
+        <!-- Dependencia para enviar correos -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.github.librepdf/openpdf -->
 		<dependency>
 			<groupId>com.github.librepdf</groupId>
 			<artifactId>openpdf</artifactId>
