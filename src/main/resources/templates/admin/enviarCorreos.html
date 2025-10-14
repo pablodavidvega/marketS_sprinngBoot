@@ -73,6 +73,9 @@
             <i class="fas fa-arrow-left"></i> Volver al panel
         </a>
     </main>
+    <div id="alerta-exito" class="alerta-exito" th:if="${correoEnviado}">
+        <i class="fas fa-check-circle"></i> ¡Correo enviado correctamente!
+    </div>
 </div>
 
 <script>
