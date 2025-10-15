@@ -243,7 +243,7 @@ table tbody tr:nth-child(even) {
     display: flex;
     align-items: center;
     font-size: 1.8rem;
-    color: #2b7a2b;
+    color: #333;
     margin-bottom: 25px;
 }
 
@@ -329,7 +329,7 @@ table tbody tr:nth-child(even) {
     align-items: center;
     margin-top: 25px;
     text-decoration: none;
-    color: #2b7a2b;
+    color: #333;
     font-weight: 600;
     transition: color 0.3s ease;
 }
