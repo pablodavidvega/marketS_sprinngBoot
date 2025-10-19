@@ -28,10 +28,10 @@ public class DataSeeder {
                     });
 
             // Verificar si ya existe un admin con ese correo
-            String adminEmail = "admin@hanaservizi.com";
+            String adminEmail = "admin@pablovega.com";
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
                 User admin = new User();
-                admin.setUsername("Administrador");
+                admin.setUsername("Admin Pablo");
                 admin.setEmail(adminEmail);
                 admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setPhone("123456789");
