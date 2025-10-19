@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Informe de Hallazgos</title>
+</head>
+<body>
+<h2>Informe de Hallazgos</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Prueba</th>
+        <th>Tipo</th>
+        <th>Resultado</th>
+        <th>Descripción</th>
+        <th>Fecha</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="h, iterStat : ${hallazgos}">
+        <td th:text="${iterStat.count}"></td>
+        <td th:text="${h.prueba}"></td>
+        <td th:text="${h.tipo}"></td>
+        <td th:text="${h.resultado}"></td>
+        <td th:text="${h.descripcion}"></td>
+        <td th:text="${h.fecha}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

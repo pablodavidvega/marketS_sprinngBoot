@@ -41,11 +41,12 @@ public class SecurityConfig {
                                 "/", "/login", "/usuarios/registro", "/usuarios/registro/**",
                                 "/CSS/**", "/JS/**", "/img/**", "/fondos/**", "/error",
                                 "/redireccionar-por-rol", "/productos/**", "/uploads/**",
-                                "/filtros", "/enviar-correo/**" // 🟢 Permite acceso libre a correo
+                                "/filtros", "/enviar-correo/**" // Permite acceso libre a correo
                         ).permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/vendedor/**").hasAnyAuthority("ROLE_VENDEDOR", "ROLE_ADMIN")
                         .requestMatchers("/cliente/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_VENDEDOR", "ROLE_ADMIN")
+                        .requestMatchers("/productos", "/productos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_VENDEDOR")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
