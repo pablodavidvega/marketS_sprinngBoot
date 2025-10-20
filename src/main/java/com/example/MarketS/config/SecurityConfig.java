@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/vendedor/**").hasAnyAuthority("ROLE_VENDEDOR", "ROLE_ADMIN")
                         .requestMatchers("/cliente/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_VENDEDOR", "ROLE_ADMIN")
                         .requestMatchers("/productos", "/productos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_VENDEDOR")
+                        .requestMatchers("/admin/reporte-hallazgos/pdf").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

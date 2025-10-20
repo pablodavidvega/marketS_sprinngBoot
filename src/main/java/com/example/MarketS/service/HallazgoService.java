@@ -7,6 +7,14 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.OutputStream;
+
+
 @Service
 public class HallazgoService {
 
@@ -25,5 +33,39 @@ public class HallazgoService {
 
     public List<Hallazgo> obtenerTodos() {
         return repository.findAll();
+    }
+
+    // Método para exportar PDF
+    public void exportarPdf(OutputStream outputStream) {
+        List<Hallazgo> hallazgos = repository.findAll();
+
+        Document document = new Document();
+        try {
+            PdfWriter.getInstance(document, outputStream);
+            document.open();
+
+            document.add(new Paragraph("Reporte de Hallazgos de Pruebas\n\n"));
+
+            PdfPTable table = new PdfPTable(5); // 5 columnas
+            table.addCell("ID");
+            table.addCell("Prueba");
+            table.addCell("Tipo");
+            table.addCell("Resultado");
+            table.addCell("Descripción");
+
+            for (Hallazgo h : hallazgos) {
+                table.addCell(String.valueOf(h.getId()));
+                table.addCell(h.getPrueba());
+                table.addCell(h.getTipo());
+                table.addCell(h.getResultado());
+                table.addCell(h.getDescripcion());
+            }
+
+            document.add(table);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        } finally {
+            document.close();
+        }
     }
 }

@@ -20,7 +20,7 @@ public class PedidoServiceTest {
     void limpiarTabla() {
         hallazgoRepository.deleteAll();
     }
-    
+
     @Test
     void testCalcularPrecioTotal() {
         try {
