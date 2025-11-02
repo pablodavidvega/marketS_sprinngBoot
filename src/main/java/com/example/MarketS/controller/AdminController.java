@@ -75,6 +75,14 @@ public class AdminController {
         }
     }
 
+    // Reporte de vendedores
+    @GetMapping("/reporte-vendedores")
+    public String mostrarReporteVendedores(Model model) {
+        model.addAttribute("activePage", "reporteVendedores");
+        // Aquí podrías agregar más datos si la vista los necesita
+        return "admin/reporteVendedores"; // nombre del HTML Thymeleaf
+    }
+
 
 
 }

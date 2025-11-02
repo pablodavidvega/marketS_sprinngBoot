@@ -358,3 +358,23 @@ table tbody tr:nth-child(even) {
         text-align: center;
     }
 }
+.links-download {
+    gap: 30px;
+    display: flex;
+}
+
+.btn-link-report {
+  color: #333;
+      margin-bottom: 25px;
+      font-weight: bold;
+      text-decoration: none;
+}
+
+.btn-link-report:hover {
+  color: #5363dc;
+}
+.cards-reporte-vendedor {
+    justify-content: space-between
+}
+
+

@@ -38,7 +38,11 @@
                 </a>
             </li>
 
-
+            <li th:class="'menu-item ' + (${activePage} == 'reporteVendedores' ? 'active' : '')">
+                <a th:href="@{/admin/reporte-pdf}">
+                    <i class="fas fa-user-tie"></i> <span>Reporte productos</span>
+                </a>
+            </li>
 
             <li>
                 <form th:action="@{/logout}" method="post">
@@ -69,6 +73,10 @@
             <a th:href="@{/admin/reporte-hallazgos}" class="card">
                 <i class="fas fa-chart-bar"></i>
                 <h3>Informe de Pruebas</h3>
+            </a>
+            <a th:href="@{/admin/reporte-pdf}" class="card">
+                <i class="fas fa-user-tie"></i>
+                <h3>Reporte productos</h3>
             </a>
         </div>
     </main>

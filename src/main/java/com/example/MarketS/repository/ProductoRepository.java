@@ -59,4 +59,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Integer> {
 
     Page<Producto> findByVendedorId(Long vendedorId, Pageable pageable);
 
+//    Método para contar productos por categoría
+    int countByCategoriasId(Long categoriaId);
 }
