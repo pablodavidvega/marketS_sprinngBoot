@@ -54,15 +54,25 @@
     <main class="dashboard-main">
         <h1>📊 Reporte de Productos</h1>
 
-        <!-- Botones -->
+        <!-- Botones de descarga con Strategy -->
         <div class="links-download" style="margin-bottom: 20px;">
             <a th:href="@{/admin/dashboard}" class="btn-link-report" style="margin-right: 10px;">
                 <i class="fas fa-arrow-left"></i> Volver al Dashboard
             </a>
+
             <a th:href="@{/admin/reporte-pdf/descargar}" class="btn-link-report" target="_blank">
-                <i class="fas fa-file-pdf"></i> Descargar gráficas
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </a>
+
+            <a th:href="@{/admin/reporte-excel/descargar}" class="btn-link-report" target="_blank">
+                <i class="fas fa-file-excel"></i> Descargar Excel
+            </a>
+
+            <a th:href="@{/admin/reporte-csv/descargar}" class="btn-link-report" target="_blank">
+                <i class="fas fa-file-csv"></i> Descargar CSV
             </a>
         </div>
+
 
         <!-- Información general -->
         <section class="info-general-reporte" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
@@ -85,24 +95,16 @@
 
 </div>
 
-<script>
-    // Sidebar toggle
-    const logo = document.getElementById('logoToggle');
-    const sidebar = document.getElementById('sidebar');
-    let expanded = false;
-    logo.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        expanded = !expanded;
-        logo.textContent = expanded ? 'MarketS' : 'MS';
-    });
+<script th:inline="javascript">
+    const categoriasNombres = [[${categoriasNombres}]];
+    const categoriasTotales = [[${categoriasTotales}]];
+    const promedioPrecio = [[${reporte.promedioPrecio}]];
+    const promedioStock = [[${reporte.promedioStock}]];
 
-    // Datos Thymeleaf → JS
-    const categoriasNombres = /*[[${categoriasNombres}]]*/ [];
-    const categoriasTotales = /*[[${categoriasTotales}]]*/ [];
-    const promedioPrecio = /*[[${reporte.promedioPrecio}]]*/ 0;
-    const promedioStock = /*[[${reporte.promedioStock}]]*/ 0;
+    console.log("Precio promedio:", promedioPrecio);
+    console.log("Stock promedio:", promedioStock);
 
-    // Gráfico torta: categorías
+    // Gráfico torta
     const ctxCat = document.getElementById('graficoCategorias').getContext('2d');
     new Chart(ctxCat, {
         type: 'pie',
@@ -110,12 +112,12 @@
             labels: categoriasNombres,
             datasets: [{
                 data: categoriasTotales,
-                backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0'],
+                backgroundColor: ['#FF6384','#36A2EB','#FFCE56','#4BC0C0']
             }]
         }
     });
 
-    // Gráfico barras: precio y stock
+    // Gráfico barras
     const ctxBarras = document.getElementById('graficoPreciosStock').getContext('2d');
     new Chart(ctxBarras, {
         type: 'bar',
@@ -129,5 +131,6 @@
         }
     });
 </script>
+
 </body>
 </html>

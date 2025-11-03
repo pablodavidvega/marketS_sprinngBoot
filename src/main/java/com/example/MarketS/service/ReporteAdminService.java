@@ -34,7 +34,27 @@ public class ReporteAdminService {
     @Autowired
     private MarcaRepository marcaRepository;
 
-    public ReporteAdminDTO generarReporteGlobal() {
+    public String generarGraficoBarrasBase64(double promedioPrecio, double promedioStock) throws Exception {
+        var dataset = new org.jfree.data.category.DefaultCategoryDataset();
+        dataset.addValue(promedioPrecio, "Promedio", "Precio");
+        dataset.addValue(promedioStock, "Promedio", "Stock");
+
+        JFreeChart chart = ChartFactory.createBarChart(
+                "Promedio Precio vs Stock",
+                "Tipo",
+                "Valor",
+                dataset
+        );
+
+        chart.setBackgroundPaint(Color.WHITE);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ChartUtils.writeChartAsPNG(baos, chart, 500, 400);
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
+    }
+
+
+    public ReporteAdminDTO generarReporte() {
 
         List<Producto> productos = productoRepository.findAll();
         List<Categorias> categorias = categoriasRepository.findAll();
@@ -50,7 +70,7 @@ public class ReporteAdminService {
         double promedioPrecio = productos.stream()
                 .mapToDouble(Producto::getPrecio)
                 .average()
-                .orElse(0);
+                .orElse(0.0);
 
         double promedioStock = productos.stream()
                 .mapToInt(Producto::getStock)
@@ -81,7 +101,38 @@ public class ReporteAdminService {
         dto.setGraficoCategoriasBase64("");
         dto.setGraficoPreciosStockBase64("");
 
+
+
+        try {
+            String graficoCategoriasBase64 = generarGraficoTortaBase64(
+                    dto.getNombresCategorias(), dto.getTotalesCategorias());
+            dto.setGraficoCategoriasBase64(graficoCategoriasBase64);
+        } catch (Exception e) {
+            dto.setGraficoCategoriasBase64("");
+        }
+
+        try {
+            // Gráfico de torta
+            String graficoCategoriasBase64 = generarGraficoTortaBase64(
+                    dto.getNombresCategorias(), dto.getTotalesCategorias());
+            dto.setGraficoCategoriasBase64(graficoCategoriasBase64);
+
+            // Gráfico de barras (precio y stock)
+            String graficoBarrasBase64 = generarGraficoBarrasBase64(
+                    dto.getPromedioPrecio(), dto.getPromedioStock());
+            dto.setGraficoPreciosStockBase64(graficoBarrasBase64);
+
+        } catch (Exception e) {
+            dto.setGraficoCategoriasBase64("");
+            dto.setGraficoPreciosStockBase64("");
+        }
+
+
+        System.out.println("Promedio Precio: " + dto.getPromedioPrecio());
+        System.out.println("Promedio Stock: " + dto.getPromedioStock());
         return dto;
+
+
     }
     /**
      * Genera un gráfico de torta de categorías en Base64

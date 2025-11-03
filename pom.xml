@@ -53,6 +53,12 @@
             <version>2.13.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+
         <!-- Dependencia para enviar correos -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
