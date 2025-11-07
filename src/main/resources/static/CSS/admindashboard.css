@@ -6,7 +6,7 @@ body {
 
 /* Navbar superior */
 .top-navbar {
-    background: #000000;
+    background: #B3B3B3;
     color: #fff;
     display: flex;
     align-items: center;
@@ -375,6 +375,12 @@ table tbody tr:nth-child(even) {
 }
 .cards-reporte-vendedor {
     justify-content: space-between
+}
+
+.reporte-graficas {
+    width: 600px;
+    height: auto;
+    align-items: end;
 }
 
 
