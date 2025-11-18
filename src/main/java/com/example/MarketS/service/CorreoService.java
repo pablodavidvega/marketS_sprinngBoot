@@ -20,19 +20,18 @@ public class CorreoService {
 
     @Async
     public void enviarCorreo(Correo correo) {
-        for (String para : correo.getDestinatarios()) {
-            try {
+        try {
+            for (String destinatario : correo.getDestinatarios()) {
                 SimpleMailMessage mensaje = new SimpleMailMessage();
-                mensaje.setFrom("tu_correo@gmail.com"); // 👈 tu remitente
-                mensaje.setTo(para);
+                mensaje.setFrom("tu_correo@gmail.com"); // define remitente
+                mensaje.setTo(destinatario);
                 mensaje.setSubject(correo.getAsunto());
                 mensaje.setText(correo.getMensaje());
-
                 mailSender.send(mensaje);
-                logger.info("✅ Correo enviado correctamente a {}", para);
-            } catch (Exception e) {
-                logger.error("❌ Error enviando correo a {}: {}", para, e.getMessage());
+                logger.info("✅ Correo enviado a {}", destinatario);
             }
+        } catch (Exception e) {
+            logger.error("❌ Error enviando correo: {}", e.getMessage());
         }
     }
 }

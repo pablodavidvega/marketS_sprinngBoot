@@ -27,7 +27,7 @@
                 <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
             </li>
             <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
-                <a th:href="@{/admin/enviar-correos}"><i class="fas fa-envelope"></i> <span>Enviar Correos</span></a>
+                <a th:href="@{/admin/enviar-correo}"><i class="fas fa-envelope"></i> <span>Enviar Correos</span></a>
             </li>
             <li>
                 <form th:action="@{/logout}" method="post">
@@ -41,41 +41,53 @@
 
     <!-- Contenido principal -->
     <main class="dashboard-main">
-        <h1><i class="fas fa-envelope"></i> Enviar Correos Masivos</h1>
+        <h1><i class="fas fa-envelope"></i> Enviar Correos</h1>
 
         <div class="cards">
             <div class="card-form">
-                <form th:action="@{/enviar-correo/masivo}" method="post" enctype="multipart/form-data" class="form-correo">
+                <form th:action="@{/enviar-correo/varios}" method="post" enctype="multipart/form-data" class="form-correo">
+
+                    <!-- Destinatarios manuales -->
                     <div class="form-group">
-                        <label for="asunto">Asunto</label>
-                        <input type="text" id="asunto" name="asunto" placeholder="Escribe el asunto del correo" required>
+                        <label for="destinatarios">Destinatarios</label>
+                        <textarea id="destinatarios" name="destinatarios" rows="3"
+                                  placeholder="Ingresa correos separados por comas o saltos de línea"></textarea>
+                        <small>Opcional: deja en blanco si solo usarás CSV.</small>
                     </div>
 
+                    <!-- Archivo CSV -->
+                    <div class="form-group">
+                        <label for="archivo">Archivo CSV</label>
+                        <input type="file" id="archivo" name="archivo" accept=".csv">
+                        <small>Opcional: CSV con lista de correos.</small>
+                    </div>
+
+                    <!-- Asunto -->
+                    <div class="form-group">
+                        <label for="asunto">Asunto</label>
+                        <input type="text" id="asunto" name="asunto" placeholder="Escribe el asunto" required>
+                    </div>
+
+                    <!-- Mensaje -->
                     <div class="form-group">
                         <label for="mensaje">Mensaje</label>
                         <textarea id="mensaje" name="mensaje" rows="6" placeholder="Escribe el mensaje aquí" required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="archivo">Archivo CSV</label>
-                        <input type="file" id="archivo" name="archivo" accept=".csv" required>
-                        <small>El archivo debe contener la lista de correos.</small>
                     </div>
 
                     <button type="submit" class="btn-enviar">
                         <i class="fas fa-paper-plane"></i> Enviar
                     </button>
                 </form>
+                <a th:href="@{/admin/dashboard}" class="btn-volver">
+                    <i class="fas fa-arrow-left"></i> Volver al panel
+                </a>
             </div>
         </div>
 
-        <a th:href="@{/admin/dashboard}" class="btn-volver">
-            <i class="fas fa-arrow-left"></i> Volver al panel
-        </a>
+        <div id="alerta-exito" class="alerta-exito" th:if="${correoEnviado}">
+            <i class="fas fa-check-circle"></i> ¡Correo enviado correctamente!
+        </div>
     </main>
-    <div id="alerta-exito" class="alerta-exito" th:if="${correoEnviado}">
-        <i class="fas fa-check-circle"></i> ¡Correo enviado correctamente!
-    </div>
 </div>
 
 <script>
