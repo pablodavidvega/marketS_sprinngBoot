@@ -67,7 +67,7 @@
         }
         .header{
             position: relative;
-            background-color: #000000;
+            background-color: #B3B3B3;;
             height: 105px;
             padding: 20px 0;
             box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -173,7 +173,7 @@
             position: relative;
             border: none;
             height: 40px;
-            width: 100px;
+            width: 120px;
             transition: .3s linear;
             cursor: pointer;
         }
@@ -204,10 +204,8 @@
         }
 
         .product-image-box {
-            flex: 1 1 400px;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
         }
 
         .product-image {
@@ -333,8 +331,7 @@
         }
 
         .btn-back {
-            margin-top: 30px;
-            display: inline-block;
+            margin-bottom: 30px;
             text-decoration: none;
             font-weight: 600;
             color: #007bff;
@@ -498,6 +495,7 @@
 </header>
 <div class="product-detail-container">
     <div class="product-image-box">
+        <a th:href="@{/productos/index}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
         <img class="product-image" th:src="@{'/uploads/' + ${producto.imagen}}" alt="Imagen del producto">
     </div>
     <div class="product-info-box">
@@ -520,7 +518,6 @@
         <p class="detail"><strong>Envío:</strong> Gratis • Entrega estimada: 3-5 días</p>
         <p class="detail"><strong>Stock:</strong> Disponible</p>
 
-
         <div class="product-actions">
             <a th:href="@{/carrito/agregar(
                                  id=${producto.id},
@@ -533,7 +530,6 @@
             <button class="fav-btn"><i class="fa fa-heart"></i></button>
         </div>
 
-        <a th:href="@{/productos/index}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
     </div>
 </div>
 
