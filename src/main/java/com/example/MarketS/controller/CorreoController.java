@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/enviar-correo")
-public class CorreoController {
+public class    CorreoController {
 
     @Autowired
     private CorreoService correoService;

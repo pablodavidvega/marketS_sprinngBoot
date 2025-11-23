@@ -94,6 +94,7 @@
         .logo{
             display: flex;
             align-items: center;
+            text-decoration: none;
         }
         .logo img{
             height: 70px;
@@ -460,10 +461,11 @@
             <div class="line"></div>
             <div class="line"></div>
         </div>
-        <div class="logo">
+        <a th:href="@{/productos/index}" class="logo">
             <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
             <h2 class="name-project"> MarketS</h2>
-        </div>
+        </a>
+
         <nav class="nav-menu">
             <div th:if="${nombreUsuario}" class="nav-logged">
                 <span class="nav-user">

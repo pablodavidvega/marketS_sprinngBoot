@@ -17,10 +17,10 @@ public class RedireccionarController {
             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                 return "redirect:/admin/dashboard";
             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_VENDEDOR"))) {
-                return "redirect:/vendedor/dashboard";
+                return "redirect:/productos/index";
             }
         }
         // Por defecto redirige al dashboard de cliente
-        return "redirect:/cliente/dashboard";
+        return "redirect:/productos/index";
     }
 }
