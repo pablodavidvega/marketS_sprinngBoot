@@ -50,7 +50,6 @@ public class SecurityConfig {
                         .requestMatchers("/admin/reporte-hallazgos/pdf").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/pdf/**").permitAll()
                         .requestMatchers("/api/usuarios/estadisticas").permitAll()
-
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
