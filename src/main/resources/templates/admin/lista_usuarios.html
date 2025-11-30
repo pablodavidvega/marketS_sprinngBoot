@@ -31,7 +31,9 @@
 
   <main class="dashboard-main">
     <h1>Lista de Usuarios</h1>
-
+      <a th:href="@{/admin/dashboard}" class="btn-volver">
+          <i class="fas fa-arrow-left"></i> Volver al panel
+      </a>
     <form th:action="@{/admin/usuarios/filtrar}" method="get" class="filtro-form">
       <input type="text" name="valor" placeholder="Buscar..." style="flex:1;">
       <select name="tipo">

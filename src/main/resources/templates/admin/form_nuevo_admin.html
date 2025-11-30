@@ -31,6 +31,9 @@
     </aside>
 
     <main class="dashboard-main">
+        <a th:href="@{/admin/dashboard}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
         <h1>Agregar Nuevo Administrador</h1>
 
         <p th:if="${error}" th:text="${error}" class="error-message"></p>
