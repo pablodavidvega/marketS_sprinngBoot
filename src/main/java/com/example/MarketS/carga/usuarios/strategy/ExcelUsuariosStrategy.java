@@ -17,42 +17,50 @@ public class ExcelUsuariosStrategy implements ArchivoUsuariosStrategy {
         List<User> usuarios = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
             Sheet sheet = workbook.getSheetAt(0);
             int fila = 0;
 
             for (Row row : sheet) {
                 fila++;
-                if (fila == 1) continue; // Saltar cabecera
+
+                // Saltar cabecera
+                if (fila == 1) continue;
 
                 try {
+                    // Saltar filas vacías
+                    if (row == null || row.getCell(1) == null) continue;
+
                     User u = new User();
 
+                    // Igual que CSV: username es col 1, email col 2, password col 3...
                     u.setUsername(getStringValue(row, 1));
                     u.setEmail(getStringValue(row, 2));
                     u.setPassword(getStringValue(row, 3));
                     u.setPhone(getStringValue(row, 4));
                     u.setAddress(getStringValue(row, 5));
+
+                    // active puede venir 1/0, true/false, activo, etc.
                     u.setActive(convertToBoolean(getStringValue(row, 6)));
 
-                    // Validaciones básicas DURANTE la lectura
+                    // Validaciones mínimas
                     if (u.getUsername() == null || u.getUsername().trim().isEmpty()) {
                         resultado.getErrores().add("Fila " + fila + ": username vacío");
                         resultado.setFallidos(resultado.getFallidos() + 1);
-                        continue; // No agregar a la lista
+                        continue;
                     }
 
                     if (u.getEmail() == null || u.getEmail().trim().isEmpty()) {
                         resultado.getErrores().add("Fila " + fila + ": email vacío");
                         resultado.setFallidos(resultado.getFallidos() + 1);
-                        continue; // No agregar a la lista
+                        continue;
                     }
 
-                    // SOLO si pasa todas las validaciones, agregar y contar
+                    // SIEMPRE agregar aunque active sea 0
                     usuarios.add(u);
-                    resultado.setProcesados(resultado.getProcesados() + 1);
 
-                    // DEBUG
-                    System.out.println("✓ Leído usuario: " + u.getUsername() + " | Active: " + u.isActive());
+                    // Igual que CSV: sumar procesados siempre
+                    resultado.setProcesados(resultado.getProcesados() + 1);
 
                 } catch (Exception e) {
                     resultado.getErrores().add("Fila " + fila + " error: " + e.getMessage());
@@ -64,70 +72,47 @@ public class ExcelUsuariosStrategy implements ArchivoUsuariosStrategy {
             resultado.getErrores().add("Error leyendo Excel: " + e.getMessage());
         }
 
-        System.out.println("DEBUG - Total leídos del Excel: " + usuarios.size());
         return usuarios;
     }
 
     private String getStringValue(Row row, int col) {
-        if (row == null || row.getCell(col) == null) {
-            return "";
-        }
-
-        Cell cell = row.getCell(col);
         try {
-            // Manejar diferentes tipos de celdas
+            Cell cell = row.getCell(col);
+            if (cell == null) return "";
+
             switch (cell.getCellType()) {
                 case STRING:
                     return cell.getStringCellValue().trim();
                 case NUMERIC:
-                    // Si es numérico pero queremos string (como phone)
-                    if (DateUtil.isCellDateFormatted(cell)) {
-                        return cell.getDateCellValue().toString();
+                    double num = cell.getNumericCellValue();
+                    if (num == (long) num) {
+                        return String.valueOf((long) num);
                     } else {
-                        // Convertir a string sin decimales si es entero
-                        double numValue = cell.getNumericCellValue();
-                        if (numValue == (long) numValue) {
-                            return String.valueOf((long) numValue);
-                        } else {
-                            return String.valueOf(numValue);
-                        }
+                        return String.valueOf(num);
                     }
                 case BOOLEAN:
                     return String.valueOf(cell.getBooleanCellValue());
                 case FORMULA:
-                    // Evaluar fórmulas
-                    switch (cell.getCachedFormulaResultType()) {
-                        case STRING:
-                            return cell.getStringCellValue();
-                        case NUMERIC:
-                            return String.valueOf(cell.getNumericCellValue());
-                        case BOOLEAN:
-                            return String.valueOf(cell.getBooleanCellValue());
-                        default:
-                            return cell.toString();
-                    }
+                    return cell.toString().trim();
                 default:
                     return cell.toString().trim();
             }
         } catch (Exception e) {
-            return cell.toString().trim();
+            return "";
         }
     }
 
     private boolean convertToBoolean(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return false;
-        }
+        if (value == null) return false;
 
-        String normalized = value.trim().toLowerCase();
+        String v = value.trim().toLowerCase();
 
-        // Manejar diferentes formatos de booleanos
-        return normalized.equals("1") ||
-                normalized.equals("true") ||
-                normalized.equals("yes") ||
-                normalized.equals("si") ||
-                normalized.equals("sí") ||
-                normalized.equals("activo") ||
-                normalized.equals("active");
+        return v.equals("1") ||
+                v.equals("true") ||
+                v.equals("si") ||
+                v.equals("sí") ||
+                v.equals("yes") ||
+                v.equals("active") ||
+                v.equals("activo");
     }
 }
