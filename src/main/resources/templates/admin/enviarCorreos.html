@@ -89,6 +89,16 @@
         </div>
     </main>
 </div>
+<!-- MODAL -->
+<div id="modalCorreo" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <h2>Resultado del envío</h2>
+        <p id="modalMensaje"></p>
+        <button id="modalCerrar">Cerrar</button>
+    </div>
+</div>
+
+
 
 <script>
     const logo = document.getElementById('logoToggle');
@@ -99,6 +109,33 @@
         expanded = !expanded;
         logo.textContent = expanded ? 'MarketS' : 'MS';
     });
+    
+    const formCorreo = document.querySelector(".form-correo");
+
+    formCorreo.addEventListener("submit", function(e){
+        e.preventDefault(); // evita refrescar la página
+
+        const formData = new FormData(formCorreo);
+
+        fetch(formCorreo.action, {
+            method: "POST",
+            body: formData
+        })
+        .then(r => r.text())
+        .then(texto => {
+            document.getElementById("modalMensaje").textContent = texto;
+            document.getElementById("modalCorreo").style.display = "flex";
+        })
+        .catch(err => {
+            document.getElementById("modalMensaje").textContent = "Error al enviar: " + err;
+            document.getElementById("modalCorreo").style.display = "flex";
+        });
+    });
+
+    document.getElementById("modalCerrar").addEventListener("click", ()=>{
+        document.getElementById("modalCorreo").style.display = "none";
+    });
+
 </script>
 </body>
 </html>
