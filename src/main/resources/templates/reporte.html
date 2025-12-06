@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <style>
@@ -7,13 +7,23 @@
             text-align: center;
             color: #2E8B57;
         }
-
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        p {
+            font-size: 12px;
+            text-align: center;
+        }
+        img {
+            display: block;
+            margin: auto;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
         }
-
         th, td {
             border: 1px solid black;
             padding: 6px;
@@ -22,7 +32,27 @@
     </style>
 </head>
 <body>
+
 <h1>Reporte de Productos</h1>
+
+<!-- Gráfica de Barras -->
+<h2>Distribución de Productos por Categoría</h2>
+<p>Este gráfico muestra la cantidad total de productos agrupados según su categoría.</p>
+
+<img th:src="${'data:image/png;base64,' + graficoBarras}" />
+     alt="Gráfico de Barras"
+     style="width:500px; height:auto;" />
+
+<!-- Gráfica de Torta -->
+<h2>Productos Activos vs Inactivos</h2>
+<p>El gráfico de torta permite visualizar la proporción entre productos activos e inactivos.</p>
+
+<img th:src="${'data:image/png;base64,' + graficoTorta}" />
+     alt="Gráfico de Torta"
+     style="width:400px; height:auto;" />
+
+<!-- Tabla -->
+<h2>Listado Completo de Productos</h2>
 <table>
     <thead>
     <tr>
@@ -51,5 +81,6 @@
     </tr>
     </tbody>
 </table>
+
 </body>
 </html>
