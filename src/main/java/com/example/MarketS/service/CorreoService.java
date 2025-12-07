@@ -28,10 +28,10 @@ public class CorreoService {
                 mensaje.setSubject(correo.getAsunto());
                 mensaje.setText(correo.getMensaje());
                 mailSender.send(mensaje);
-                logger.info("✅ Correo enviado a {}", destinatario);
+                logger.info("Correo enviado a {}", destinatario);
             }
         } catch (Exception e) {
-            logger.error("❌ Error enviando correo: {}", e.getMessage());
+            logger.error("Error enviando correo: {}", e.getMessage());
         }
     }
 }

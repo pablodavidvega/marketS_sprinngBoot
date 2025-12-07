@@ -40,15 +40,15 @@ public class PdfUsuarioRestController {
     @GetMapping(value = "/api/pdf/usuarios", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> generarPdfYJson() {
         try {
-            // 1️⃣ Consumir servicio interno
+            //Consumir servicio interno
             Map<String, Object> estadisticas = usuarioPdfClient.consumirEstadisticas();
 
-            // 2️⃣ Crear archivo JSON en la raíz
+            //Crear archivo JSON en la raíz
             String jsonFileName = "estadisticas_usuarios_" + LocalDateTime.now().toString().replace(":", "-") + ".json";
             File jsonFile = new File(System.getProperty("user.dir") + "/" + jsonFileName);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(jsonFile, estadisticas);
 
-            // 3️⃣ Generar PDF
+            // Generar PDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document document = new Document();
             PdfWriter.getInstance(document, baos);
@@ -74,7 +74,7 @@ public class PdfUsuarioRestController {
             document.add(table);
             document.add(new Paragraph(" "));
 
-            // 4️⃣ Gráfico de barras
+            // Gráfico de barras
             DefaultCategoryDataset barDataset = new DefaultCategoryDataset();
             for (Map.Entry<String, Object> entry : estadisticas.entrySet()) {
                 if (entry.getValue() instanceof Number) {
@@ -97,7 +97,7 @@ public class PdfUsuarioRestController {
             document.add(barImage);
             document.add(new Paragraph(" "));
 
-            // 5️⃣ Gráfico de torta
+            // 5Gráfico de torta
             DefaultPieDataset pieDataset = new DefaultPieDataset();
             for (Map.Entry<String, Object> entry : estadisticas.entrySet()) {
                 if (entry.getValue() instanceof Number) {
