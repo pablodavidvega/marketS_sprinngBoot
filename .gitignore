@@ -23,6 +23,7 @@ target/
 C:/uploads/
 src/main/resources/static/img/
 node_modules/
+application.properties
 
 ### NetBeans ###
 /nbproject/private/
