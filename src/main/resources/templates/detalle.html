@@ -451,6 +451,25 @@
             color: #f8f8f8;
             border: 1px solid rgba(0,0,0,0.15);
         }
+
+        .btn-volver {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 25px;
+        text-decoration: none;
+        color: #333;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        }
+
+        .btn-volver i {
+            margin-right: 6px;
+            color: #333;
+        }
+
+        .btn-volver:hover {
+            color: #256b25;
+        }
     </style>
 </head>
 <body>
@@ -484,8 +503,6 @@
             <div th:unless="${nombreUsuario}" class="nav-not-logged">
                 <a href="#" class="btn-icon"><i class="fa-solid fa-user"></i></a>
                 <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
-                <a th:href="@{/login}"><button class="btn6"><strong>Iniciar Sesión</strong></button></a>
-                <a th:href="@{/usuarios/registro}"><button class="btn6"><strong>Registrarse</strong></button></a>
             </div>
 
             <button id="toggle-dark-mode" class="modo-btn">
@@ -497,7 +514,7 @@
 </header>
 <div class="product-detail-container">
     <div class="product-image-box">
-        <a th:href="@{/productos/index}" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+        <a th:href="@{/productos/index}" class="btn-back btn-volver"><i class="fa-solid fa-arrow-left"></i> Volver</a>
         <img class="product-image" th:src="@{'/uploads/' + ${producto.imagen}}" alt="Imagen del producto">
     </div>
     <div class="product-info-box">
@@ -517,8 +534,8 @@
         <p class="detail"><strong>Marca:</strong> <span th:text="${producto.marca.nombreMarca}">Marca Ejemplo</span></p>
         <p class="detail"><strong>Categoría:</strong> <span th:text="${producto.categorias.nombreCategoria}">Categoría</span></p>
         <p class="detail"><strong>Fecha de agregado:</strong> <span th:text="${producto.fechaAgregacion}">2024-06-20</span></p>
-        <p class="detail"><strong>Envío:</strong> Gratis • Entrega estimada: 3-5 días</p>
-        <p class="detail"><strong>Stock:</strong> Disponible</p>
+        <p class="detail"><strong>Envío:</strong> <span>Gratis • Entrega estimada: 3-5 días</span></p>
+        <p class="detail"><strong>Stock:</strong> <span> Disponible <span></p>
 
         <div class="product-actions">
             <a th:href="@{/carrito/agregar(

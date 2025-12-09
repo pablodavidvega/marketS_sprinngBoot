@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>MarketS</title>
@@ -28,6 +28,10 @@
             background-color: white;
             color: black;
             transition: 0.3s ease;
+        }
+
+        header {
+            background-color: #B3B3B3;
         }
         .modo-btn {
             background-color: #fff;
@@ -419,6 +423,24 @@
             color: #fff;
         }
 
+        .btn-volver {
+        display: inline-flex;
+        align-items: center;
+        margin: 25px 0 0 25px;
+        text-decoration: none;
+        color: #fff;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        }
+
+        .btn-volver i {
+            margin-right: 6px;
+        }
+
+        .btn-volver:hover {
+            color: #256b25;
+        }
+
     </style>
     <div class="header_container">
         <div class="bars">
@@ -426,10 +448,14 @@
             <div class="line"></div>
             <div class="line"></div>
         </div>
-        <div class="logo">
+        <a th:href="@{/vendedor/dashboard}" class="logo">
             <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
             <h2 class="name-project"> MarketS</h2>
-        </div>
+        </a>
+<!--        <div class="logo">-->
+<!--            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">-->
+<!--            <h2 class="name-project"> MarketS</h2>-->
+<!--        </div>-->
         <nav class="nav-menu">
             <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
                class="btn-icon"
@@ -444,6 +470,9 @@
         </nav>
     </div>
 </header>
+<a th:href="@{/vendedor/productos}" class="btn-volver">
+    <i class="fas fa-arrow-left"></i> Volver a mis productos
+</a>
 <section>
     <div class="container">
         <h1>Crear Producto</h1>
