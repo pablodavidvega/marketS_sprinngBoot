@@ -12,7 +12,7 @@
   <div id="logoToggle" class="logo">MS</div>
   <div class="navbar-title">Panel de Vendedor@</div>
   <div class="user-info">
-    <!--Informacion del vendedor a futuro-->
+
   </div>
 </header>
 
@@ -35,24 +35,22 @@
   <!-- Contenido principal -->
   <main class="dashboard-main">
     <h1>Hola, <span th:text="${usuario.username}">Usuario</span></h1>
-      <p id="tasa">💵 El dólar hoy está a: cargando...</p>
+      <p id="tasa">El dólar hoy está a: cargando...</p>
 
       <script>
           async function cargarTasa() {
             try {
               const res = await fetch("http://localhost:8081/api/tasas/usd-cop");
               const data = await res.text();
-              document.getElementById("tasa").innerText = "💵 El dólar hoy está a " + data;
+              document.getElementById("tasa").innerText = "El dólar hoy está a " + data;
             } catch (error) {
-              document.getElementById("tasa").innerText = "⚠️ No se pudo obtener la tasa actual.";
+              document.getElementById("tasa").innerText = "No se pudo obtener la tasa actual.";
             }
           }
 
           // cargar al abrir la página
           cargarTasa();
 
-          // volver a actualizar cada 60 segundos (60000 ms)
-          setInterval(cargarTasa, 60000);
       </script>
 
       </script>
