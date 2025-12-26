@@ -643,6 +643,164 @@
         color: #f8f8f8;
         border: 1px solid rgba(0,0,0,0.15);
     }
+/* CHECKOUT STEPS */
+.checkout-steps {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.step {
+    padding: 10px 20px;
+    margin: 0 10px;
+    cursor: pointer;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.step.active {
+    color: #28a745;
+    border-bottom-color: #28a745;
+    font-weight: bold;
+}
+
+.step:hover:not(.active) {
+    color: #333;
+    border-bottom-color: #ccc;
+}
+
+.step-content {
+    display: none;
+    animation: fadeIn 0.5s;
+}
+
+.step-content.active {
+    display: flex;
+    gap: 30px;
+}
+
+/* CONTENIDO DE PAGO Y CONFIRMACIÓN */
+.pago-content, .confirmacion-content {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.pedido-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.pedido-info p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.pedido-info strong {
+    color: #333;
+}
+
+.tabla-pedido {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tabla-pedido th {
+    background: #28a745;
+    color: white;
+    padding: 12px;
+    text-align: left;
+}
+
+.tabla-pedido td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.tabla-pedido tr:hover {
+    background: #f8f9fa;
+}
+
+.total-pedido {
+    text-align: right;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.acciones-pedido {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn6 {
+    background: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn6:hover {
+    background: #218838;
+}
+
+.btn-secundario {
+    background: #6c757d;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-secundario:hover {
+    background: #5a6268;
+}
+
+.mensaje-confirmacion {
+    text-align: center;
+    font-size: 1.2em;
+    margin: 20px 0;
+    padding: 15px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 8px;
+    border: 1px solid #c3e6cb;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Botón de volver */
+.btn-back {
+    margin-bottom: 20px;
+    display: inline-block;
+}
 </style>
 <header class="header">
     <div class="header_container">
@@ -694,103 +852,147 @@
     </div>
 </header>
 
-
 <div class="cart-container">
-    <div class="cart-items">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-back">
-            <i class="fa-solid fa-arrow-left"></i> Volver
-        </a>
-
-        <div class="checkout-steps">
-            <span class="step active">1. Carrito</span>
-            <span class="step">2. Pago</span>
-            <span class="step">3. Confirmación</span>
-        </div>
-
-        <h2>Tu Carrito</h2>
-        <ul>
-            <li th:if="${carrito == null or #lists.isEmpty(carrito)}">
-                <p>El carrito está vacío.</p>
-            </li>
-
-            <li class="cart-item" th:each="item : ${carrito}">
-                <div class="item-details">
-                    <strong th:text="${item.nombre}"></strong>
-                    <p>Precio: $<span class="precio" th:data-id="${item.id}"
-                                      th:text="${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}"></span></p>
-
-
-                    <div class="quantity-controls">
-                        <form th:action="@{'/carrito/decrementar/' + ${item.id}}" method="post" style="display:inline;">
-                            <button type="submit" class="btn decrease">-</button>
-                        </form>
-                        <span class="cantidad" th:data-id="${item.id}"
-                              th:text="${item.cantidad}"></span>
-                        <form th:action="@{'/carrito/incrementar/' + ${item.id}}" method="post" style="display:inline;">
-                            <button type="submit" class="btn increase">+</button>
-                        </form>
-
-                    </div>
-
-                    <p>Total: $<span class="total-product" th:data-id="${item.id}"
-                                     th:text="${#numbers.formatDecimal(item.precio * item.cantidad, 1, 'COMMA', 2, 'POINT')}"></span></p>
-
-
-
-                    <form th:action="@{/carrito/eliminar/{id}(id=${item.id})}" method="post">
-                        <input type="hidden" name="_method" value="delete"/>
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
-                </div>
-            </li>
-        </ul>
-
-        <a th:href="@{'/productos/index'}" class="btn">Volver a la tienda</a>
+    <!-- PASOS DEL CHECKOUT -->
+    <div class="checkout-steps">
+        <span class="step active" id="step-1-tab" onclick="mostrarStep(1)">1. Carrito</span>
+        <span class="step" id="step-2-tab" onclick="mostrarStep(2)">2. Pago</span>
+        <span class="step" id="step-3-tab" onclick="mostrarStep(3)">3. Confirmación</span>
     </div>
 
-    <div class="cart-summary">
-        <h2>Resumen del Pedido</h2>
-        <div class="totals">
-            <p><strong>Total artículos:</strong> $<span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></p>
-            <p><strong>Descuento:</strong> -$<span th:text="${#numbers.formatDecimal(descuentoAplicado, 1, 'COMMA', 2, 'POINT')}"></span></p>
-            <p><strong>Total:</strong> $<span th:text="${#numbers.formatDecimal(totalFinal, 1, 'COMMA', 2, 'POINT')}"></span></p>
+    <!-- STEP 1: CARRITO (visible por defecto) -->
+    <div id="step-1" class="step-content active">
+        <div class="cart-items">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </a>
+
+            <h2>Tu Carrito</h2>
+            <ul>
+                <li th:if="${carrito == null or #lists.isEmpty(carrito)}">
+                    <p>El carrito está vacío.</p>
+                </li>
+
+                <li class="cart-item" th:each="item : ${carrito}">
+                    <div class="item-details">
+                        <strong th:text="${item.nombre}"></strong>
+                        <p>Precio: $<span class="precio" th:data-id="${item.id}"
+                                          th:text="${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}"></span></p>
+
+                        <div class="quantity-controls">
+                            <form th:action="@{'/carrito/decrementar/' + ${item.id}}" method="post" style="display:inline;">
+                                <button type="submit" class="btn decrease">-</button>
+                            </form>
+                            <span class="cantidad" th:data-id="${item.id}"
+                                  th:text="${item.cantidad}"></span>
+                            <form th:action="@{'/carrito/incrementar/' + ${item.id}}" method="post" style="display:inline;">
+                                <button type="submit" class="btn increase">+</button>
+                            </form>
+                        </div>
+
+                        <p>Total: $<span class="total-product" th:data-id="${item.id}"
+                                         th:text="${#numbers.formatDecimal(item.precio * item.cantidad, 1, 'COMMA', 2, 'POINT')}"></span></p>
+
+                        <form th:action="@{/carrito/eliminar/{id}(id=${item.id})}" method="post">
+                            <input type="hidden" name="_method" value="delete"/>
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+
+            <a th:href="@{'/productos/index'}" class="btn">Volver a la tienda</a>
         </div>
 
-        <span class="warning-text">Por favor consulte el monto de su pago real final.</span>
-        <span class="warning-text">La disponibilidad y el precio de los artículos no están garantizados hasta que se finalice el pago.</span>
-        <span class="warning-text">No se te cobrará hasta que revises este pedido en la página siguiente</span>
+        <div class="cart-summary">
+            <h2>Resumen del Pedido</h2>
+            <div class="totals">
+                <p><strong>Total artículos:</strong> $<span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                <p><strong>Descuento:</strong> -$<span th:text="${#numbers.formatDecimal(descuentoAplicado, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                <p><strong>Total:</strong> $<span id="total-final" th:text="${#numbers.formatDecimal(totalFinal, 1, 'COMMA', 2, 'POINT')}"></span></p>
+            </div>
 
-        <form th:action="@{/pedido/crear}" method="post">
-            <button type="submit" class="btn btn-success">
-                Realizar Pedido
+            <span class="warning-text">Por favor consulte el monto de su pago real final.</span>
+            <span class="warning-text">La disponibilidad y el precio de los artículos no están garantizados hasta que se finalice el pago.</span>
+            <span class="warning-text">No se te cobrará hasta que revises este pedido en la página siguiente</span>
+
+            <!-- Botón para crear pedido y mostrar pago -->
+            <form id="form-crear-pedido" th:action="@{/pedido/crear}" method="post">
+                <button type="submit" class="btn btn-success">
+                    Realizar Pedido
+                </button>
+            </form>
+
+            <div class="security-icons">
+                <i class="fas fa-lock"></i> Pago seguro &nbsp; | &nbsp;
+                <i class="fas fa-shield-alt"></i> Protección al comprador
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 2: PAGO (oculta inicialmente) - Contenido de pago.html -->
+    <div id="step-2" class="step-content" style="display: none;">
+        <div class="pago-content">
+            <button type="button" class="btn btn-outline-secondary btn-back" onclick="mostrarStep(1)">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Carrito
             </button>
-        </form>
 
-        <div class="security-icons">
-            <i class="fas fa-lock"></i> Pago seguro &nbsp; | &nbsp;
-            <i class="fas fa-shield-alt"></i> Protección al comprador
+            <h2>Pedido realizado con éxito</h2>
+
+            <div class="pedido-info" id="pago-pedido-info">
+                <!-- Se llenará dinámicamente con JavaScript -->
+            </div>
+
+            <h3>Resumen de productos</h3>
+
+            <table class="tabla-pedido" id="pago-tabla">
+                <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+                </thead>
+                <tbody id="pago-tabla-body">
+                <!-- Se llenará dinámicamente -->
+                </tbody>
+            </table>
+
+            <div class="total-pedido">
+                <h3>Total a pagar: $<span id="pago-total"></span></h3>
+            </div>
+
+            <div class="acciones-pedido">
+                <form id="form-pagar-pedido">
+                    <input type="hidden" id="pedido-id" name="pedidoId">
+                    <button class="btn6" type="button" onclick="procesarPago()">Pagar ahora</button>
+                </form>
+
+                <button class="btn-secundario" onclick="mostrarStep(1)">Seguir comprando</button>
+            </div>
         </div>
+    </div>
 
-        <div class="payment-info">
-            <h3>Opciones de pago seguro</h3>
-            <p>MarketS se compromete a proteger su información de pago. Seguimos los estándares PCI DSS, utilizamos un cifrado sólido y realizamos revisiones periódicas del sistema para proteger tu privacidad.</p>
+    <!-- STEP 3: CONFIRMACIÓN (oculta inicialmente) - Contenido de confirmacion.html -->
+    <div id="step-3" class="step-content" style="display: none;">
+        <div class="confirmacion-content">
+            <h2>🎉 ¡Compra realizada con éxito!</h2>
 
-            <ul>
-                <li>Métodos de pago verificados</li>
-                <li>Certificación de seguridad activa</li>
-            </ul>
+            <p class="mensaje-confirmacion" id="confirmacion-mensaje">
+                <!-- Se llenará dinámicamente -->
+            </p>
 
-            <h3>Privacidad segura</h3>
-            <p>Proteger tu privacidad es muy importante para nosotros. Tu información se mantendrá segura y libre de riesgos.</p>
+            <div class="pedido-info" id="confirmacion-pedido-info">
+                <!-- Se llenará dinámicamente -->
+            </div>
 
-            <h3>Protección al comprador</h3>
-            <ul>
-                <li>Entrega garantizada</li>
-                <li>$4.000 de crédito por retraso</li>
-                <li>Reembolso por 15 días sin actualizaciones</li>
-                <li>Devolución si el artículo está dañado</li>
-                <li>Reembolso por 60 días sin entrega</li>
-            </ul>
+            <div class="acciones-pedido">
+                <a th:href="@{/productos/index}" class="btn6">
+                    Volver a la tienda
+                </a>
+                <button class="btn-secundario" onclick="mostrarStep(1)">Hacer otro pedido</button>
+            </div>
         </div>
     </div>
 </div>

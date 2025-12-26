@@ -4,18 +4,17 @@ import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
 import com.example.MarketS.service.PedidoService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 @RequestMapping("/pedido")
@@ -33,10 +32,122 @@ public class PedidoController {
         this.userRepository = userRepository;
     }
 
+    // En PedidoController.java, modificar los métodos para que puedan responder tanto a redirecciones como a AJAX
+
     @PostMapping("/crear")
-    public String crearPedido(HttpSession session, Model model) {
+    public String crearPedido(HttpSession session, Model model,
+                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
         System.out.println("=== DEBUG POST: /pedido/crear llamado ===");
-        return procesarCrearPedido(session, model);
+
+        // Ejecutar la lógica normal
+        String resultado = procesarCrearPedido(session, model);
+
+        // Verificar si es una solicitud AJAX
+        if ("XMLHttpRequest".equals(requestedWith)) {
+            // Si es AJAX, retornar la vista como fragmento HTML
+            return "pago :: #contenido-pago"; // Necesitarías crear este fragmento
+        }
+
+        return resultado;
+    }
+
+    @PostMapping("/pagar/{id}")
+    public String pagarPedido(@PathVariable Long id,
+                              HttpSession session,
+                              Model model,
+                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+
+        System.out.println("=== DEBUG: /pagar/" + id + " llamado ===");
+
+        Pedido pedido = pedidoRepository.findById(id).orElseThrow();
+        System.out.println("DEBUG: Pedido encontrado para pago - ID: " + pedido.getId());
+
+        // cambiar estado
+        pedido.setEstado("PAGADO");
+        pedidoRepository.save(pedido);
+        System.out.println("DEBUG: Estado cambiado a PAGADO");
+
+        // vaciar carrito
+        session.removeAttribute("carrito");
+        System.out.println("DEBUG: Carrito eliminado de sesión");
+
+        model.addAttribute("pedido", pedido);
+        System.out.println("DEBUG: Redirigiendo a confirmacion.html");
+
+        // Verificar si es AJAX
+        if ("XMLHttpRequest".equals(requestedWith)) {
+            return "confirmacion :: #contenido-confirmacion"; // Necesitarías crear este fragmento
+        }
+
+        return "confirmacion";
+    }
+
+    // OPCIÓN ALTERNATIVA MÁS SIMPLE: Crear endpoints específicos para AJAX
+    @PostMapping("/crear-ajax")
+    @ResponseBody
+    public Map<String, Object> crearPedidoAjax(HttpSession session, Model model) {
+        Map<String, Object> respuesta = new HashMap<>();
+
+        try {
+            // Ejecutar la lógica normal
+            procesarCrearPedido(session, model);
+
+            // Obtener el pedido recién creado del modelo
+            Pedido pedido = (Pedido) model.getAttribute("pedido");
+
+            if (pedido != null) {
+                respuesta.put("success", true);
+                respuesta.put("pedido", Map.of(
+                        "id", pedido.getId(),
+                        "fecha", pedido.getFecha().toString(),
+                        "estado", pedido.getEstado(),
+                        "total", pedido.getTotal(),
+                        "detalles", pedido.getDetalles().stream().map(d -> Map.of(
+                                "producto", d.getProducto().getNombre(),
+                                "cantidad", d.getCantidad(),
+                                "precio", d.getPrecioUnitario(),
+                                "subtotal", d.getCantidad() * d.getPrecioUnitario()
+                        )).collect(Collectors.toList())
+                ));
+            } else {
+                respuesta.put("success", false);
+                respuesta.put("error", "No se pudo crear el pedido");
+            }
+
+        } catch (Exception e) {
+            respuesta.put("success", false);
+            respuesta.put("error", e.getMessage());
+        }
+
+        return respuesta;
+    }
+
+    @PostMapping("/pagar-ajax/{id}")
+    @ResponseBody
+    public Map<String, Object> pagarPedidoAjax(@PathVariable Long id, HttpSession session) {
+        Map<String, Object> respuesta = new HashMap<>();
+
+        try {
+            Pedido pedido = pedidoRepository.findById(id).orElseThrow();
+            pedido.setEstado("PAGADO");
+            pedidoRepository.save(pedido);
+
+            // vaciar carrito
+            session.removeAttribute("carrito");
+
+            respuesta.put("success", true);
+            respuesta.put("pedido", Map.of(
+                    "id", pedido.getId(),
+                    "estado", pedido.getEstado(),
+                    "total", pedido.getTotal()
+            ));
+
+        } catch (Exception e) {
+            respuesta.put("success", false);
+            respuesta.put("error", e.getMessage());
+        }
+
+        return respuesta;
     }
 
     @GetMapping("/crear")
@@ -154,27 +265,5 @@ public class PedidoController {
     }
 
 
-    @PostMapping("/pagar/{id}")
-    public String pagarPedido(@PathVariable Long id,
-                              HttpSession session,
-                              Model model) {
 
-        System.out.println("=== DEBUG: /pagar/" + id + " llamado ===");
-
-        Pedido pedido = pedidoRepository.findById(id).orElseThrow();
-        System.out.println("DEBUG: Pedido encontrado para pago - ID: " + pedido.getId());
-
-        // cambiar estado
-        pedido.setEstado("PAGADO");
-        pedidoRepository.save(pedido);
-        System.out.println("DEBUG: Estado cambiado a PAGADO");
-
-        // vaciar carrito
-        session.removeAttribute("carrito");
-        System.out.println("DEBUG: Carrito eliminado de sesión");
-
-        model.addAttribute("pedido", pedido);
-        System.out.println("DEBUG: Redirigiendo a confirmacion.html");
-        return "confirmacion";
-    }
 }
