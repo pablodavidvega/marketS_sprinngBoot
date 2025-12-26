@@ -1,12 +1,11 @@
 
-image.png
-image.png
 document.addEventListener("DOMContentLoaded", function () {
-    const cartList = document.getElementById('cart-list');
+//    const cartList = document.getElementById('cart-list');
+const cartList = document.querySelector('.cart-items ul'); // Más específico
     const subtotalEl = document.getElementById('subtotal');
     const totalEl = document.getElementById('total');
 
-    // ✅ Mostrar notificación flotante estilo Temu
+    // Mostrar notificación flotante estilo Temu
     function mostrarNotificacion(mensaje) {
         const noti = document.createElement('div');
         noti.className = 'hana-toast';
@@ -19,12 +18,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 2000);
     }
 
-    // ✅ Formato moneda
+    // Formato moneda
     function formatear(valor) {
         return valor.toLocaleString('es-CO', { minimumFractionDigits: 2 });
     }
 
-    // ✅ Agregar producto al carrito
+    //Agregar producto al carrito
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function (event) {
             event.preventDefault();
@@ -54,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // ✅ Actualizar la vista del carrito
+    //Actualizar la vista del carrito
     function actualizarCarrito(carrito) {
         cartList.innerHTML = '';
 
@@ -84,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
         activarBotonesCantidad();
     }
 
-    // ✅ Recalcular el total
+    //Recalcular el total
     function recalcularTotales() {
         let subtotal = 0;
         document.querySelectorAll(".total-product").forEach(el => {
@@ -95,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
         totalEl.textContent = formatear(subtotal);
     }
 
-    // ✅ Botones de + y -
+    //Botones de + y -
     function activarBotonesCantidad() {
         document.querySelectorAll(".increase").forEach(btn => {
             btn.onclick = () => {

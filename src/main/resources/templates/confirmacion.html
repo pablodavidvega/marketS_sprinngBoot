@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido confirmado</title>
+</head>
+<body>
+
+<h2>¡Compra realizada con éxito! 🎉</h2>
+
+<p>
+    Tu pedido número
+    <strong th:text="${pedido.id}"></strong>
+    ha sido pagado correctamente.
+</p>
+
+<p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
+<p><strong>Total pagado:</strong> $<span th:text="${pedido.total}"></span></p>
+
+<hr>
+
+<a th:href="@{/productos/index}">Volver a la tienda</a>
+
+</body>
+</html>

@@ -1,7 +1,10 @@
 package com.example.MarketS.model;
+
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
+
 
 @Entity
 @Table(name = "pedidos")
@@ -10,36 +13,58 @@ public class Pedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_pedido")
-    private Long idPedido;
+    private Long id;
 
-    // Relación con User (tabla users, PK = id)
+    // CORREGIDO: Agregar orphanRemoval y fetch type
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<DetallePedido> detalles = new ArrayList<>();
+
     @ManyToOne
-    @JoinColumn(name = "id_usuario", referencedColumnName = "id")
+    @JoinColumn(name = "id_usuario", nullable = false)
     private User usuario;
 
-    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime fecha = LocalDateTime.now();
+    @Column(name = "fecha", nullable = false)
+    private LocalDateTime fecha;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal total;
+    @Column(name = "total", nullable = false)
+    private Double total;
 
-    @Column(name = "estado_pedido", length = 30)
-    private String estadoPedido;
+    @Column(name = "estado_pedido", nullable = false)
+    private String estado;
 
-    // Relación con MetodoPago
-    @ManyToOne
-    @JoinColumn(name = "id_metodo", referencedColumnName = "id_metodo")
-    private MetodoPago metodoPago;
-
-    public Pedido() {}
-
-    // Getters & Setters
-    public Long getIdPedido() {
-        return idPedido;
+    // ===== CONSTRUCTORES =====
+    public Pedido() {
+        this.detalles = new ArrayList<>(); // INICIALIZAR SIEMPRE
+        this.fecha = LocalDateTime.now();
     }
 
-    public void setIdPedido(Long idPedido) {
-        this.idPedido = idPedido;
+    // Constructor actualizado
+    public Pedido(User usuario, Double total, String estado) {
+        this();
+        this.usuario = usuario;
+        this.total = total;
+        this.estado = estado;
+    }
+
+    // ===== MÉTODO HELPER PARA AGREGAR DETALLES =====
+    public void agregarDetalle(DetallePedido detalle) {
+        detalle.setPedido(this);
+        this.detalles.add(detalle);
+    }
+
+    // ===== GETTERS Y SETTERS =====
+
+    public List<DetallePedido> getDetalles() {
+        return detalles;
+    }
+
+    public void setDetalles(List<DetallePedido> detalles) {
+        this.detalles = detalles;
+    }
+
+
+    public Long getId() {
+        return id;
     }
 
     public User getUsuario() {
@@ -58,27 +83,19 @@ public class Pedido {
         this.fecha = fecha;
     }
 
-    public BigDecimal getTotal() {
+    public Double getTotal() {
         return total;
     }
 
-    public void setTotal(BigDecimal total) {
+    public void setTotal(Double total) {
         this.total = total;
     }
 
-    public String getEstadoPedido() {
-        return estadoPedido;
+    public String getEstado() {
+        return estado;
     }
 
-    public void setEstadoPedido(String estadoPedido) {
-        this.estadoPedido = estadoPedido;
-    }
-
-    public MetodoPago getMetodoPago() {
-        return metodoPago;
-    }
-
-    public void setMetodoPago(MetodoPago metodoPago) {
-        this.metodoPago = metodoPago;
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 }
