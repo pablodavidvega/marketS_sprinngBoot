@@ -2,24 +2,76 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Pedido confirmado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compra confirmada - MarketS</title>
+
+    <link rel="stylesheet" th:href="@{/CSS/style.css}">
+    <link rel="stylesheet" th:href="@{/CSS/realizarPedido.css}">
+    <link rel="icon" type="image" th:href="@{/img/logo.png}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
+
 <body>
 
-<h2>¡Compra realizada con éxito! 🎉</h2>
+<!-- CABECERA CLIENTE -->
+<header class="header">
+    <div class="header_container">
+        <div class="logo">
+            <img th:src="@{/img/icon.jpg}" alt="Logo">
+            <h2 class="name-project">MarketS</h2>
+        </div>
 
-<p>
-    Tu pedido número
-    <strong th:text="${pedido.id}"></strong>
-    ha sido pagado correctamente.
-</p>
+        <nav class="nav-menu">
+            <span class="nav-user">
+                ¡Gracias por tu compra!
+            </span>
+            <a th:href="@{/}" class="btn-icon">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <a th:href="@{/cliente/dashboard}" class="btn-icon">
+                <i class="fa-solid fa-user"></i>
+            </a>
+        </nav>
+    </div>
+</header>
 
-<p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
-<p><strong>Total pagado:</strong> $<span th:text="${pedido.total}"></span></p>
+<!-- CONTENIDO -->
+<main class="container-pedido">
 
-<hr>
+    <section class="pedido-card">
 
-<a th:href="@{/productos/index}">Volver a la tienda</a>
+        <h2>🎉 ¡Compra realizada con éxito!</h2>
+
+        <p class="mensaje-confirmacion">
+            Tu pedido número
+            <strong th:text="${pedido.id}"></strong>
+            ha sido pagado correctamente.
+        </p>
+
+        <div class="pedido-info">
+            <p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
+            <p><strong>Total pagado:</strong> $<span th:text="${pedido.total}"></span></p>
+        </div>
+
+        <div class="acciones-pedido">
+            <a th:href="@{/productos/index}" class="btn6">
+                Volver a la tienda
+            </a>
+        </div>
+
+    </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+    <div class="copyright">
+        <p>©2024 MarketS. ALL Rights Reserved.</p>
+    </div>
+</footer>
 
 </body>
 </html>
