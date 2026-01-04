@@ -1,19 +1,16 @@
 package com.example.MarketS.service;
-import org.springframework.http.HttpStatusCode;
+
 import com.example.MarketS.config.MercadoPagoConfig;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import java.util.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.client.*;
-import java.nio.charset.StandardCharsets;
-import java.io.*;
-import java.util.stream.Collectors;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class MercadoPagoService {
@@ -25,77 +22,152 @@ public class MercadoPagoService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * Crear preferencia de pago usando API REST
+     * Crear preferencia de pago usando API REST - VERSIÓN SIMPLIFICADA
      */
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email) {
         try {
-            System.out.println("=== USANDO REQUEST EXACTO COMO CURL ===");
+            System.out.println("=== 🚀 MERCADO PAGO SERVICE: crearPreferencia ===");
+            System.out.println("Pedido ID: " + pedidoId);
+            System.out.println("Monto: $" + monto);
+            System.out.println("Descripción: " + descripcion);
+            System.out.println("Email: " + email);
 
-            // EXACTAMENTE el mismo JSON que curl
-            String requestJson = "{\"items\":[{\"title\":\"Test\",\"quantity\":1,\"currency_id\":\"COP\",\"unit_price\":15000}]}";
+            // Verificar token
+            String token = config.getAccessToken();
+            System.out.println("Token (primeros 20 chars): " +
+                    (token != null ? token.substring(0, Math.min(20, token.length())) : "NULL"));
 
-            System.out.println("Request JSON: " + requestJson);
+            if (token == null || token.isEmpty()) {
+                System.err.println("❌ Token de MercadoPago no configurado");
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("error", "Token de MercadoPago no configurado");
+                return error;
+            }
 
-            // Headers EXACTOS como curl
+            // URL base
+            String baseUrl = config.getAppUrl();
+            System.out.println("Base URL: " + baseUrl);
+
+            // JSON SIMPLIFICADO - Lo mismo que funciona en tus pruebas
+            String requestJson = "{"
+                    + "\"items\": [{"
+                    + "\"title\": \"" + escapeJsonString(descripcion) + "\","
+                    + "\"quantity\": 1,"
+                    + "\"currency_id\": \"COP\","
+                    + "\"unit_price\": " + monto
+                    + "}]"
+                    + "}";
+
+            System.out.println("📤 Request JSON enviado a MercadoPago:");
+            System.out.println(requestJson);
+
+            // Headers SIMPLES - igual que en tus pruebas exitosas
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + config.getAccessToken());
+            headers.set("Authorization", "Bearer " + token);
             headers.set("Content-Type", "application/json");
-            // NO agregar más headers
 
-            // RestTemplate simple
-            RestTemplate rt = new RestTemplate();
             HttpEntity<String> request = new HttpEntity<>(requestJson, headers);
 
-            System.out.println("Enviando POST...");
+            System.out.println("🔄 Enviando POST a MercadoPago...");
 
-            ResponseEntity<String> response = rt.exchange(
+            ResponseEntity<String> response = restTemplate.exchange(
                     "https://api.mercadopago.com/checkout/preferences",
                     HttpMethod.POST,
                     request,
                     String.class
             );
 
-            System.out.println("Response Status: " + response.getStatusCode());
-            System.out.println("Response Body (primeros 500 chars): " +
-                    response.getBody().substring(0, Math.min(500, response.getBody().length())));
+            System.out.println("✅ Response Status: " + response.getStatusCode());
 
-            // Extraer sandbox_init_point
             String responseBody = response.getBody();
-            String sandboxUrl = "";
+            System.out.println("📥 Response recibida (primeros 300 chars):");
+            System.out.println(responseBody != null ?
+                    responseBody.substring(0, Math.min(300, responseBody.length())) : "NULL");
 
-            if (responseBody.contains("\"sandbox_init_point\"")) {
-                int start = responseBody.indexOf("\"sandbox_init_point\":\"") + 22;
-                int end = responseBody.indexOf("\"", start);
-                sandboxUrl = responseBody.substring(start, end);
+            // Procesar respuesta
+            if (response.getStatusCode().is2xxSuccessful() && responseBody != null) {
+                try {
+                    // Parsear JSON de respuesta
+                    JsonNode root = objectMapper.readTree(responseBody);
+
+                    String sandboxUrl = "";
+                    String preferenceId = "";
+
+                    if (root.has("sandbox_init_point")) {
+                        sandboxUrl = root.get("sandbox_init_point").asText();
+                        System.out.println("✅ Sandbox URL encontrada: " + sandboxUrl);
+                    }
+
+                    if (root.has("id")) {
+                        preferenceId = root.get("id").asText();
+                        System.out.println("✅ Preference ID: " + preferenceId);
+                    }
+
+                    // También intentar con init_point si sandbox no está
+                    if (sandboxUrl.isEmpty() && root.has("init_point")) {
+                        sandboxUrl = root.get("init_point").asText();
+                        System.out.println("✅ Usando init_point: " + sandboxUrl);
+                    }
+
+                    if (!sandboxUrl.isEmpty()) {
+                        Map<String, Object> resultado = new HashMap<>();
+                        resultado.put("success", true);
+                        resultado.put("paymentUrl", sandboxUrl);
+                        resultado.put("preferenceId", preferenceId);
+                        resultado.put("rawResponse", responseBody);
+
+                        System.out.println("🎉 ¡PREFERENCIA CREADA EXITOSAMENTE!");
+                        return resultado;
+                    }
+
+                } catch (Exception e) {
+                    System.err.println("❌ Error parseando respuesta JSON: " + e.getMessage());
+                }
             }
 
-            Map<String, Object> resultado = new HashMap<>();
-            resultado.put("success", true);
-            resultado.put("paymentUrl", sandboxUrl);
-            resultado.put("preferenceId", "3098493738-eb07269a-4b2f-4f30-bc47-d9581e837da5");
+            // Si llegamos aquí, hubo un error
+            System.err.println("❌ Error en respuesta de MercadoPago");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("error", "Error en respuesta: " + response.getStatusCode());
+            errorResult.put("responseBody", responseBody);
 
-            return resultado;
+            return errorResult;
 
         } catch (Exception e) {
-            System.err.println("ERROR: " + e.getClass().getName());
-            System.err.println("MENSAJE: " + e.getMessage());
+            System.err.println("❌ ERROR en crearPreferencia:");
+            System.err.println("Tipo: " + e.getClass().getName());
+            System.err.println("Mensaje: " + e.getMessage());
 
-            // Si es HttpClientErrorException, mostrar respuesta
             if (e instanceof HttpClientErrorException) {
                 HttpClientErrorException ex = (HttpClientErrorException) e;
-                System.err.println("STATUS: " + ex.getStatusCode());
-                System.err.println("RESPONSE BODY: " + ex.getResponseBodyAsString());
+                System.err.println("Status: " + ex.getStatusCode());
+                System.err.println("Response: " + ex.getResponseBodyAsString());
             }
 
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("error", "Exception: " + e.getClass().getSimpleName());
+            errorResult.put("error", "Exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             return errorResult;
         }
     }
+
     /**
-     * Método SIMPLE para prueba rápida
+     * Método para escapar strings en JSON (renombrado para evitar conflicto)
+     */
+    private String escapeJsonString(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    /**
+     * Método SIMPLE para prueba rápida (mantener compatibilidad)
      */
     public String pruebaConexion() {
         try {

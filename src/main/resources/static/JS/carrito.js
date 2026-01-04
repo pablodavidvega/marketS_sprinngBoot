@@ -8,7 +8,71 @@ document.addEventListener("DOMContentLoaded", function () {
     const subtotalEl = document.getElementById('subtotal');
     const totalEl = document.getElementById('total');
 
-    // Mostrar notificación flotante estilo Temu
+
+    // Función para manejar el envío del formulario de crear pedido
+    function manejarCrearPedido(event) {
+        console.log("🛒 Iniciando creación de pedido...");
+
+        // Prevenir el envío normal del formulario
+        event.preventDefault();
+
+        const form = document.getElementById('form-crear-pedido');
+        const boton = document.getElementById('btn-realizar-pedido');
+
+        if (!form || !boton) {
+            console.error("No se encontró el formulario o el botón");
+            return false;
+        }
+
+        // Guardar texto original del botón
+        const textoOriginal = boton.innerHTML;
+
+        // Mostrar estado de carga
+        boton.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creando pedido...';
+        boton.disabled = true;
+
+        console.log("Enviando datos al servidor...");
+
+        // Enviar el formulario usando Fetch API
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(new FormData(form))
+        })
+        .then(response => {
+            console.log("Respuesta recibida, status:", response.status);
+
+            if (response.redirected) {
+                // Si el servidor redirige, seguir la redirección
+                console.log("Redirigiendo a:", response.url);
+                window.location.href = response.url;
+            } else {
+                // Si no hay redirección, intentar leer la respuesta
+                return response.text().then(html => {
+                    console.log("Contenido HTML recibido");
+                    // Reemplazar el contenido actual con la respuesta
+                    document.open();
+                    document.write(html);
+                    document.close();
+                });
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error al crear pedido:", error);
+
+            // Restaurar el botón
+            boton.innerHTML = textoOriginal;
+            boton.disabled = false;
+
+            // Mostrar mensaje de error
+            alert('Error al crear el pedido. Por favor, intenta nuevamente.\n' + error.message);
+        });
+
+        return false;
+    }
+    // Mostrar notificación flotante
     function mostrarNotificacion(mensaje) {
         const noti = document.createElement('div');
         noti.className = 'hana-toast';
@@ -363,85 +427,99 @@ function llenarPasoPago(pedido) {
             document.getElementById('total-final')?.textContent || '0';
     }
 }
-
-// Procesar el pago del pedido
+// Función para procesar el pago
 function procesarPago() {
-    const pedidoId = document.getElementById('pedido-id')?.value;
+    console.log("🔍 procesarPago() llamado");
 
+    // Buscar el ID del pedido de TODAS las formas posibles
+    let pedidoId = null;
+
+    // 1. Del campo oculto (si existe)
+    const pedidoIdInput = document.getElementById('pedido-id');
+    if (pedidoIdInput) {
+        pedidoId = pedidoIdInput.value;
+        console.log("1. Pedido ID del input: " + pedidoId);
+    }
+
+    // 2. De window.pedidoData (si existe)
+    if (!pedidoId && window.pedidoData && window.pedidoData.id) {
+        pedidoId = window.pedidoData.id;
+        console.log("2. Pedido ID de window.pedidoData: " + pedidoId);
+    }
+
+    // 3. De window.pedidoIdFromModel (si existe)
+    if (!pedidoId && window.pedidoIdFromModel) {
+        pedidoId = window.pedidoIdFromModel;
+        console.log("3. Pedido ID de window.pedidoIdFromModel: " + pedidoId);
+    }
+
+    // 4. De la URL
     if (!pedidoId) {
-        alert('No hay un pedido para pagar');
+        const urlParams = new URLSearchParams(window.location.search);
+        pedidoId = urlParams.get('pedidoId');
+        console.log("4. Pedido ID de URL: " + pedidoId);
+    }
+
+    // Si aún no tenemos ID
+    if (!pedidoId) {
+        alert('❌ No se pudo encontrar el ID del pedido. Por favor:\n1. Vuelve al carrito\n2. Haz clic en "Realizar Pedido" nuevamente');
+        console.error("No se encontró ID de pedido");
         return;
     }
 
-    const btn = document.querySelector('#form-pagar-pedido button');
-    if (!btn) return;
+    console.log("✅ Pedido ID encontrado: " + pedidoId);
 
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando pago...';
-    btn.disabled = true;
+    // Verificar si ya tenemos paymentUrl
+    if (window.paymentUrl) {
+        console.log("✅ Redirigiendo a paymentUrl existente");
+        window.location.href = window.paymentUrl;
+        return;
+    }
 
-    // Usar el endpoint existente de pago
-    fetch(`/pedido/pagar/${pedidoId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content ||
-                           document.querySelector('input[name="_csrf"]')?.value
-        }
-    })
-    .then(response => {
-        if (response.redirected) {
-            // Si hay redirección, obtener la página de confirmación
-            return fetch(response.url);
-        } else {
-            return response.text();
-        }
-    })
-    .then(html => {
-        if (html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+    // Mostrar loading
+    const btnPagar = document.querySelector('#form-pagar-pedido button');
+    if (btnPagar) {
+        const originalText = btnPagar.innerHTML;
+        btnPagar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Conectando...';
+        btnPagar.disabled = true;
 
-            // Extraer datos de confirmación de confirmacion.html
-            const confirmacionElement = doc.querySelector('.pedido-card');
-            if (confirmacionElement) {
-                const confirmacionId = confirmacionElement.querySelector('strong')?.textContent ||
-                                     pedidoId;
-                const confirmacionEstado = confirmacionElement.querySelector('[th\\:text="${pedido.estado}"]')?.textContent ||
-                                         'PAGADO';
-                const confirmacionTotal = confirmacionElement.querySelector('[th\\:text="${pedido.total}"]')?.textContent ||
-                                        document.getElementById('pago-total')?.textContent;
+        // Llamar al backend
+        console.log("🔄 Llamando a /pedido/iniciar-mercadopago/" + pedidoId);
 
-                // Llenar paso de confirmación
-                llenarPasoConfirmacion({
-                    id: confirmacionId,
-                    estado: confirmacionEstado,
-                    total: confirmacionTotal
-                });
-
-                // Ir al step de confirmación
-                mostrarStep(3);
-
-                // Limpiar carrito visualmente
-                limpiarCarritoVisual();
-            } else {
-                // Si no se pudo extraer, usar datos básicos
-                llenarPasoConfirmacionBasico(pedidoId);
-                mostrarStep(3);
-                limpiarCarritoVisual();
+        fetch('/pedido/iniciar-mercadopago/' + pedidoId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error al procesar el pago: ' + error.message);
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
-}
+        })
+        .then(response => {
+            console.log("Response status:", response.status);
+            if (!response.ok) {
+                throw new Error('Error del servidor: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Respuesta:", data);
 
+            if (data.success && data.paymentUrl) {
+                console.log("✅ Redirigiendo a MercadoPago");
+                window.location.href = data.paymentUrl;
+            } else {
+                throw new Error(data.error || 'No se pudo obtener URL de pago');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error:', error);
+            alert('Error al procesar el pago:\n' + error.message +
+                  '\n\nPor favor, contacta soporte o intenta nuevamente.');
+
+            // Restaurar botón
+            btnPagar.innerHTML = originalText;
+            btnPagar.disabled = false;
+        });
+    }
+}
 // Llenar el paso de confirmación con datos básicos
 function llenarPasoConfirmacionBasico(pedidoId) {
     const confirmacionTotal = document.getElementById('pago-total')?.textContent ||
@@ -503,4 +581,125 @@ function getCSRFToken() {
     return document.querySelector('meta[name="_csrf"]')?.content ||
            document.querySelector('input[name="_csrf"]')?.value ||
            document.querySelector('meta[name="csrf-token"]')?.content;
+}
+
+//para procesar pago con MercadoPago
+function procesarPagoConMercadoPago(pedidoId) {
+    console.log("Iniciando pago MercadoPago para pedido #" + pedidoId);
+
+    // Mostrar loading
+    const btnPagar = document.querySelector('#form-pagar-pedido button');
+    if (btnPagar) {
+        const originalText = btnPagar.innerHTML;
+        btnPagar.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Conectando con MercadoPago...';
+        btnPagar.disabled = true;
+    }
+
+    // Llamar al endpoint para iniciar pago con MercadoPago
+    fetch('/pedido/iniciar-mercadopago/' + pedidoId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Redirigir a MercadoPago
+            console.log("Redirigiendo a MercadoPago:", data.paymentUrl);
+            window.location.href = data.paymentUrl;
+        } else {
+            alert('Error al procesar el pago: ' + data.error);
+            if (btnPagar) {
+                btnPagar.innerHTML = 'Pagar ahora';
+                btnPagar.disabled = false;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al conectar con MercadoPago: ' + error.message);
+        if (btnPagar) {
+            btnPagar.innerHTML = 'Pagar ahora';
+            btnPagar.disabled = false;
+        }
+    });
+}
+
+// Modificar la función procesarPago existente
+function procesarPago() {
+    const pedidoId = document.getElementById('pedido-id').value;
+
+    if (!pedidoId) {
+        alert('No hay un pedido para pagar');
+        return;
+    }
+
+    console.log("Procesando pago para pedido #" + pedidoId);
+    procesarPagoConMercadoPago(pedidoId);
+}
+
+// Agregar al DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    // ... código existente ...
+
+    // Si estamos en el paso 2 y tenemos paymentUrl de MercadoPago
+    if (window.paymentUrl && window.location.search.includes('step=2')) {
+        console.log("Tiene URL de MercadoPago, redirigiendo automáticamente...");
+        // Redirigir automáticamente después de 2 segundos
+        setTimeout(() => {
+            window.location.href = window.paymentUrl;
+        }, 2000);
+    }
+});
+
+// Función para reintentar MercadoPago
+function reintentarMercadoPago() {
+    const pedidoId = document.getElementById('pedido-id')?.value ||
+                     new URLSearchParams(window.location.search).get('pedidoId');
+
+    if (!pedidoId) {
+        alert('No se encontró el ID del pedido');
+        return;
+    }
+
+    console.log("🔄 Reintentando MercadoPago para pedido #" + pedidoId);
+
+    // Mostrar loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Reintentando...';
+    btn.disabled = true;
+
+    // Llamar al endpoint para generar nueva preferencia
+    fetch('/pedido/iniciar-mercadopago/' + pedidoId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Respuesta:", data);
+
+        if (data.success && data.paymentUrl) {
+            // Redirigir a MercadoPago
+            window.location.href = data.paymentUrl;
+        } else {
+            alert('Error al generar pago: ' + (data.error || 'Error desconocido'));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión: ' + error.message);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
 }

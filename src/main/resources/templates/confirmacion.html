@@ -3,75 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compra confirmada - MarketS</title>
-
-    <link rel="stylesheet" th:href="@{/CSS/style.css}">
-    <link rel="stylesheet" th:href="@{/CSS/realizarPedido.css}">
-    <link rel="icon" type="image" th:href="@{/img/logo.png}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Confirmación - MarketS</title>
+    <!-- Cargar estilos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .icono-exito {
+            color: #4CAF50;
+            font-size: 80px;
+            margin: 20px 0;
+        }
+        .icono-pendiente {
+            color: #FF9800;
+            font-size: 80px;
+            margin: 20px 0;
+        }
+        .icono-error {
+            color: #F44336;
+            font-size: 80px;
+            margin: 20px 0;
+        }
+        .mensaje {
+            margin: 30px 0;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .pedido-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: left;
+            border-left: 4px solid #2196F3;
+        }
+        .botones {
+            margin-top: 40px;
+        }
+        .btn {
+            background: #009ee3;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #007bb5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn-secundario {
+            background: #6c757d;
+        }
+        .btn-secundario:hover {
+            background: #5a6268;
+        }
+        .info-item {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #333;
+            display: inline-block;
+            width: 150px;
+        }
+        .info-value {
+            color: #666;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        h3 {
+            color: #555;
+            margin: 25px 0 15px 0;
+        }
+    </style>
 </head>
-
 <body>
-
-<!-- CABECERA CLIENTE -->
-<header class="header">
-    <div class="header_container">
-        <div class="logo">
-            <img th:src="@{/img/icon.jpg}" alt="Logo">
-            <h2 class="name-project">MarketS</h2>
+<div class="container">
+    <!-- Mensaje según estado -->
+    <div th:if="${origenPago == 'mercadopago'}">
+        <div th:if="${status == 'approved'}" class="icono-exito">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div th:if="${status == 'pending'}" class="icono-pendiente">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div th:if="${status == 'rejected'}" class="icono-error">
+            <i class="fas fa-times-circle"></i>
         </div>
 
-        <nav class="nav-menu">
-            <span class="nav-user">
-                ¡Gracias por tu compra!
-            </span>
-            <a th:href="@{/}" class="btn-icon">
-                <i class="fa-solid fa-house"></i>
-            </a>
-            <a th:href="@{/cliente/dashboard}" class="btn-icon">
-                <i class="fa-solid fa-user"></i>
-            </a>
-        </nav>
+        <h1 th:if="${status == 'approved'}">¡Pago Exitoso!</h1>
+        <h1 th:if="${status == 'pending'}">Pago Pendiente</h1>
+        <h1 th:if="${status == 'rejected'}">Pago Rechazado</h1>
+
+        <div class="mensaje">
+            <p th:if="${status == 'approved'}">
+                Tu pago ha sido procesado exitosamente. Hemos enviado un correo con los detalles de tu compra.
+            </p>
+            <p th:if="${status == 'pending'}">
+                Tu pago está pendiente de confirmación. Te notificaremos cuando sea aprobado.
+            </p>
+            <p th:if="${status == 'rejected'}">
+                El pago no pudo ser procesado. Por favor, intenta nuevamente o contacta a tu banco.
+            </p>
+        </div>
     </div>
-</header>
 
-<!-- CONTENIDO -->
-<main class="container-pedido">
-
-    <section class="pedido-card">
-
-        <h2>🎉 ¡Compra realizada con éxito!</h2>
-
-        <p class="mensaje-confirmacion">
-            Tu pedido número
-            <strong th:text="${pedido.id}"></strong>
-            ha sido pagado correctamente.
-        </p>
-
-        <div class="pedido-info">
-            <p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
-            <p><strong>Total pagado:</strong> $<span th:text="${pedido.total}"></span></p>
+    <!-- Mensaje para pago directo -->
+    <div th:if="${origenPago == 'directo'}">
+        <div class="icono-exito">
+            <i class="fas fa-check-circle"></i>
         </div>
-
-        <div class="acciones-pedido">
-            <a th:href="@{/productos/index}" class="btn6">
-                Volver a la tienda
-            </a>
+        <h1>¡Pedido Confirmado!</h1>
+        <div class="mensaje">
+            <p>Tu pedido ha sido registrado exitosamente en nuestro sistema.</p>
+            <p><strong>Nota:</strong> Este es un pedido de prueba. En producción usarías MercadoPago para procesar el pago real.</p>
         </div>
-
-    </section>
-
-</main>
-
-<!-- FOOTER -->
-<footer>
-    <div class="copyright">
-        <p>©2024 MarketS. ALL Rights Reserved.</p>
     </div>
-</footer>
 
+    <!-- Información del pedido -->
+    <div class="pedido-info" th:if="${pedido}">
+        <h3><i class="fas fa-receipt"></i> Detalles del Pedido</h3>
+
+        <div class="info-item">
+            <span class="info-label">Número de pedido:</span>
+            <span class="info-value">#<span th:text="${pedido.id}"></span></span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label">Fecha:</span>
+            <span class="info-value">
+                    <!-- Formatear fecha sin usar #dates.format() -->
+                    <span th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy')}"></span>
+                    <span th:text="${#temporals.format(pedido.fecha, 'HH:mm')}"></span>
+                </span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label">Estado:</span>
+            <span class="info-value">
+                    <span th:text="${pedido.estado}"></span>
+                </span>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label">Total pagado:</span>
+            <span class="info-value" style="font-size: 20px; color: #2196F3; font-weight: bold;">
+                    $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></span>
+                </span>
+        </div>
+
+        <!-- Mostrar productos si hay detalles -->
+        <div th:if="${pedido.detalles and !pedido.detalles.empty}">
+            <h3 style="margin-top: 25px;"><i class="fas fa-box"></i> Productos comprados</h3>
+            <div th:each="detalle : ${pedido.detalles}"
+                 style="background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <strong th:text="${detalle.producto.nombre}"></strong>
+                        <div>Cantidad: <span th:text="${detalle.cantidad}"></span></div>
+                    </div>
+                    <div>
+                        $<span th:text="${#numbers.formatDecimal(detalle.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></span> x
+                        <span th:text="${detalle.cantidad}"></span> =
+                        $<span th:text="${#numbers.formatDecimal(detalle.cantidad * detalle.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje si no hay pedido -->
+    <div th:unless="${pedido}" style="text-align: center; padding: 40px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ff9800;"></i>
+        <h3>No hay información del pedido</h3>
+        <p>No se encontraron detalles del pedido. Por favor, contacta con soporte.</p>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="botones">
+        <a href="/productos/index" class="btn">
+            <i class="fas fa-store"></i> Seguir Comprando
+        </a>
+
+        <a href="/carrito" class="btn btn-secundario">
+            <i class="fas fa-shopping-cart"></i> Volver al Carrito
+        </a>
+
+        <a th:href="@{'/mis-pedidos'}" class="btn btn-secundario" th:if="${pedido}">
+            <i class="fas fa-clipboard-list"></i> Ver Mis Pedidos
+        </a>
+    </div>
+
+    <!-- Información adicional -->
+    <div style="margin-top: 40px; padding: 20px; background: #f0f8ff; border-radius: 5px; font-size: 14px;">
+        <p><i class="fas fa-info-circle"></i> <strong>Información importante:</strong></p>
+        <p>• Recibirás un correo electrónico con el resumen de tu compra.</p>
+        <p>• Para consultas sobre tu pedido, contacta a soporte@markets.com</p>
+        <p>• El tiempo de entrega depende de tu ubicación y disponibilidad.</p>
+    </div>
+</div>
 </body>
 </html>

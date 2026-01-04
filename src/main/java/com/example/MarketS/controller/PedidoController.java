@@ -1,24 +1,31 @@
 package com.example.MarketS.controller;
 
+import com.example.MarketS.config.MercadoPagoConfig;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
+import com.example.MarketS.service.MercadoPagoService;
 import com.example.MarketS.service.PedidoService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.repository.PedidoRepository;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 @RequestMapping("/pedido")
 public class PedidoController {
+    @Autowired
+    private MercadoPagoService mercadoPagoService;
+    @Autowired
+    private MercadoPagoConfig mercadoPagoConfig;
 
     private final PedidoService pedidoService;
     private final PedidoRepository pedidoRepository;
@@ -26,63 +33,180 @@ public class PedidoController {
 
     public PedidoController(PedidoService pedidoService,
                             PedidoRepository pedidoRepository,
-                            UserRepository userRepository){
+                            UserRepository userRepository,
+                            MercadoPagoService mercadoPagoService,  // Agregar
+                            MercadoPagoConfig mercadoPagoConfig) {  // Agregar
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.userRepository = userRepository;
+        this.mercadoPagoService = mercadoPagoService;  // Agregar
+        this.mercadoPagoConfig = mercadoPagoConfig;    // Agregar
     }
 
     // En PedidoController.java, modificar los métodos para que puedan responder tanto a redirecciones como a AJAX
 
     @PostMapping("/crear")
     public String crearPedido(HttpSession session, Model model,
-                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
-        System.out.println("=== DEBUG POST: /pedido/crear llamado ===");
+                              RedirectAttributes redirectAttributes) {
 
-        // Ejecutar la lógica normal
-        String resultado = procesarCrearPedido(session, model);
+        System.out.println("\n=== 🚀 PEDIDO CONTROLLER: crearPedido() ===");
 
-        // Verificar si es una solicitud AJAX
-        if ("XMLHttpRequest".equals(requestedWith)) {
-            // Si es AJAX, retornar la vista como fragmento HTML
-            return "pago :: #contenido-pago"; // Necesitarías crear este fragmento
+        try {
+            System.out.println("1. Creando pedido...");
+            String resultado = procesarCrearPedido(session, model);
+
+            Pedido pedido = (Pedido) model.getAttribute("pedido");
+            if (pedido == null) {
+                System.err.println("❌ Pedido no creado");
+                redirectAttributes.addFlashAttribute("error", "No se pudo crear el pedido");
+                return "redirect:/carrito";
+            }
+
+            System.out.println("✅ Pedido creado: #" + pedido.getId() + ", Total: $" + pedido.getTotal());
+
+            // FORZAR MERCADO PAGO - SIEMPRE intentarlo
+            System.out.println("🔄 FORZANDO MERCADO PAGO...");
+            try {
+                Map<String, Object> resultadoMP = mercadoPagoService.crearPreferencia(
+                        pedido.getId(),
+                        pedido.getTotal(),
+                        "Compra MarketS - Pedido #" + pedido.getId(),
+                        pedido.getUsuario().getEmail()
+                );
+
+                System.out.println("Resultado MercadoPago: " + resultadoMP);
+
+                if (Boolean.TRUE.equals(resultadoMP.get("success"))) {
+                    String paymentUrl = (String) resultadoMP.get("paymentUrl");
+                    String preferenceId = (String) resultadoMP.get("preferenceId");
+
+                    redirectAttributes.addFlashAttribute("paymentUrl", paymentUrl);
+                    redirectAttributes.addFlashAttribute("preferenceId", preferenceId);
+                    redirectAttributes.addFlashAttribute("mercadoPagoSuccess", true);
+
+                    System.out.println("✅ MercadoPago configurado - URL: " + paymentUrl);
+                } else {
+                    System.err.println("❌ Error MercadoPago: " + resultadoMP.get("error"));
+                    // Aún así pasar el error para mostrar en la vista
+                    redirectAttributes.addFlashAttribute("errorMercadoPago", resultadoMP.get("error"));
+                    redirectAttributes.addFlashAttribute("errorMercadoPagoDetails", resultadoMP);
+                }
+
+            } catch (Exception e) {
+                System.err.println("⚠️ Excepción en MercadoPago: " + e.getMessage());
+                redirectAttributes.addFlashAttribute("errorMercadoPago", "Error técnico: " + e.getMessage());
+            }
+
+            // Pasar el pedido de todas formas
+            redirectAttributes.addFlashAttribute("pedido", pedido);
+            redirectAttributes.addFlashAttribute("pedidoId", pedido.getId());
+
+            System.out.println("🎯 Redirigiendo a paso 2 con MercadoPago habilitado");
+            return "redirect:/carrito?step=2&pedidoId=" + pedido.getId();
+
+        } catch (Exception e) {
+            System.err.println("❌ Error en crearPedido: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            return "redirect:/carrito";
+        }
+    }
+
+    @PostMapping("/iniciar-mercadopago/{pedidoId}")
+    @ResponseBody
+    public Map<String, Object> iniciarPagoMercadoPago(@PathVariable Long pedidoId) {
+        Map<String, Object> respuesta = new HashMap<>();
+
+        System.out.println("\n=== 🔄 iniciarPagoMercadoPago llamado ===");
+        System.out.println("Pedido ID solicitado: " + pedidoId);
+
+        try {
+            // Buscar el pedido
+            Pedido pedido = pedidoRepository.findById(pedidoId)
+                    .orElseThrow(() -> {
+                        System.err.println("❌ Pedido no encontrado: " + pedidoId);
+                        return new RuntimeException("Pedido no encontrado: " + pedidoId);
+                    });
+
+            System.out.println("✅ Pedido encontrado: #" + pedido.getId());
+            System.out.println("   - Usuario: " + pedido.getUsuario().getEmail());
+            System.out.println("   - Total: $" + pedido.getTotal());
+
+            // Crear preferencia en MercadoPago
+            Map<String, Object> resultadoMP = mercadoPagoService.crearPreferencia(
+                    pedido.getId(),
+                    pedido.getTotal(),
+                    "Compra MarketS - Pedido #" + pedido.getId(),
+                    pedido.getUsuario().getEmail()
+            );
+
+            System.out.println("📊 Resultado MercadoPago: " + resultadoMP);
+
+            if (Boolean.TRUE.equals(resultadoMP.get("success"))) {
+                respuesta.put("success", true);
+                respuesta.put("paymentUrl", resultadoMP.get("paymentUrl"));
+                respuesta.put("preferenceId", resultadoMP.get("preferenceId"));
+
+                // Actualizar estado del pedido
+                pedido.setEstado("PROCESANDO_PAGO");
+                pedidoRepository.save(pedido);
+
+                System.out.println("✅ Pago MercadoPago iniciado exitosamente");
+            } else {
+                respuesta.put("success", false);
+                respuesta.put("error", resultadoMP.get("error"));
+                System.err.println("❌ Error MercadoPago: " + resultadoMP.get("error"));
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error en iniciarPagoMercadoPago: " + e.getMessage());
+            e.printStackTrace();
+            respuesta.put("success", false);
+            respuesta.put("error", "Error al iniciar pago: " + e.getMessage());
         }
 
-        return resultado;
+        System.out.println("📤 Respuesta enviada: " + respuesta);
+        return respuesta;
     }
 
     @PostMapping("/pagar/{id}")
     public String pagarPedido(@PathVariable Long id,
                               HttpSession session,
                               Model model,
-                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith) {
+                              @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+                              @RequestParam(required = false) String origen) {
 
         System.out.println("=== DEBUG: /pagar/" + id + " llamado ===");
+        System.out.println("Origen: " + (origen != null ? origen : "directo"));
 
-        Pedido pedido = pedidoRepository.findById(id).orElseThrow();
-        System.out.println("DEBUG: Pedido encontrado para pago - ID: " + pedido.getId());
+        try {
+            Pedido pedido = pedidoRepository.findById(id).orElseThrow();
+            System.out.println("DEBUG: Pedido encontrado para pago - ID: " + pedido.getId());
 
-        // cambiar estado
-        pedido.setEstado("PAGADO");
-        pedidoRepository.save(pedido);
-        System.out.println("DEBUG: Estado cambiado a PAGADO");
+            // Solo marcar como PAGADO si viene de MercadoPago o es pago directo
+            if ("mercadopago".equals(origen) || "directo".equals(origen)) {
+                pedido.setEstado("PAGADO");
+                pedidoRepository.save(pedido);
+                System.out.println("DEBUG: Estado cambiado a PAGADO");
+            }
 
-        // vaciar carrito
-        session.removeAttribute("carrito");
-        System.out.println("DEBUG: Carrito eliminado de sesión");
+            // vaciar carrito
+            session.removeAttribute("carrito");
+            System.out.println("DEBUG: Carrito eliminado de sesión");
 
-        model.addAttribute("pedido", pedido);
-        System.out.println("DEBUG: Redirigiendo a confirmacion.html");
+            model.addAttribute("pedido", pedido);
+            model.addAttribute("origenPago", origen != null ? origen : "directo");
 
-        // Verificar si es AJAX
-        if ("XMLHttpRequest".equals(requestedWith)) {
-            return "confirmacion :: #contenido-confirmacion"; // Necesitarías crear este fragmento
+            System.out.println("DEBUG: Mostrando confirmacion.html");
+            return "confirmacion";
+
+        } catch (Exception e) {
+            System.err.println("❌ Error en pagarPedido: " + e.getMessage());
+            return "redirect:/carrito?error=" + e.getMessage();
         }
-
-        return "confirmacion";
     }
 
-    // OPCIÓN ALTERNATIVA MÁS SIMPLE: Crear endpoints específicos para AJAX
+    // Crear endpoints específicos para AJAX
     @PostMapping("/crear-ajax")
     @ResponseBody
     public Map<String, Object> crearPedidoAjax(HttpSession session, Model model) {
@@ -157,7 +281,8 @@ public class PedidoController {
 
     // Lógica común para crear pedido
     private String procesarCrearPedido(HttpSession session, Model model) {
-        System.out.println("\n=== 🎯 INICIO CREAR PEDIDO ===");
+        System.out.println("\n=== 🎯 INICIO procesarCrearPedido ===");
+        System.out.println("Sesión ID: " + session.getId());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         System.out.println("1. Auth: " + (auth != null ? auth.getName() : "null"));
@@ -180,6 +305,7 @@ public class PedidoController {
 
         Object carritoObj = session.getAttribute("carrito");
         System.out.println("3. Carrito en sesión (raw): " + carritoObj);
+        System.out.println("3b. Tipo de carritoObj: " + (carritoObj != null ? carritoObj.getClass().getName() : "null"));
 
         Map<Integer, Integer> carrito = new HashMap<>();
 
@@ -194,6 +320,8 @@ public class PedidoController {
 
                     Object keyObj = entry.getKey();
                     Object valueObj = entry.getValue();
+
+                    System.out.println("   Procesando item - Key: " + keyObj + ", Value: " + valueObj);
 
                     // Obtener productId de la clave
                     if (keyObj instanceof Integer) {
@@ -235,12 +363,15 @@ public class PedidoController {
                     System.out.println("   ❌ Error procesando item: " + e.getMessage());
                 }
             }
+        } else {
+            System.out.println("⚠️ carritoObj no es un Map, es: " + (carritoObj != null ? carritoObj.getClass().getName() : "null"));
         }
 
         System.out.println("5. Carrito procesado tamaño: " + carrito.size());
 
         if (carrito == null || carrito.isEmpty()) {
             System.out.println("❌ ERROR: Carrito vacío, redirigiendo a /carrito");
+            model.addAttribute("error", "El carrito está vacío");
             return "redirect:/carrito";
         }
 
@@ -254,12 +385,13 @@ public class PedidoController {
             System.out.println("   - Detalles: " + (pedido.getDetalles() != null ? pedido.getDetalles().size() : 0));
 
             model.addAttribute("pedido", pedido);
-            System.out.println("7. Redirigiendo a pago.html");
+            System.out.println("7. Retornando 'pago'");
             return "pago";
 
         } catch (Exception e) {
             System.out.println("❌ ERROR AL CREAR PEDIDO: " + e.getMessage());
             e.printStackTrace();
+            model.addAttribute("error", "Error al crear el pedido: " + e.getMessage());
             return "redirect:/carrito";
         }
     }

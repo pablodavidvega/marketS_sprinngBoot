@@ -2,95 +2,54 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmación de Pedido - MarketS</title>
-
-    <link rel="stylesheet" th:href="@{/CSS/style.css}">
-    <link rel="stylesheet" th:href="@{/CSS/realizarPedido.css}">
-    <link rel="icon" type="image" th:href="@{/img/logo.png}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <title>Pago - MarketS</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
 </head>
-
 <body>
+<div class="container">
+    <h1>Página de Pago</h1>
 
-<header class="header">
-    <div class="header_container">
-        <div class="logo">
-            <img th:src="@{/img/icon.jpg}" alt="Logo">
-            <h2 class="name-project">MarketS</h2>
-        </div>
-
-        <nav class="nav-menu">
-            <span class="nav-user">
-                ¡Gracias por tu compra, <strong th:text="${nombreUsuario}">Usuario</strong>!
-            </span>
-            <a th:href="@{/}" class="btn-icon">
-                <i class="fa-solid fa-house"></i>
-            </a>
-            <a th:href="@{/cliente/dashboard}" class="btn-icon">
-                <i class="fa-solid fa-user"></i>
-            </a>
-        </nav>
+    <div th:if="${mensaje}" class="success">
+        <p th:text="${mensaje}"></p>
     </div>
-</header>
 
-<!-- CONTENIDO PRINCIPAL -->
-<main class="container-pedido">
+    <div th:if="${pedido}">
+        <h2>Pedido #<span th:text="${pedido.id}"></span></h2>
+        <p><strong>Total:</strong> $<span th:text="${pedido.total}"></span></p>
+        <p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
+        <p><strong>Fecha:</strong> <span th:text="${pedido.fecha}"></span></p>
 
-    <section class="pedido-card">
-        <h2>Pedido realizado con éxito</h2>
-
-        <div class="pedido-info">
-            <p><strong>N° Pedido:</strong> <span th:text="${pedido.id}"></span></p>
-            <p><strong>Fecha:</strong> <span th:text="${pedido.fecha}"></span></p>
-            <p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>
+        <div th:if="${paymentUrl}">
+            <h3>Pagar con MercadoPago</h3>
+            <a th:href="${paymentUrl}" style="background: #009ee3; color: white; padding: 10px 20px; text-decoration: none;">
+                Ir a MercadoPago
+            </a>
         </div>
 
-        <h3>Resumen de productos</h3>
-
-        <table class="tabla-pedido">
-            <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio</th>
-                <th>Subtotal</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="d : ${pedido.detalles}">
-                <td th:text="${d.producto.nombre}"></td>
-                <td th:text="${d.cantidad}"></td>
-                <td>$<span th:text="${d.precioUnitario}"></span></td>
-                <td>$<span th:text="${d.cantidad * d.precioUnitario}"></span></td>
-            </tr>
-            </tbody>
-        </table>
-
-        <div class="total-pedido">
-            <h3>Total a pagar: $<span th:text="${pedido.total}"></span></h3>
-        </div>
-
-        <div class="acciones-pedido">
-            <form th:action="@{/pedido/pagar/{id}(id=${pedido.id})}" method="post">
-                <button class="btn6" type="submit">Pagar ahora</button>
+        <div th:unless="${paymentUrl}">
+            <p class="error">MercadoPago no está disponible</p>
+            <form th:action="@{'/pedido/pagar/' + ${pedido.id}}" method="post">
+                <input type="hidden" name="origen" value="directo">
+                <button type="submit" style="background: #6c757d; color: white; padding: 10px 20px; border: none;">
+                    Marcar como Pagado (Prueba)
+                </button>
             </form>
-
-            <a th:href="@{/}" class="btn-secundario">Seguir comprando</a>
         </div>
-    </section>
-
-</main>
-
-<!-- FOOTER (MISMO DEL INDEX) -->
-<footer>
-    <div class="copyright">
-        <p>©2024 MarketS. ALL Rights Reserved.</p>
     </div>
-</footer>
 
+    <div th:unless="${pedido}">
+        <p class="error">No hay pedido para mostrar</p>
+        <a href="/carrito">Volver al carrito</a>
+    </div>
+
+    <hr>
+    <a href="/carrito">← Volver al Carrito</a> |
+    <a href="/productos/index">Seguir Comprando</a>
+</div>
 </body>
 </html>
