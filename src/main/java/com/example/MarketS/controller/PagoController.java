@@ -14,8 +14,8 @@ public class PagoController {
     @Autowired
     private MercadoPagoService mercadoPagoService;
 
-    @Autowired  // Añade esta línea
-    private MercadoPagoConfig config;  // Añade esta variable
+    @Autowired
+    private MercadoPagoConfig config;
 
     /**
      * Página para probar pago

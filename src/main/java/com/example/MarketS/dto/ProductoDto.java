@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ProductoDto {
 
-    private int id;
+    private Long id;
 
     @NotBlank(message = "El nombre es obligatorio.")
     @Size(max = 50, message = "El nombre no puede exceder 100 caracteres.")
@@ -33,7 +33,10 @@ public class ProductoDto {
     @Size(max = 300, message = "La descripción no puede exceder 300 caracteres.")
     private String descripcion;
 
+    // Campos para imágenes
     private MultipartFile imagen;
+    private List<MultipartFile> imagenes = new ArrayList<>();
+    private MultipartFile nuevaImagen; // Para edición de imágenes
 
     @NotBlank(message = "El nombre de la marca es obligatorio.")
     private String nombreMarca;
@@ -43,114 +46,51 @@ public class ProductoDto {
 
     private List<TallasStockDTO> tallas = new ArrayList<>();
 
-    @NotNull(message = "El stock es obligatorio.")
     @Positive(message = "El stock debe ser mayor a 0.")
-    private Integer stock;   // 👈 este es el stock general
+    private Integer stock;
 
-    public Integer getStock() {return stock;}
+    private Integer stockOriginal;
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
+    // Getters y Setters COMPLETOS
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public List<TallasStockDTO> getTallas() {
-        return tallas;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public void setTallas(List<TallasStockDTO> tallas) {
-        this.tallas = tallas;
-    }
+    public Double getPrecio() { return precio; }
+    public void setPrecio(Double precio) { this.precio = precio; }
 
-    private List<MultipartFile> imagenes;
-    private MultipartFile nuevaImagen; // no "imagen", para no chocar con la String
+    public Date getFechaAgregacion() { return fechaAgregacion; }
+    public void setFechaAgregacion(Date fechaAgregacion) { this.fechaAgregacion = fechaAgregacion; }
 
-    public MultipartFile getNuevaImagen() {
-        return nuevaImagen;
-    }
+    public String getEstadoProducto() { return estadoProducto; }
+    public void setEstadoProducto(String estadoProducto) { this.estadoProducto = estadoProducto; }
 
-    public void setNuevaImagen(MultipartFile nuevaImagen) {
-        this.nuevaImagen = nuevaImagen;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public List<MultipartFile> getImagenes() {
-        return imagenes;
-    }
+    public MultipartFile getImagen() { return imagen; }
+    public void setImagen(MultipartFile imagen) { this.imagen = imagen; }
 
-    public void setImagenes(List<MultipartFile> imagenes) {
-        this.imagenes = imagenes;
-    }
+    public List<MultipartFile> getImagenes() { return imagenes; }
+    public void setImagenes(List<MultipartFile> imagenes) { this.imagenes = imagenes; }
 
+    public MultipartFile getNuevaImagen() { return nuevaImagen; }
+    public void setNuevaImagen(MultipartFile nuevaImagen) { this.nuevaImagen = nuevaImagen; }
 
-    public int getId() {
-        return id;
-    }
+    public String getNombreMarca() { return nombreMarca; }
+    public void setNombreMarca(String nombreMarca) { this.nombreMarca = nombreMarca; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public Long getCategoriaId() { return categoriaId; }
+    public void setCategoriaId(Long categoriaId) { this.categoriaId = categoriaId; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public List<TallasStockDTO> getTallas() { return tallas; }
+    public void setTallas(List<TallasStockDTO> tallas) { this.tallas = tallas; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
 
-    public Double getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(Double precio) {
-        this.precio = precio;
-    }
-
-    public Date getFechaAgregacion() {
-        return fechaAgregacion;
-    }
-
-    public void setFechaAgregacion(Date fechaAgregacion) {
-        this.fechaAgregacion = fechaAgregacion;
-    }
-
-    public String getEstadoProducto() {
-        return estadoProducto;
-    }
-
-    public void setEstadoProducto(String estadoProducto) {
-        this.estadoProducto = estadoProducto;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public MultipartFile getImagen() {
-        return imagen;
-    }
-
-    public void setImagen(MultipartFile imagen) {
-        this.imagen = imagen;
-    }
-
-    public String getNombreMarca() {
-        return nombreMarca;
-    }
-
-    public void setNombreMarca(String nombreMarca) {
-        this.nombreMarca = nombreMarca;
-    }
-
-    public Long getCategoriaId() {
-        return categoriaId;
-    }
-
-    public void setCategoriaId(Long categoriaId) {
-        this.categoriaId = categoriaId;
-    }
+    public Integer getStockOriginal() { return stockOriginal; }
+    public void setStockOriginal(Integer stockOriginal) { this.stockOriginal = stockOriginal; }
 }
-

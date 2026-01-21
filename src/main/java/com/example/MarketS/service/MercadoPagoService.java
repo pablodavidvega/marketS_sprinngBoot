@@ -46,24 +46,25 @@ public class MercadoPagoService {
                 return error;
             }
 
-            // URL base
-            String baseUrl = config.getAppUrl();
-            System.out.println("Base URL: " + baseUrl);
+            // URL base - IMPORTANTE: Cambia localhost:8081 si usas otro puerto
+            String baseUrl = "http://localhost:8081"; // Asegúrate que sea correcto
 
-            // JSON SIMPLIFICADO - Lo mismo que funciona en tus pruebas
+            // ========== JSON MÍNIMO QUE FUNCIONA ==========
+            // Solo los campos esenciales, sin back_urls ni auto_return
             String requestJson = "{"
                     + "\"items\": [{"
                     + "\"title\": \"" + escapeJsonString(descripcion) + "\","
                     + "\"quantity\": 1,"
                     + "\"currency_id\": \"COP\","
                     + "\"unit_price\": " + monto
-                    + "}]"
+                    + "}],"
+                    + "\"external_reference\": \"" + pedidoId + "\""
                     + "}";
 
             System.out.println("📤 Request JSON enviado a MercadoPago:");
             System.out.println(requestJson);
 
-            // Headers SIMPLES - igual que en tus pruebas exitosas
+            // Headers SIMPLES
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + token);
             headers.set("Content-Type", "application/json");
@@ -119,6 +120,9 @@ public class MercadoPagoService {
                         resultado.put("rawResponse", responseBody);
 
                         System.out.println("🎉 ¡PREFERENCIA CREADA EXITOSAMENTE!");
+                        System.out.println("🔗 URL de pago: " + sandboxUrl);
+                        System.out.println("📋 ID de preferencia: " + preferenceId);
+
                         return resultado;
                     }
 
@@ -154,38 +158,30 @@ public class MercadoPagoService {
         }
     }
 
-    /**
-     * Método para escapar strings en JSON (renombrado para evitar conflicto)
-     */
+    public String pruebaConexion() {
+        try {
+            String token = config.getAccessToken();
+            if (token == null || token.isEmpty()) {
+                return "❌ Token no configurado";
+            }
+
+            String tokenStart = token.substring(0, Math.min(10, token.length()));
+            boolean isTestToken = token.startsWith("TEST") || token.startsWith("APP_USR");
+
+            return "✅ Token encontrado (inicio: " + tokenStart + ")\n" +
+                    "Es token de test: " + isTestToken;
+        } catch (Exception e) {
+            return "❌ Error: " + e.getMessage();
+        }
+    }
+
     private String escapeJsonString(String input) {
         if (input == null) return "";
-        return input.replace("\\", "\\\\")
+        return input
+                .replace("\\", "\\\\")
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
-    }
-
-    /**
-     * Método SIMPLE para prueba rápida (mantener compatibilidad)
-     */
-    public String pruebaConexion() {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + config.getAccessToken());
-
-            HttpEntity<String> request = new HttpEntity<>(headers);
-            ResponseEntity<String> response = restTemplate.exchange(
-                    "https://api.mercadopago.com/v1/payment_methods",
-                    HttpMethod.GET,
-                    request,
-                    String.class
-            );
-
-            return "Conexion exitosa. Status: " + response.getStatusCode();
-
-        } catch (Exception e) {
-            return "Error conexion: " + e.getMessage();
-        }
     }
 }

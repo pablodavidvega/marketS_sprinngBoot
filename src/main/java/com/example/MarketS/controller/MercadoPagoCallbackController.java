@@ -1,7 +1,9 @@
 package com.example.MarketS.controller;
 
 import com.example.MarketS.model.Pedido;
+import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.service.ProductoService; // Añadido
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +18,9 @@ public class MercadoPagoCallbackController {
     @Autowired
     private PedidoRepository pedidoRepository;
 
+    @Autowired // Nuevo: Inyectar ProductoService
+    private ProductoService productoService;
+
     /**
      * Callback de éxito desde MercadoPago
      */
@@ -23,9 +28,22 @@ public class MercadoPagoCallbackController {
     public String exito(@RequestParam Map<String, String> params,
                         @RequestParam(required = false) Long pedidoId,
                         Model model) {
-
         System.out.println("\n🎉🎉🎉 CALLBACK EXITO MERCADOPAGO 🎉🎉🎉");
         System.out.println("Parámetros recibidos: " + params);
+
+        // ========== DEBUG DEL ESTADO ==========
+        System.out.println("\n🎉🎉🎉 CALLBACK EXITO MERCADOPAGO 🎉🎉🎉");
+        System.out.println("Parámetros recibidos: " + params);
+
+        // ========== DEBUG DEL ESTADO ==========
+        System.out.println("\n🔍 DEBUG DEL ESTADO:");
+        System.out.println("1. status: " + params.get("status"));
+        System.out.println("2. collection_status: " + params.get("collection_status"));
+        System.out.println("3. payment_status: " + params.get("payment_status"));
+        System.out.println("4. external_reference: " + params.get("external_reference"));
+        System.out.println("5. preference_id: " + params.get("preference_id"));
+        System.out.println("6. payment_id: " + params.get("payment_id"));
+        System.out.println("======================================");
 
         try {
             // Obtener ID del pedido
@@ -43,6 +61,16 @@ public class MercadoPagoCallbackController {
 
             procesarEstadoPago(params, pedido);
 
+            // ========== NUEVO: Reducir stock solo si el pago fue aprobado ==========
+            if ("approved".equals(params.get("status"))) {
+                try {
+                    reducirStockDeProductos(pedido);
+                } catch (Exception e) {
+                    // Registrar error pero continuar con el flujo (no interrumpir el proceso de pago)
+                    System.err.println("⚠️ Error al reducir stock (continuando con el pago): " + e.getMessage());
+                }
+            }
+
             // Redirigir a la confirmación
             return "redirect:/carrito?step=3&pedidoId=" + idPedido + "&status=" + params.get("status");
 
@@ -52,6 +80,53 @@ public class MercadoPagoCallbackController {
             model.addAttribute("error", "Error procesando el pago: " + e.getMessage());
             return "pago/error";
         }
+    }
+
+    /**
+     * NUEVO MÉTODO: Reducir stock de los productos del pedido
+     * Se llama automáticamente cuando un pago es aprobado
+     */
+    private void reducirStockDeProductos(Pedido pedido) {
+        if (pedido == null) {
+            System.err.println("❌ Pedido es null, no se puede reducir stock");
+            return;
+        }
+
+        System.out.println("\n🔄 REDUCIENDO STOCK DE PEDIDO #" + pedido.getId());
+
+        // Verificar si ya se redujo el stock (para evitar duplicados)
+//        if (pedido.getStockReducido() != null && pedido.getStockReducido()) {
+//            System.out.println("⚠️ Stock ya reducido anteriormente para este pedido");
+//            return;
+//        }
+
+        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
+            System.out.println("⚠️ El pedido no tiene detalles");
+            return;
+        }
+
+        for (DetallePedido detalle : pedido.getDetalles()) {
+            try {
+                Long productoId = detalle.getProducto().getId();
+                Integer cantidad = detalle.getCantidad();
+
+                System.out.println("📦 Reduciendo " + cantidad + " unidades del producto ID: " + productoId);
+
+                // LLAMADA AL SERVICIO
+                productoService.reducirStock(productoId, cantidad);
+
+                System.out.println("✅ Stock reducido exitosamente");
+
+            } catch (Exception e) {
+                System.err.println("❌ Error: " + e.getMessage());
+            }
+        }
+
+        // Marcar que el stock ya fue reducido
+        // pedido.setStockReducido(true); // Necesitarías agregar este campo a la entidad Pedido
+        // pedidoRepository.save(pedido);
+
+        System.out.println("✅ Stock reducido completamente para pedido #" + pedido.getId());
     }
 
     private Long obtenerIdPedido(Map<String, String> params, Long pedidoIdParam) {
@@ -69,7 +144,6 @@ public class MercadoPagoCallbackController {
 
         // Intentar extraer de la URL o otros parámetros
         if (params.containsKey("collection_id")) {
-            // En algunos casos el ID viene aquí
             System.out.println("collection_id encontrado: " + params.get("collection_id"));
         }
 
@@ -81,29 +155,50 @@ public class MercadoPagoCallbackController {
      */
     private void procesarEstadoPago(Map<String, String> params, Pedido pedido) {
         String status = params.get("status");
+        String collectionStatus = params.get("collection_status"); // NUEVO
         String paymentId = params.get("payment_id");
 
         System.out.println("📋 Detalles del pago:");
         System.out.println("   - Pedido ID: " + pedido.getId());
         System.out.println("   - Status: " + status);
+        System.out.println("   - Collection Status: " + collectionStatus); // NUEVO
         System.out.println("   - Payment ID: " + paymentId);
 
-        // Actualizar estado del pedido según el resultado
-        if ("approved".equals(status)) {
-            pedido.setEstado("PAGADO");
+        // DECISIÓN: Para Sandbox, considerar "approved" o "pending"
+        String estadoFinal = "PROCESANDO";
+
+        if ("approved".equals(status) || "approved".equals(collectionStatus)) {
+            estadoFinal = "PAGADO";
             System.out.println("✅ Pago APROBADO - Marcando como PAGADO");
-        } else if ("pending".equals(status)) {
-            pedido.setEstado("PENDIENTE_PAGO");
+        } else if ("pending".equals(status) || "pending".equals(collectionStatus)) {
+            estadoFinal = "PENDIENTE_PAGO";
             System.out.println("⚠️ Pago PENDIENTE");
-        } else if ("rejected".equals(status)) {
-            pedido.setEstado("RECHAZADO");
+
+            // PARA SANDBOX: Auto-aprobar pagos pendientes (solo testing!)
+            if (esAmbienteSandbox()) {
+                System.out.println("🔄 SANDBOX: Auto-aprobando pago pendiente para testing");
+                estadoFinal = "PAGADO";
+            }
+        } else if ("rejected".equals(status) || "rejected".equals(collectionStatus)) {
+            estadoFinal = "RECHAZADO";
             System.out.println("❌ Pago RECHAZADO");
-        } else {
-            pedido.setEstado("PROCESANDO");
-            System.out.println("🔄 Estado desconocido: " + status);
         }
 
+        pedido.setEstado(estadoFinal);
         pedidoRepository.save(pedido);
+
+        // ========== NUEVO: Reducir stock si el estado es PAGADO ==========
+        if ("PAGADO".equals(estadoFinal)) {
+            reducirStockDeProductos(pedido);
+        }
+    }
+
+    // Método auxiliar para detectar si estamos en Sandbox
+    private boolean esAmbienteSandbox() {
+        // Verifica si el token de MercadoPago es de Sandbox (empieza con TEST-)
+        // O puedes crear una variable de entorno
+        return System.getenv("MP_ENV") != null &&
+                System.getenv("MP_ENV").equals("sandbox");
     }
 
     /**
@@ -183,8 +278,8 @@ public class MercadoPagoCallbackController {
         System.out.println("\n📢 WEBHOOK MERCADOPAGO RECIBIDO");
         System.out.println("Params: " + params);
 
-        // Aquí procesarías las notificaciones en tiempo real
-        // Por ahora solo logueamos
+        // OPCIONAL: También podrías procesar el webhook para reducir stock
+        // pero el callback /exito ya lo hace
         return "OK";
     }
 

@@ -19,7 +19,5 @@ public class TallaStock {
     @ManyToOne
     @JoinColumn(name = "producto_id")
     private Producto producto;
-
-    // Getters y setters
 }
 

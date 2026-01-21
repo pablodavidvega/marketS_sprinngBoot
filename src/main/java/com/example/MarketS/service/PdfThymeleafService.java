@@ -7,7 +7,16 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.xhtmlrenderer.pdf.ITextRenderer;
-import com.example.MarketS.service.pdf.B64ImgReplacedElementFactory;
+import org.xhtmlrenderer.extend.FSImage;
+import org.xhtmlrenderer.extend.ReplacedElement;
+import org.xhtmlrenderer.extend.ReplacedElementFactory;
+import org.xhtmlrenderer.extend.UserAgentCallback;
+import org.xhtmlrenderer.layout.LayoutContext;
+import org.xhtmlrenderer.pdf.ITextFSImage;
+import org.xhtmlrenderer.pdf.ITextImageElement;
+import org.xhtmlrenderer.render.BlockBox;
+
+import com.lowagie.text.Image;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -90,8 +99,10 @@ public class PdfThymeleafService {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             ITextRenderer renderer = new ITextRenderer();
+
+            // Usar la clase interna en lugar de la externa faltante
             renderer.getSharedContext().setReplacedElementFactory(
-                    new B64ImgReplacedElementFactory()
+                    new InternalB64ImgReplacedElementFactory()
             );
 
             renderer.setDocumentFromString(html);
@@ -106,6 +117,60 @@ public class PdfThymeleafService {
             System.out.println(html);
 
             throw new RuntimeException("Error al generar PDF: " + e.getMessage(), e);
+        }
+    }
+
+    // Clase interna adaptada para la versión específica de Flying Saucer
+    private static class InternalB64ImgReplacedElementFactory implements ReplacedElementFactory {
+
+        @Override
+        public ReplacedElement createReplacedElement(LayoutContext lc, BlockBox box,
+                                                     UserAgentCallback uac, int cssWidth, int cssHeight) {
+
+            org.w3c.dom.Element element = box.getElement();
+            if (element == null) {
+                return null;
+            }
+
+            String nodeName = element.getNodeName();
+            String src = element.getAttribute("src");
+
+            // Procesar imágenes en base64
+            if ("img".equals(nodeName) && src != null && src.startsWith("data:image")) {
+                try {
+                    // Extraer base64
+                    String base64Data = src.substring(src.indexOf("base64,") + 7);
+                    byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+
+                    // Crear imagen
+                    Image image = Image.getInstance(imageBytes);
+                    FSImage fsImage = new ITextFSImage(image);
+
+                    // Escalar si es necesario
+                    if (cssWidth > 0 || cssHeight > 0) {
+                        fsImage.scale(cssWidth, cssHeight);
+                    }
+
+                    return new ITextImageElement(fsImage);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public void reset() {}
+
+        @Override
+        public void remove(org.w3c.dom.Element e) {}
+
+        // Añadir este método específico para tu versión de Flying Saucer
+        @Override
+        public void setFormSubmissionListener(org.xhtmlrenderer.simple.extend.FormSubmissionListener listener) {
+            // No es necesario implementar nada aquí
         }
     }
 

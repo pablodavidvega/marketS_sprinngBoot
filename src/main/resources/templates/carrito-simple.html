@@ -868,7 +868,7 @@
     </div>
 </header>
 
-<div class="cart-container">
+<body class="cart-container">
     <!-- PASOS DEL CHECKOUT - Solo indicadores visuales -->
     <div class="checkout-steps">
         <div class="step-indicator" th:classappend="${currentStep == '1'} ? 'active' : ''">
@@ -987,7 +987,7 @@
                     <h2><i class="fas fa-credit-card"></i> Pagar con MercadoPago</h2>
 
                     <div th:if="${paymentUrl}">
-                        <a th:href="${paymentUrl}" class="btn-mercadopago">
+                        <a th:href="${paymentUrl}" target="_blank" class ="btn-mercadopago">
                             <i class="fas fa-lock"></i> PAGAR AHORA
                         </a>
                         <p>Serás redirigido a MercadoPago para completar tu compra de forma segura</p>
@@ -1078,4 +1078,7 @@
 
     <!-- MENSAJES DEL SISTEMA -->
     <!-- Mensajes de error -->
-    <div th:if="${error}" style="
+    <div th:if="${error}" style="background: #ffe6e6; border: 1px solid #ff4d4d; padding: 10px; margin: 10px 0; border-radius: 5px; color: #cc0000;">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
+</body>
