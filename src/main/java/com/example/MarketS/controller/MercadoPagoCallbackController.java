@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
 
@@ -79,6 +80,115 @@ public class MercadoPagoCallbackController {
             e.printStackTrace();
             model.addAttribute("error", "Error procesando el pago: " + e.getMessage());
             return "pago/error";
+        }
+    }
+
+    @Controller
+    @RequestMapping("/pedido")
+    public class PedidoController {
+
+        @Autowired
+        private PedidoRepository pedidoRepository;
+
+        @Autowired
+        private ProductoService productoService;
+
+        /**
+         * Confirmación manual de pago (para cuando el usuario ya pagó en MercadoPago)
+         */
+        @PostMapping("/confirmar-pago/{pedidoId}")
+        public String confirmarPagoManual(@PathVariable Long pedidoId,
+                                          @RequestParam(required = false) String origen,
+                                          RedirectAttributes redirectAttributes) {
+
+            System.out.println("\n🔄 CONFIRMACIÓN MANUAL DE PAGO");
+            System.out.println("Pedido ID: " + pedidoId);
+            System.out.println("Origen: " + (origen != null ? origen : "desconocido"));
+
+            try {
+                // Buscar el pedido
+                Pedido pedido = pedidoRepository.findById(pedidoId)
+                        .orElseThrow(() -> new RuntimeException("Pedido no encontrado: " + pedidoId));
+
+                System.out.println("📋 Estado actual del pedido: " + pedido.getEstado());
+
+                // Verificar si ya está pagado
+                if ("PAGADO".equals(pedido.getEstado())) {
+                    System.out.println("⚠️ El pedido ya está marcado como PAGADO");
+                    redirectAttributes.addFlashAttribute("info", "Este pedido ya está pagado.");
+                    return "redirect:/carrito?step=3&pedidoId=" + pedidoId;
+                }
+
+                // Marcar como pagado
+                pedido.setEstado("PAGADO");
+                pedidoRepository.save(pedido);
+                System.out.println("✅ Pedido marcado como PAGADO");
+
+                // Reducir stock de productos
+                reducirStockDeProductos(pedido);
+
+                // Registrar la acción
+                System.out.println("🎉 Confirmación manual completada para pedido #" + pedidoId);
+
+                // Redirigir a la confirmación (paso 3)
+                redirectAttributes.addFlashAttribute("success", "¡Pago confirmado exitosamente!");
+                return "redirect:/carrito?step=3&pedidoId=" + pedidoId;
+
+            } catch (Exception e) {
+                System.err.println("❌ Error en confirmación manual: " + e.getMessage());
+                e.printStackTrace();
+                redirectAttributes.addFlashAttribute("error",
+                        "Error al confirmar el pago: " + e.getMessage());
+                return "redirect:/carrito?step=2&pedidoId=" + pedidoId;
+            }
+        }
+
+        /**
+         * Método para reducir stock (reutilizable)
+         */
+        private void reducirStockDeProductos(Pedido pedido) {
+            if (pedido == null) {
+                System.err.println("❌ Pedido es null, no se puede reducir stock");
+                return;
+            }
+
+            System.out.println("\n🔄 REDUCIENDO STOCK DE PEDIDO #" + pedido.getId());
+
+            if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
+                System.out.println("⚠️ El pedido no tiene detalles");
+                return;
+            }
+
+            int productosActualizados = 0;
+            for (DetallePedido detalle : pedido.getDetalles()) {
+                try {
+                    Long productoId = detalle.getProducto().getId();
+                    Integer cantidad = detalle.getCantidad();
+
+                    System.out.println("📦 Reduciendo " + cantidad + " unidades del producto ID: " + productoId);
+
+                    // Reducir stock
+                    productoService.reducirStock(productoId, cantidad);
+                    productosActualizados++;
+
+                    System.out.println("✅ Stock reducido exitosamente");
+
+                } catch (Exception e) {
+                    System.err.println("❌ Error al reducir stock del producto: " + e.getMessage());
+                    // Continuar con los demás productos
+                }
+            }
+
+            System.out.println("✅ Stock reducido para " + productosActualizados + " productos del pedido #" + pedido.getId());
+        }
+
+        /**
+         * Endpoint alternativo (GET) para confirmación rápida
+         */
+        @GetMapping("/confirmar/{pedidoId}")
+        public String confirmarPagoRapido(@PathVariable Long pedidoId,
+                                          RedirectAttributes redirectAttributes) {
+            return confirmarPagoManual(pedidoId, "rapido", redirectAttributes);
         }
     }
 
