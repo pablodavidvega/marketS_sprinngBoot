@@ -1,5 +1,6 @@
 package com.example.MarketS.service;
 
+import com.example.MarketS.model.User;
 import org.jfree.chart.JFreeChart;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.MarketS.model.Producto;
@@ -50,7 +51,7 @@ public class PdfThymeleafService {
     }
 
     // Generar PDF
-    public byte[] generarPdfDesdeHtml(List<Producto> productos) {
+    public byte[] generarPdfDesdeHtml(List<Producto> productos, User usuario) {
 
         // Barras por categoría
         Map<String, Long> productosPorCategoria = productos.stream()
@@ -89,6 +90,7 @@ public class PdfThymeleafService {
         // Enviar al HTML
         Context context = new Context();
         context.setVariable("productos", productos);
+        context.setVariable("usuario", usuario);
         context.setVariable("graficoBarras", barrasBase64);
         context.setVariable("graficoTorta", tortaBase64);
 

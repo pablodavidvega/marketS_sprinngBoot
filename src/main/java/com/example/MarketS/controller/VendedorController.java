@@ -362,7 +362,7 @@ public class VendedorController {
             productos = productoRepository.findByVendedor(usuario);
         }
 
-        byte[] pdf = pdfThymeleafService.generarPdfDesdeHtml(productos);
+        byte[] pdf = pdfThymeleafService.generarPdfDesdeHtml(productos, usuario);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=mis_productos.pdf")
