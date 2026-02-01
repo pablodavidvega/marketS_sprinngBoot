@@ -2,6 +2,7 @@ package com.example.MarketS.service;
 
 import com.example.MarketS.model.Categorias;
 import com.example.MarketS.model.User;
+import com.example.MarketS.repository.CategoriaRepository;
 import org.jfree.chart.JFreeChart;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.MarketS.model.Producto;
@@ -41,28 +42,6 @@ public class PdfThymeleafService {
     @Autowired
     private CategoriaRepository categoriaRepository;
 
-    // 1. Inicializar todas las categorías en 0 (normalizadas)
-    Map<String, Long> productosPorCategoria = categoriaRepository.findAll()
-            .stream()
-            .collect(Collectors.toMap(
-                    c -> c.getNombreCategoria().trim().toLowerCase(),
-                    c -> 0L
-            ));
-
-// 2. Contar productos
-productos.forEach(p -> {
-        if (p.getCategorias() != null) {
-            String nombre = p.getCategorias()
-                    .getNombreCategoria()
-                    .trim()
-                    .toLowerCase();
-
-            productosPorCategoria.put(
-                    nombre,
-                    productosPorCategoria.getOrDefault(nombre, 0L) + 1
-            );
-        }
-    });
 
     // Conversión seguro gráfico -> Base64
     private String chartToBase64(JFreeChart chart, int width, int height) {
