@@ -1,5 +1,6 @@
 package com.example.MarketS.service;
 
+import com.example.MarketS.model.Categorias;
 import com.example.MarketS.model.User;
 import org.jfree.chart.JFreeChart;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,32 @@ public class PdfThymeleafService {
     @Autowired
     private TemplateEngine templateEngine;
 
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    // 1. Inicializar todas las categorías en 0 (normalizadas)
+    Map<String, Long> productosPorCategoria = categoriaRepository.findAll()
+            .stream()
+            .collect(Collectors.toMap(
+                    c -> c.getNombreCategoria().trim().toLowerCase(),
+                    c -> 0L
+            ));
+
+// 2. Contar productos
+productos.forEach(p -> {
+        if (p.getCategorias() != null) {
+            String nombre = p.getCategorias()
+                    .getNombreCategoria()
+                    .trim()
+                    .toLowerCase();
+
+            productosPorCategoria.put(
+                    nombre,
+                    productosPorCategoria.getOrDefault(nombre, 0L) + 1
+            );
+        }
+    });
+
     // Conversión seguro gráfico -> Base64
     private String chartToBase64(JFreeChart chart, int width, int height) {
         try {
@@ -53,13 +80,25 @@ public class PdfThymeleafService {
     // Generar PDF
     public byte[] generarPdfDesdeHtml(List<Producto> productos, User usuario) {
 
-        // Barras por categoría
-        Map<String, Long> productosPorCategoria = productos.stream()
-                .collect(Collectors.groupingBy(
-                        p -> p.getCategorias() != null ?
-                                p.getCategorias().getNombreCategoria() : "Sin categoría",
-                        Collectors.counting()
+        // 1. Inicializar todas las categorías en 0
+        Map<String, Long> productosPorCategoria = categoriaRepository.findAll()
+                .stream()
+                .collect(Collectors.toMap(
+                        Categorias::getNombreCategoria,
+                        c -> 0L
                 ));
+
+// 2. Contar productos existentes
+        productos.forEach(p -> {
+            if (p.getCategorias() != null) {
+                String nombre = p.getCategorias().getNombreCategoria();
+                productosPorCategoria.put(
+                        nombre,
+                        productosPorCategoria.get(nombre) + 1
+                );
+            }
+        });
+
 
         DefaultCategoryDataset datasetBarras = new DefaultCategoryDataset();
         productosPorCategoria.forEach((cat, count) ->
