@@ -49,7 +49,10 @@ public class SecurityConfig {
                                 "/filtros",
                                 "/enviar-correo/**",
                                 "/api/pdf/**",
-                                "/api/usuarios/estadisticas"
+                                "/api/usuarios/estadisticas",
+                                "/login",
+                                "/forgot-password",
+                                "/reset-password"
                         ).permitAll()
 
                         // ROLES

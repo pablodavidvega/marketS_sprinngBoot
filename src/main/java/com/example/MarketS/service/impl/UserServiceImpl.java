@@ -161,6 +161,11 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+    @Override
+    public Optional<User> buscarPorToken(String token) {
+        return userRepository.findByResetToken(token);
+    }
+
     // 🔹 MÉTODO ADICIONAL: Para activar/desactivar usuario
     public void cambiarEstado(Long userId, boolean activo) {
         User user = userRepository.findById(userId)
