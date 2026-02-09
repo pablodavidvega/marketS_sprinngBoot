@@ -32,9 +32,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-
-
+                .csrf(csrf -> csrf
+                        // Solo desactiva para APIs específicas si es necesario
+                        .ignoringRequestMatchers(
+                                "/enviar-correo/**"  // Solo APIs REST que necesiten POST sin CSRF
+                        )
+                )
+                
                 .authorizeHttpRequests(auth -> auth
 
                         //PÚBLICOS
