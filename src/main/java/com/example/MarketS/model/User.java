@@ -33,6 +33,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    private String resetToken;
+    private LocalDateTime resetTokenExpira;
+
     @ManyToOne
     @JoinColumn(name="rol_id")
     private Rol rol;

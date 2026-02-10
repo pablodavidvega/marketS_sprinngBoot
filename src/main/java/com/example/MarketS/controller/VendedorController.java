@@ -145,18 +145,36 @@ public class VendedorController {
         }
 
         Producto producto = productoRepository.findById(
-                Integer.valueOf(productoDto.getId())
+                productoDto.getId().intValue()
         ).orElse(null);
         if (producto == null || !producto.getVendedor().equals(usuario)) {
             return "redirect:/vendedor/productos";
         }
 
+        // Actualizar campos básicos
         producto.setNombre(productoDto.getNombre());
         producto.setPrecio(productoDto.getPrecio());
         producto.setDescripcion(productoDto.getDescripcion());
         producto.setEstadoProducto(productoDto.getEstadoProducto());
         producto.setFechaAgregacion(productoDto.getFechaAgregacion());
-        producto.setStock(productoDto.getStock());
+
+        // MODIFICADO: Lógica para manejar el stock
+        // Si se proporciona nuevo stock, usarlo; de lo contrario, mantener el original
+        if (productoDto.getStock() != null && productoDto.getStock() >= 0) {
+            producto.setStock(productoDto.getStock());
+
+            // Actualizar estado según nuevo stock
+            if (productoDto.getStock() == 0) {
+                producto.setEstadoProducto("No disponible");
+            } else if ("No disponible".equals(producto.getEstadoProducto()) && productoDto.getStock() > 0) {
+                producto.setEstadoProducto("Disponible");
+            }
+        } else {
+            // Si no se proporciona stock, mantener el original
+            if (productoDto.getStockOriginal() != null) {
+                producto.setStock(productoDto.getStockOriginal());
+            }
+        }
 
         if (productoDto.getCategoriaId() != null) {
             Categorias categoria = categoriaRepository.findById(productoDto.getCategoriaId()).orElse(null);
@@ -169,37 +187,35 @@ public class VendedorController {
             producto.setMarca(marca);
         }
 
+        // Mantener el código existente para manejar imágenes...
+        // Mantener el código existente para manejar imágenes...
         if (productoDto.getNuevaImagen() != null && !productoDto.getNuevaImagen().isEmpty()) {
+            MultipartFile archivo = productoDto.getNuevaImagen();
+            if (!archivo.isEmpty()) {
+                String originalFilename = archivo.getOriginalFilename();
+                String extension = "";
 
-            if (producto.getImagen() != null) {
-                Path rutaAnterior = Paths.get("C:/uploads/hana").resolve(producto.getImagen());
-                if (Files.exists(rutaAnterior)) {
-                    Files.delete(rutaAnterior);
+                int i = originalFilename.lastIndexOf('.');
+                if (i >= 0) {
+                    extension = originalFilename.substring(i);
                 }
+
+                // Generar nombre con el nombre del producto
+                String nombreArchivo = productoDto.getNombre()
+                        .replaceAll("\\s+", "_")
+                        .toLowerCase() + extension;
+
+                Path ruta = Paths.get("C:/uploads/hana");
+                if (!Files.exists(ruta)) Files.createDirectories(ruta);
+
+                Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
+
+                producto.setImagen(nombreArchivo);
             }
-
-            String originalFilename = productoDto.getNuevaImagen().getOriginalFilename();
-            String extension = "";
-            int i = originalFilename.lastIndexOf('.');
-            if (i >= 0) {
-                extension = originalFilename.substring(i);
-            }
-
-            String nombreArchivo = productoDto.getNombre()
-                    .replaceAll("\\s+", "_")
-                    .toLowerCase() + extension;
-
-            Path ruta = Paths.get("C:/uploads/hana");
-            if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-            Files.copy(productoDto.getNuevaImagen().getInputStream(),
-                    ruta.resolve(nombreArchivo),
-                    StandardCopyOption.REPLACE_EXISTING);
-
-            producto.setImagen(nombreArchivo);
         }
-        producto.getTallas().clear();
 
+        // Mantener el código existente para manejar tallas...
+        producto.getTallas().clear();
         if (productoDto.getTallas() != null) {
             for (TallasStockDTO tallaDto : productoDto.getTallas()) {
                 if (tallaDto.getTalla() != null && !tallaDto.getTalla().isBlank()) {
@@ -212,12 +228,13 @@ public class VendedorController {
             }
         }
 
-
-
         productoRepository.save(producto);
+
+        System.out.println("✅ Producto actualizado: " + producto.getNombre()
+                + ", Stock: " + producto.getStock());
+
         return "redirect:/vendedor/productos";
     }
-
 
     @PostMapping("/productos/guardar")
     public String guardarProducto(
@@ -345,7 +362,7 @@ public class VendedorController {
             productos = productoRepository.findByVendedor(usuario);
         }
 
-        byte[] pdf = pdfThymeleafService.generarPdfDesdeHtml(productos);
+        byte[] pdf = pdfThymeleafService.generarPdfDesdeHtml(productos, usuario);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=mis_productos.pdf")
@@ -353,53 +370,60 @@ public class VendedorController {
                 .body(new ByteArrayResource(pdf));
     }
 
+            @GetMapping("/productos/editar/{id}")
+            public String mostrarFormularioEdicion(
+                    @PathVariable Long id,
+                    Authentication authentication,
+                    Model model) {
 
-    @GetMapping("/productos/editar/{id}")
-    public String mostrarFormularioEdicion(
-            @PathVariable Long id,
-            Authentication authentication,
-            Model model) {
+                String email = authentication.getName();
+                User usuario = userService.buscarPorEmail(email).orElse(null);
 
-        String email = authentication.getName();
-        User usuario = userService.buscarPorEmail(email).orElse(null);
+                Producto producto = productoRepository.findById(id.intValue()).orElse(null);
+                if (producto == null || !producto.getVendedor().equals(usuario)) {
+                    return "redirect:/vendedor/productos";
+                }
 
-        Producto producto = productoRepository.findById(Integer.valueOf(id.intValue())).orElse(null);
-        if (producto == null || !producto.getVendedor().equals(usuario)) {
-            return "redirect:/vendedor/productos";
-        }
+                // Cargar los datos del producto en el DTO
+                ProductoDto productoDto = new ProductoDto();
+                productoDto.setId(producto.getId());
+                productoDto.setNombre(producto.getNombre());
+                productoDto.setPrecio(producto.getPrecio());
+                productoDto.setDescripcion(producto.getDescripcion());
+                productoDto.setEstadoProducto(producto.getEstadoProducto());
+                productoDto.setFechaAgregacion(producto.getFechaAgregacion());
 
-        // Cargar los datos del producto en el DTO
-        ProductoDto productoDto = new ProductoDto();
-        productoDto.setId((int) producto.getId().longValue());
-        productoDto.setNombre(producto.getNombre());
-        productoDto.setPrecio(producto.getPrecio());
-        productoDto.setDescripcion(producto.getDescripcion());
-        productoDto.setEstadoProducto(producto.getEstadoProducto());
-        productoDto.setFechaAgregacion(producto.getFechaAgregacion());
-        if (producto.getCategorias() != null)
-            productoDto.setCategoriaId(producto.getCategorias().getId());
-        if (producto.getMarca() != null)
-            productoDto.setNombreMarca(producto.getMarca().getNombreMarca());
+                // IMPORTANTE: Manejo del stock
+                productoDto.setStock(producto.getStock()); // Valor actual
+                productoDto.setStockOriginal(producto.getStock()); // Guardar original para referencia
 
-        if (producto.getTallas() != null && !producto.getTallas().isEmpty()) {
-            List<TallasStockDTO> tallasDto = producto.getTallas().stream()
-                    .map(t -> {
-                        TallasStockDTO dto = new TallasStockDTO();
-                        dto.setTalla(t.getTalla());
-                        dto.setStock(t.getStock());
-                        return dto;
-                    })
-                    .toList();
-            productoDto.setTallas(tallasDto);
-        }
+                if (producto.getCategorias() != null) {
+                    productoDto.setCategoriaId(producto.getCategorias().getId());
+                }
 
+                if (producto.getMarca() != null) {
+                    productoDto.setNombreMarca(producto.getMarca().getNombreMarca());
+                }
 
-        model.addAttribute("productoDto", productoDto);
-        model.addAttribute("categorias", categoriaRepository.findAll());
-        model.addAttribute("usuario", usuario);
+                if (producto.getTallas() != null && !producto.getTallas().isEmpty()) {
+                    List<TallasStockDTO> tallasDto = producto.getTallas().stream()
+                            .map(t -> {
+                                TallasStockDTO dto = new TallasStockDTO();
+                                dto.setTalla(t.getTalla());
+                                dto.setStock(t.getStock());
+                                return dto;
+                            })
+                            .toList();
+                    productoDto.setTallas(tallasDto);
+                }
 
-        return "vendedor/edit";
-    }
+                model.addAttribute("productoDto", productoDto);
+                model.addAttribute("categorias", categoriaRepository.findAll());
+                model.addAttribute("usuario", usuario);
+
+                return "vendedor/edit";
+            }
+
 
     @GetMapping("/productos/activar/{id}")
     public String activarProducto(@PathVariable Long id, Authentication authentication) {

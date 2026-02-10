@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - MarketS</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+</head>
+<body>
+<style>
+    /* TODOS TUS ESTILOS ACTUALES SE MANTIENEN */
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        line-height: 1.2;
+    }
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #fff;
+        color: #333;
+    }
+
+    .modo-btn {
+        background-color: #fff;
+        color: #000 !important;
+        padding: 12px 13px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+
+    .modo-btn .modo-text {
+        color: #000 ;
+    }
+
+    .modo-btn i {
+        font-size: 15px;
+        color: #f4c542;
+    }
+
+    body.dark-mode {
+        background-color: #121212;
+        color: white;
+    }
+
+    body.dark-mode .modo-btn {
+        background-color: #222;
+        color: #fff ;
+    }
+
+    body.dark-mode .modo-btn .modo-text {
+        color: #fff ;
+    }
+
+    /* 🌙 Dark Mode Carrito */
+    body.dark-mode .cart-container {
+        background-color: #121212;
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .cart-items {
+        background: #1e1e1e;
+        color: #f1f1f1;
+        box-shadow: none;
+    }
+
+    body.dark-mode .cart-items h2 {
+        color: #ffffff;
+    }
+
+    body.dark-mode .cart-item {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #333;
+    }
+
+    body.dark-mode .cart-item:nth-child(even) {
+        background-color: #252525;
+    }
+
+    body.dark-mode .item-details p,
+    body.dark-mode .item-details strong,
+    body.dark-mode .cart-item .precio,
+    body.dark-mode .cart-item .total-product {
+        color: #f1f1f1;
+    }
+
+    body.dark-mode .quantity-controls .cantidad {
+        color: #ffffff;
+    }
+
+    body.dark-mode .btn {
+        background: #ff0000;
+        color: #ffffff;
+        border: 1px solid #555;
+    }
+
+    body.dark-mode .btn:hover {
+        background: #444;
+    }
+
+    body.dark-mode .btn-danger {
+        background: #c0392b;
+        border-color: #c0392b;
+        color: #fff;
+    }
+
+    body.dark-mode .btn-danger:hover {
+        background: #e74c3c;
+    }
+
+    body.dark-mode .btn-success {
+        background: #27ae60;
+        border-color: #27ae60;
+        color: #fff;
+    }
+
+    body.dark-mode .btn-success:hover {
+        background: #2ecc71;
+    }
+
+    body.dark-mode .btn.back-to-shop {
+        background: #333;
+        color: #fff;
+        border: 1px solid #555;
+    }
+
+    body.dark-mode .checkout-steps {
+        background-color: #222;
+        color: #aaa;
+    }
+
+    body.dark-mode .checkout-steps .step-indicator.active {
+        color: #ffffff;
+    }
+
+    body.dark-mode .cart-summary {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+        border-color: #333;
+        box-shadow: none;
+    }
+
+    body.dark-mode .cart-summary h2 {
+        color: #ffffff;
+    }
+
+    body.dark-mode .totals p {
+        color: #ffffff;
+    }
+
+    body.dark-mode .warning-text {
+        color: #bbbbbb;
+    }
+
+    body.dark-mode .security-icons {
+        color: #bbbbbb;
+    }
+
+    body.dark-mode .security-icons i {
+        color: #27ae60;
+    }
+
+    body.dark-mode .payment-info {
+        border-top: 1px solid #333;
+    }
+
+    body.dark-mode .payment-info h3 {
+        color: #ffffff;
+    }
+
+    body.dark-mode .payment-info p,
+    body.dark-mode .payment-info ul li {
+        color: #cccccc;
+    }
+
+    /* Footer */
+    body.dark-mode .footer-col .info p {
+        color: white !important;
+    }
+
+    /* header start*/
+    .header{
+        position: relative;
+        background-color: #000000;
+        height: 105px;
+        padding: 20px 0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+    }
+
+    .header_container{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .name-project{
+        color: #FFFFFF;
+        font-weight: 500;
+    }
+
+    .bars{
+        display: none;
+    }
+
+    .nav-menu a .active{
+        color: #1a1a1a;
+        background-color: #FFFFFF;
+    }
+    .logo{
+        display: flex;
+        align-items: center;
+    }
+    .logo img{
+        height: 70px;
+        margin-left: 10px;
+        padding: 10px;
+    }
+
+    .nav-menu{
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .nav-menu > a.btn-icon {
+        color: #ffffff;
+        font-size: 0.95em;
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-menu > a.btn-icon:hover {
+        background-color: #7a0c0c;
+        box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+        color: #fff;
+    }
+
+    button{
+        background: red;
+        border: 2px;
+        border-radius: 20px;
+        color: #FFF;
+        text-transform: uppercase;
+        position: relative;
+        border: none;
+        height: 40px;
+        width: 120px;
+        transition: .3s linear;
+        cursor: pointer;
+    }
+    button:hover{
+        background: white;
+        color: #000;
+    }
+
+    .btn6:hover{
+        background-color: #FFFFFF;
+        box-shadow: 0 0 5px #FFFFFF, 0 0 25px #FFFFFF,
+        0 0 50px #FFFFFF, 0 0 100px #FFFFFF, 0 0 300px #FFFFFF;
+    }
+    .btn-icon {
+        color: #ffffff;
+        font-size: 0.95em;
+        padding: 8px 12px;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-icon:hover {
+        background-color: #a0021d;
+        box-shadow: 0 0 10px #a0021d;
+        color: #ffffff;
+    }
+
+    .btn-cart i {
+        color: #f4c542;
+        font-size: 16px;
+    }
+
+    .btn-user i {
+        color: #ffffff;
+        font-size: 16px;
+    }
+
+    /* Dark Mode */
+    body.dark-mode .btn-cart i {
+        color: #f4c542;
+    }
+
+    body.dark-mode .btn-icon:hover {
+        background-color: #555555;
+        box-shadow: 0 0 10px #555555;
+        color: #ffffff;
+    }
+    /*end header*/
+
+    /* Contenedor principal del carrito */
+    .cart-container {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 20px;
+        gap: 20px;
+        max-width: 1200px;
+        margin: auto;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .cart-items {
+        flex: 1 1 60%;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .cart-items h2 {
+        margin-bottom: 15px;
+        color: #e60023;
+    }
+
+    .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding: 15px 0;
+    }
+
+    .item-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quantity-controls .btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        font-size: 20px;
+        line-height: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .quantity-controls .cantidad {
+        min-width: 32px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .btn {
+        background-color: #e60023;
+        margin-top: 20px;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        background-color: #cc001f;
+    }
+
+    .btn-danger {
+        background-color: #ff4d4d;
+    }
+
+    .btn-danger:hover {
+        background-color: #cc0000;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn .back-to-shop {
+        padding: 6px 12px;
+        font-size: 14px;
+        display: inline-block;
+        width: auto;
+    }
+
+    .cart-summary {
+        flex: 1 1 35%;
+        background-color: #fff7f9;
+        padding: 20px;
+        border: 2px solid #e60023;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(230, 0, 35, 0.1);
+    }
+
+    .cart-summary h2 {
+        color: #e60023;
+        margin-bottom: 15px;
+    }
+
+    .totals p {
+        font-size: 16px;
+        margin: 5px 0;
+        font-weight: bold;
+    }
+
+    .warning-text {
+        font-size: 12px;
+        color: #666;
+        margin: 10px 0;
+        display: block;
+    }
+
+    .payment-info {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .payment-info h3 {
+        color: #e60023;
+        font-size: 16px;
+        margin-top: 15px;
+    }
+
+    .payment-info p {
+        font-size: 14px;
+        color: #444;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .payment-info ul {
+        list-style: disc inside;
+        font-size: 14px;
+        color: #333;
+        padding-left: 10px;
+        margin-top: 10px;
+    }
+
+    .payment-info ul li {
+        margin-bottom: 6px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .cart-container {
+            flex-direction: column;
+        }
+
+        .cart-summary,
+        .cart-items {
+            flex: 1 1 100%;
+        }
+    }
+    .cart-item:nth-child(even) {
+        background-color: #fdf1f2;
+    }
+
+    .cart-item:nth-child(odd) {
+        background-color: #fff;
+    }
+
+    .checkout-steps {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+        font-size: 14px;
+        color: #999;
+        background-color: #fff0f3;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    .step-indicator {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+
+    .step-indicator.active {
+        font-weight: bold;
+        color: #e60023;
+        border-bottom-color: #e60023;
+    }
+
+    .security-icons {
+        font-size: 14px;
+        color: #666;
+        margin: 10px 0 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .security-icons i {
+        color: #e60023;
+        margin-right: 4px;
+    }
+
+    footer{
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: auto;
+        background-color: #000000;
+        padding: 25px 0;
+    }
+
+    ul{
+        list-style: none;
+    }
+
+    .footer-col {
+        width: 25%;
+        padding: 0 15px;
+    }
+
+    .footer-col h4{
+        position: relative;
+        margin-bottom: 35px;
+        font-weight: 500;
+        font-size: 22px;
+        color: #FFFFFF;
+        text-transform: capitalize;
+    }
+
+    .footer-col h4:before{
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -6px;
+        background-color: #FFFFFF;
+        height: 2px;
+        width: 40px;
+    }
+
+    ul li:not(:last-child){
+        margin-bottom: 10px;
+    }
+
+    ul li a{
+        display: block;
+        font-size: 16px;
+        text-transform: capitalize;
+        color: white;
+        text-decoration: none;
+        transition: all 0.4s ease;
+    }
+
+    ul li a:hover{
+        color: white;
+        padding-left: 8px ;
+    }
+
+    .links a{
+        display: inline-block;
+        height: 40px;
+        width: 40px;
+        color: #f8f8f8;
+        background-color: rgba(40, 130, 214, 0.8);
+        margin: 0 8pc 8px 0;
+        text-align: center;
+        line-height: 40px;
+        border-radius: 50%;
+        transition: all 0.4s ease;
+    }
+
+    .links a:hover{
+        color: #000000;
+        background-color: #f8f8f8;
+    }
+
+    footer .sec-contact .info{
+        position: relative;
+    }
+
+    .footer-col .info li{
+        display: grid;
+        grid-template-columns: 30px 1fr;
+        margin-bottom: 16px;
+    }
+
+    .footer-col .info li span{
+        color: #FFFFFF;
+        font-size: 20px;
+    }
+    .footer-col p{
+        color: #FFFFFF;
+    }
+
+    .footer-col .info li a{
+        color: #FFFFFF;
+        text-decoration: none;
+    }
+
+    .img3{
+        position: absolute;
+        width: 32px;
+        margin-top: 0;
+        right: 59px;
+    }
+
+    .copyright{
+        width: 100%;
+        background: #000000;
+        padding: 10px 100px 20px;
+        text-align: center;
+        color: #f8f8f8;
+        border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    /* ========== ESTILOS PARA LOS PASOS (carrito-simple style) ========== */
+    /* Contenedor de cada paso */
+    .step-container {
+        display: none;
+        animation: fadeIn 0.5s;
+    }
+
+    .step-container.active {
+        display: block;
+    }
+
+    /* Estilos para el paso de pago (tomados del carrito-simple que funciona) */
+    .pago-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .mercado-pago-box {
+        text-align: center;
+        margin: 30px 0;
+        padding: 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn-mercadopago {
+        display: inline-block;
+        background: white;
+        color: #009ee3;
+        padding: 18px 50px;
+        font-size: 22px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s;
+        margin: 15px 0;
+    }
+
+    .btn-mercadopago:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+
+    .metodo-alternativo {
+        text-align: center;
+        margin: 30px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Estilos para el paso de confirmación */
+    .confirmacion-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .mensaje-confirmacion {
+        font-size: 1.2em;
+        margin: 20px 0;
+        padding: 20px;
+        background: #d4edda;
+        color: #155724;
+        border-radius: 8px;
+        border: 1px solid #c3e6cb;
+    }
+
+    .pedido-detalles {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+
+    .acciones-pedido {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        text-decoration: none;
+        color: #666;
+    }
+
+    .btn-back:hover {
+        color: #e60023;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Botón de volver a tienda */
+    .btn-volver-tienda {
+        background: #28a745;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-volver-tienda:hover {
+        background: #218838;
+    }
+
+    /* Botón secundario */
+    .btn-secundario {
+        background: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-secundario:hover {
+        background: #5a6268;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .checkout-steps {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .step-indicator {
+            margin: 5px 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        .acciones-pedido {
+            flex-direction: column;
+        }
+
+        .footer-col {
+            width: 50%;
+            margin-bottom: 30px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .footer-col {
+            width: 100%;
+        }
+    }
+</style>
+
+<header class="header">
+    <div class="header_container">
+        <div class="bars">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+        <div class="logo">
+            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
+            <h2 class="name-project"> MarketS</h2>
+        </div>
+
+        <nav class="nav-menu">
+            <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>
+
+            <!-- Botón usuario -->
+            <a th:if="${nombreUsuario != null}"
+               th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+               class="btn-icon btn-user">
+                <i class="fa-solid fa-user"></i>
+                <span th:text="${nombreUsuario}"></span>
+            </a>
+
+            <a href="#" class="btn-icon">
+                <i class="fa-solid fa-bell"></i>
+            </a>
+
+            <a th:href="@{/carrito}" class="btn-icon btn-cart" th:if="${nombreUsuario != null}">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span th:text="${nombreUsuario}"></span>
+            </a>
+
+            <!-- Mostrar solo si NO está logueado -->
+            <a th:if="${nombreUsuario == null}" th:href="@{/login}">
+                <button class="btn6"><strong>Iniciar Sesión</strong></button>
+            </a>
+            <a th:if="${nombreUsuario == null}" th:href="@{/register}">
+                <button class="btn6"><strong>Registrarse</strong></button>
+            </a>
+
+            <!-- Modo oscuro -->
+            <button id="toggle-dark-mode" class="modo-btn">
+                <i class="fa-solid fa-moon"></i>
+                <span class="modo-text">Modo Oscuro</span>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<body class="cart-container">
+    <!-- PASOS DEL CHECKOUT - Solo indicadores visuales -->
+    <div class="checkout-steps">
+        <div class="step-indicator" th:classappend="${currentStep == '1'} ? 'active' : ''">
+            1. Carrito
+        </div>
+        <div class="step-indicator" th:classappend="${currentStep == '2'} ? 'active' : ''">
+            2. Pago
+        </div>
+        <div class="step-indicator" th:classappend="${currentStep == '3'} ? 'active' : ''">
+            3. Confirmación
+        </div>
+    </div>
+
+    <!-- =========== PASO 1: CARRITO =========== -->
+    <div id="step-1" class="step-container" th:classappend="${currentStep == '1'} ? 'active' : ''">
+        <div class="cart-step-container">
+            <div class="cart-items">
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Volver
+                </a>
+
+                <h2>Tu Carrito</h2>
+
+                <!-- CARRITO VACÍO -->
+                <div th:if="${carrito == null or #lists.isEmpty(carrito)}">
+                    <p>El carrito está vacío.</p>
+                    <a th:href="@{'/productos/index'}" class="btn">Volver a la tienda</a>
+                </div>
+
+                <!-- CARRITO CON PRODUCTOS -->
+                <div th:if="${carrito != null and !#lists.isEmpty(carrito)}">
+                    <ul>
+                        <li class="cart-item" th:each="item : ${carrito}">
+                            <div class="item-details">
+                                <strong th:text="${item.nombre}"></strong>
+                                <p>Precio: $<span class="precio" th:text="${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}"></span></p>
+
+                                <!-- CONTROLES DE CANTIDAD - FUNCIONALIDAD COMPLETA -->
+                                <div class="quantity-controls">
+                                    <form th:action="@{'/carrito/decrementar/' + ${item.id}}" method="post">
+                                        <button type="submit" class="btn">-</button>
+                                    </form>
+                                    <span class="cantidad" th:text="${item.cantidad}"></span>
+                                    <form th:action="@{'/carrito/incrementar/' + ${item.id}}" method="post">
+                                        <button type="submit" class="btn">+</button>
+                                    </form>
+                                </div>
+
+                                <p>Total: $<span class="total-product"
+                                                 th:text="${#numbers.formatDecimal(item.precio * item.cantidad, 1, 'COMMA', 2, 'POINT')}"></span></p>
+
+                                <form th:action="@{/carrito/eliminar/{id}(id=${item.id})}" method="post">
+                                    <input type="hidden" name="_method" value="delete"/>
+                                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                                </form>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <a th:href="@{'/productos/index'}" class="btn">Continuar comprando</a>
+                </div>
+            </div>
+
+            <!-- RESUMEN DEL PEDIDO (solo si hay productos) -->
+            <div class="cart-summary" th:if="${carrito != null and !#lists.isEmpty(carrito)}">
+                <h2>Resumen del Pedido</h2>
+                <div class="totals">
+                    <p><strong>Subtotal:</strong> $<span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                    <p><strong>Descuento:</strong> -$<span th:text="${#numbers.formatDecimal(descuentoAplicado, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                    <p><strong>Total Final:</strong> $<span th:text="${#numbers.formatDecimal(totalFinal, 1, 'COMMA', 2, 'POINT')}"></span></p>
+                </div>
+
+                <div class="warning-text">
+                    <p>El precio puede variar hasta la confirmación del pago.</p>
+                    <p>No se te cobrará hasta que revises el pedido en la página siguiente.</p>
+                </div>
+
+                <!-- FORMULARIO PARA CREAR PEDIDO - ESTE ES EL QUE FUNCIONA -->
+                <form th:action="@{/pedido/crear}" method="post">
+                    <button type="submit" class="btn btn-success" id="btn-realizar-pedido">
+                        <i class="fa fa-shopping-cart"></i> Realizar Pedido
+                    </button>
+                </form>
+
+                <div class="security-icons">
+                    <i class="fas fa-lock"></i> Pago seguro
+                    <i class="fas fa-shield-alt"></i> Protección al comprador
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========== PASO 2: PAGO =========== -->
+    <div id="step-2" class="step-container" th:classappend="${currentStep == '2'} ? 'active' : ''">
+        <div class="pago-container">
+            <a th:href="@{/carrito}" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Carrito
+            </a>
+
+            <h2>Pago</h2>
+
+            <div th:if="${pedido}">
+                <div class="pedido-detalles">
+                    <h3>Pedido #<span th:text="${pedido.id}"></span></h3>
+                    <p><strong>Fecha:</strong> <span th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy HH:mm')}"></span></p>
+                    <p><strong>Estado:</strong>
+                        <span th:if="${pedido.estado == 'PENDIENTE'}" style="color: #ffc107;">
+                        <i class="fas fa-clock"></i> PENDIENTE
+                    </span>
+                        <span th:if="${pedido.estado == 'PAGADO'}" style="color: #28a745;">
+                        <i class="fas fa-check-circle"></i> PAGADO
+                    </span>
+                        <span th:if="${pedido.estado == 'PROCESANDO'}" style="color: #17a2b8;">
+                        <i class="fas fa-sync-alt"></i> PROCESANDO
+                    </span>
+                    </p>
+                    <p><strong>Total a pagar:</strong>
+                        <span style="font-size: 24px; color: #e60023; font-weight: bold;">
+                        $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></span>
+                    </span>
+                    </p>
+                </div>
+
+                <!-- SECCIÓN MERCADO PAGO -->
+                <div class="mercado-pago-box">
+                    <h2><i class="fas fa-credit-card"></i> Pagar con MercadoPago</h2>
+
+                    <div th:if="${paymentUrl}">
+                        <a th:href="${paymentUrl}" target="_blank" class ="btn-mercadopago">
+                            <i class="fas fa-lock"></i> PAGAR AHORA
+                        </a>
+                        <p>Serás redirigido a MercadoPago para completar tu compra de forma segura</p>
+                    </div>
+
+                    <div th:if="${errorMercadoPago}">
+                        <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; color: #333;">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Error con MercadoPago</h4>
+                            <p th:text="${errorMercadoPago}"></p>
+                            <button onclick="window.location.reload()" class="btn">
+                                <i class="fas fa-redo"></i> Reintentar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 30px; margin-top: 20px;">
+                        <div><i class="fas fa-shield-alt"></i><p>Seguro</p></div>
+                        <div><i class="fas fa-lock"></i><p>Encriptado</p></div>
+                        <div><i class="fas fa-credit-card"></i><p>Varios métodos</p></div>
+                    </div>
+                </div>
+
+                <!-- =========== NUEVA SECCIÓN: CONFIRMACIÓN MANUAL =========== -->
+                <div class="confirmacion-manual"
+                     style="margin: 40px 0; padding: 25px; background: #f8f9fa; border-radius: 12px; border-left: 5px solid #28a745;">
+                    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                        <div style="background: #28a745; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                            <i class="fas fa-hand-pointer"></i>
+                        </div>
+                        <div>
+                            <h4 style="color: #333; margin: 0;">Confirmación Manual</h4>
+                            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">
+                                ¿Ya pagaste con MercadoPago? Confirma aquí para completar tu pedido
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="padding: 15px; background: white; border-radius: 8px;">
+                            <h5 style="color: #333; margin-bottom: 10px;">
+                                <i class="fas fa-info-circle"></i> Estado actual
+                            </h5>
+                            <p style="margin: 8px 0;">
+                                <strong>Pedido:</strong> #<span th:text="${pedido.id}"></span>
+                            </p>
+                            <p style="margin: 8px 0;">
+                                <strong>Estado:</strong>
+                                <span th:text="${pedido.estado}"
+                                      th:class="${pedido.estado == 'PAGADO'} ? 'badge-success' : 'badge-warning'"></span>
+                            </p>
+                            <p style="margin: 8px 0;">
+                                <strong>Stock afectado:</strong>
+                                <span th:if="${pedido.estado != 'PAGADO'}" style="color: #dc3545;">
+                                <i class="fas fa-times-circle"></i> NO DESCONTADO
+                            </span>
+                                <span th:if="${pedido.estado == 'PAGADO'}" style="color: #28a745;">
+                                <i class="fas fa-check-circle"></i> DESCONTADO
+                            </span>
+                            </p>
+                        </div>
+
+                        <div style="padding: 15px; background: white; border-radius: 8px;">
+                            <h5 style="color: #333; margin-bottom: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> Después de pagar
+                            </h5>
+                            <ul style="color: #666; font-size: 14px; padding-left: 20px;">
+                                <li>Si ya pagaste en la ventana de MercadoPago</li>
+                                <li>Haz clic en "Confirmar Pago" para finalizar</li>
+                                <li>El stock se reducirá automáticamente</li>
+                                <li>Serás redirigido a la confirmación</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN DE CONFIRMACIÓN -->
+                    <div style="text-align: center; margin-top: 20px;">
+                        <!-- Opción 1: Formulario directo (recomendado) -->
+                        <form th:action="@{'/pedido/confirmar-pago/' + ${pedido.id}}" method="post"
+                              style="display: inline-block; margin: 0 10px;">
+                            <input type="hidden" name="origen" value="manual">
+                            <button type="submit" class="btn"
+                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                       padding: 15px 40px;
+                                       font-size: 18px;
+                                       min-width: 250px;">
+                                <i class="fas fa-check-circle"></i> CONFIRMAR PAGO
+                            </button>
+                        </form>
+
+                        <!-- Opción 2: Botón que usa el callback existente -->
+                        <a th:href="@{'/mercadopago/exito?status=approved&payment_id=TEST' + ${pedido.id} + '&external_reference=' + ${pedido.id}}"
+                           class="btn"
+                           style="background: #17a2b8;
+                              padding: 15px 40px;
+                              font-size: 18px;
+                              min-width: 250px;
+                              display: inline-block;
+                              margin: 0 10px;">
+                            <i class="fas fa-sync-alt"></i> SIMULAR PAGO (Test)
+                        </a>
+                    </div>
+
+                    <p style="color: #666; margin-top: 15px; font-size: 13px; text-align: center;">
+                        <i class="fas fa-info-circle"></i>
+                        Al confirmar, el pedido se marcará como <strong>PAGADO</strong>, se reducirá el stock y se mostrará la confirmación.
+                    </p>
+                </div>
+
+                <div class="acciones-pedido">
+                    <a th:href="@{/productos/index}" class="btn-volver-tienda">
+                        <i class="fas fa-store"></i> Seguir Comprando
+                    </a>
+                    <a th:href="@{/carrito}" class="btn-secundario">
+                        <i class="fas fa-shopping-cart"></i> Volver al Carrito
+                    </a>
+                </div>
+            </div>
+
+            <div th:unless="${pedido}">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-shopping-cart fa-3x" style="color: #ccc;"></i>
+                    <h3>No hay pedido para mostrar</h3>
+                    <p>Primero debes crear un pedido desde el carrito</p>
+                    <a th:href="@{/carrito}" class="btn">
+                        Volver al Carrito
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========== PASO 3: CONFIRMACIÓN =========== -->
+    <div id="step-3" class="step-container" th:classappend="${currentStep == '3'} ? 'active' : ''">
+        <div class="confirmacion-container">
+            <h2><i class="fas fa-check-circle" style="color: #28a745;"></i> ¡Compra Exitosa!</h2>
+
+            <div class="mensaje-confirmacion">
+                <h3>¡Gracias por tu compra!</h3>
+                <p>Tu pedido ha sido procesado correctamente.</p>
+                <p th:if="${pedido}">Número de pedido: <strong>#<span th:text="${pedido.id}"></span></strong></p>
+                <p>Recibirás un correo con los detalles de tu compra.</p>
+            </div>
+
+            <div class="pedido-detalles" th:if="${pedido}">
+                <h4>Detalles del Pedido:</h4>
+                <p><strong>Número de pedido:</strong> <span th:text="${pedido.id}"></span></p>
+                <p><strong>Fecha:</strong> <span th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy HH:mm')}"></span></p>
+                <p><strong>Estado:</strong> <span style="color: #28a745;" th:text="${pedido.estado}"></span></p>
+                <p><strong>Total pagado:</strong> $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></span></p>
+            </div>
+
+            <div class="acciones-pedido">
+                <a th:href="@{/productos/index}" class="btn-volver-tienda">
+                    <i class="fas fa-store"></i> Volver a la Tienda
+                </a>
+                <a th:href="@{/cliente/pedidos}" class="btn-secundario">
+                    <i class="fas fa-clipboard-list"></i> Ver Mis Pedidos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJES DEL SISTEMA -->
+    <!-- Mensajes de error -->
+    <div th:if="${error}" style="background: #ffe6e6; border: 1px solid #ff4d4d; padding: 10px; margin: 10px 0; border-radius: 5px; color: #cc0000;">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
+</body>

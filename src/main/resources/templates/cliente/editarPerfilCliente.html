@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Editar Perfil - MarketS</title>
-  <link rel="icon" href="/images/icon.jpg">
+  <link rel="icon" href="/img/icon.jpg">
   <link rel="stylesheet" th:href="@{/CSS/editarPerfilCliente.css}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -40,32 +40,36 @@
     <h2>Actualizar Información</h2>
 
     <form th:action="@{/cliente/editar-perfil}" method="post" th:object="${clienteDto}">
-      <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+        <input type="hidden"
+               th:if="${_csrf != null}"
+               name="_csrf"
+               th:value="${_csrf.token}" />
 
-      <div class="input-group">
+
+        <div class="input-group">
         <div class="input-field">
           <i class="fa-solid fa-user"></i>
           <input type="text" placeholder="Nombre Completo" th:field="*{username}" required>
         </div>
-        <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error-message"></div>
+        <div th:if="${#fields.hasErrors('username')}" th:text="${#fields.errors('username')[0]}" class="error-message"></div>
 
         <div class="input-field">
           <i class="fa-solid fa-envelope"></i>
           <input type="email" placeholder="Correo Electrónico" th:field="*{email}" required>
         </div>
-        <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></div>
+        <div th:if="${#fields.hasErrors('email')}" th:text="${#fields.errors('email')[0]}" class="error-message"></div>
 
         <div class="input-field">
           <i class="fa-solid fa-phone"></i>
           <input type="tel" placeholder="Teléfono" th:field="*{phone}" required>
         </div>
-        <div th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="error-message"></div>
+        <div th:if="${#fields.hasErrors('phone')}" th:text="${#fields.errors('phone')[0]}" class="error-message"></div>
 
         <div class="input-field">
           <i class="fa-solid fa-map-marker-alt"></i>
           <input type="text" placeholder="Dirección" th:field="*{address}" required>
         </div>
-        <div th:if="${#fields.hasErrors('address')}" th:errors="*{address}" class="error-message"></div>
+        <div th:if="${#fields.hasErrors('address')}" th:text="${#fields.errors('address')[0]}" class="error-message"></div>
 
         <div class="input-field">
           <i class="fa-solid fa-eye toggle-password" onclick="togglePassword('currentPassword', this)"></i>

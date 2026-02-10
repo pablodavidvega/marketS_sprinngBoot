@@ -15,7 +15,7 @@ public interface UserService {
     Optional<User> buscarPorNombre(String username);
 
     Optional<User> buscarPorEmail(String email);
-
+    Optional<User> buscarPorToken(String token);
     List<User> buscarPorDireccion(String address);
 
     List<User> listarPorRol(String rolnombre);

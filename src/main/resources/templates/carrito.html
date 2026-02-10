@@ -1,837 +1,708 @@
-<!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrito de Compras - MarketS</title>
-    <script th:src="@{/JS/carrito.js}" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-</head>
-<body>
-<style>
-    *{
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        line-height: 1.2;
-    }
-    body {
-        margin: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #fff;
-        color: #333;
-    }
-
-    .modo-btn {
-        background-color: #fff;
-        color: #000 !important;
-        padding: 12px 13px;
-        border-radius: 10px;
-        border: none;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    }
-
-    .modo-btn .modo-text {
-        color: #000 ;
-    }
-
-    .modo-btn i {
-        font-size: 15px;
-        color: #f4c542;
-    }
-
-    body.dark-mode {
-        background-color: #121212;
-        color: white;
-    }
-
-
-    body.dark-mode .modo-btn {
-        background-color: #222;
-        color: #fff ;
-    }
-
-    body.dark-mode .modo-btn .modo-text {
-        color: #fff ;
-    }
-
-    /* 🌙 Dark Mode Carrito */
-
-    body.dark-mode .cart-container {
-        background-color: #121212;
-        color: #f1f1f1;
-    }
-
-    body.dark-mode .cart-items {
-        background: #1e1e1e;
-        color: #f1f1f1;
-        box-shadow: none;
-    }
-
-    body.dark-mode .cart-items h2 {
-        color: #ffffff;
-    }
-
-    body.dark-mode .cart-item {
-        background-color: #1e1e1e;
-        border-bottom: 1px solid #333;
-    }
-
-    body.dark-mode .cart-item:nth-child(even) {
-        background-color: #252525;
-    }
-
-    body.dark-mode .item-details p,
-    body.dark-mode .item-details strong,
-    body.dark-mode .cart-item .precio,
-    body.dark-mode .cart-item .total-product {
-        color: #f1f1f1;
-    }
-
-    body.dark-mode .quantity-controls .cantidad {
-        color: #ffffff;
-    }
-
-    body.dark-mode .btn {
-        background: #ff0000;
-        color: #ffffff;
-        border: 1px solid #555;
-    }
-
-    body.dark-mode .btn:hover {
-        background: #444;
-    }
-
-    body.dark-mode .btn-danger {
-        background: #c0392b;
-        border-color: #c0392b;
-        color: #fff;
-    }
-
-    body.dark-mode .btn-danger:hover {
-        background: #e74c3c;
-    }
-
-    body.dark-mode .btn-success {
-        background: #27ae60;
-        border-color: #27ae60;
-        color: #fff;
-    }
-
-    body.dark-mode .btn-success:hover {
-        background: #2ecc71;
-    }
-
-    body.dark-mode .btn.back-to-shop {
-        background: #333;
-        color: #fff;
-        border: 1px solid #555;
-    }
-
-    body.dark-mode .checkout-steps {
-        background-color: #222;
-        color: #aaa;
-    }
-
-    body.dark-mode .checkout-steps .step.active {
-        color: #ffffff;
-    }
-
-    body.dark-mode .cart-summary {
-        background-color: #1e1e1e;
-        color: #f1f1f1;
-        border-color: #333;
-        box-shadow: none;
-    }
-
-    body.dark-mode .cart-summary h2 {
-        color: #ffffff;
-    }
-
-    body.dark-mode .totals p {
-        color: #ffffff;
-    }
-
-    body.dark-mode .warning-text {
-        color: #bbbbbb;
-    }
-
-    body.dark-mode .security-icons {
-        color: #bbbbbb;
-    }
-
-    body.dark-mode .security-icons i {
-        color: #27ae60;
-    }
-
-    body.dark-mode .payment-info {
-        border-top: 1px solid #333;
-    }
-
-    body.dark-mode .payment-info h3 {
-        color: #ffffff;
-    }
-
-    body.dark-mode .payment-info p,
-    body.dark-mode .payment-info ul li {
-        color: #cccccc;
-    }
-
-
-    /* Footer */
-    body.dark-mode .footer-col .info p {
-        color: white !important;
-    }
-
-    /* header start*/
-
-    .header{
-        position: relative;
-        background-color: #000000;
-        height: 105px;
-        padding: 20px 0;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.06);
-    }
-
-    .header_container{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .name-project{
-        color: #FFFFFF;
-        font-weight: 500;
-    }
-
-    .bars{
-        display: none;
-    }
-
-    .nav-menu a .active{
-        color: #1a1a1a;
-        background-color: #FFFFFF;
-    }
-    .logo{
-        display: flex;
-        align-items: center;
-    }
-    .logo img{
-        height: 70px;
-        margin-left: 10px;
-        padding: 10px;
-    }
-
-    .nav-menu{
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        gap: 10px;
-    }
-
-    .nav-menu > a.btn-icon {
-        color: #ffffff;
-        font-size: 0.95em;
-        padding: 8px 12px;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-    }
-
-    .nav-menu > a.btn-icon:hover {
-        background-color: #7a0c0c;
-        box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
-        color: #fff;
-    }
-
-    button{
-        background: red;
-        border: 2px;
-        border-radius: 20px;
-        color: #FFF;
-        text-transform: uppercase;
-        position: relative;
-        border: none;
-        height: 40px;
-        width: 120px;
-        transition: .3s linear;
-        cursor: pointer;
-    }
-    button:hover{
-        background: white;
-        color: #000;
-    }
-
-    .btn6:hover{
-        background-color: #FFFFFF;
-        box-shadow: 0 0 5px #FFFFFF, 0 0 25px #FFFFFF,
-        0 0 50px #FFFFFF, 0 0 100px #FFFFFF, 0 0 300px #FFFFFF;
-    }
-    .btn-icon {
-        color: #ffffff;
-        font-size: 0.95em;
-        padding: 8px 12px;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-icon:hover {
-        background-color: #a0021d;
-        box-shadow: 0 0 10px #a0021d;
-        color: #ffffff;
-    }
-
-    .btn-cart i {
-        color: #f4c542; /* amarillo suave para el carrito */
-        font-size: 16px;
-    }
-
-    .btn-user i {
-        color: #ffffff;
-        font-size: 16px;
-    }
-
-    /* Dark Mode */
-    body.dark-mode .btn-cart i {
-        color: #f4c542;
-    }
-
-    body.dark-mode .btn-icon:hover {
-        background-color: #555555;
-        box-shadow: 0 0 10px #555555;
-        color: #ffffff;
-    }
-    /*end header*/
-
-    /* Contenedor principal del carrito */
-    .cart-container {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 20px;
-        gap: 20px;
-        max-width: 1200px;
-        margin: auto;
-    }
-
-    .cart-items {
-        flex: 1 1 60%;
-        background: #f9f9f9;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .cart-items h2 {
-        margin-bottom: 15px;
-        color: #e60023;
-    }
-
-    .cart-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #ddd;
-        padding: 15px 0;
-    }
-
-    .item-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .quantity-controls .btn {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        font-size: 20px;
-        line-height: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .quantity-controls .cantidad {
-        min-width: 32px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 16px;
-    }
-
-    .btn {
-        background-color: #e60023;
-        margin-top: 20px;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        cursor: pointer;
-        border-radius: 6px;
-        font-weight: bold;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .btn:hover {
-        background-color: #cc001f;
-    }
-
-    .btn-danger {
-        background-color: #ff4d4d;
-    }
-
-    .btn-danger:hover {
-        background-color: #cc0000;
-    }
-
-    .btn-success {
-        background-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-    }
-
-    .btn .back-to-shop {
-        padding: 6px 12px;
-        font-size: 14px;
-        display: inline-block;
-        width: auto;
-    }
-
-    .cart-summary {
-        flex: 1 1 35%;
-        background-color: #fff7f9;
-        padding: 20px;
-        border: 2px solid #e60023;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(230, 0, 35, 0.1);
-    }
-
-    .cart-summary h2 {
-        color: #e60023;
-        margin-bottom: 15px;
-    }
-
-    .totals p {
-        font-size: 16px;
-        margin: 5px 0;
-        font-weight: bold;
-    }
-
-    .warning-text {
-        font-size: 12px;
-        color: #666;
-        margin: 10px 0;
-        display: block;
-    }
-
-    .payment-info {
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid #ddd;
-    }
-
-    .payment-info h3 {
-        color: #e60023;
-        font-size: 16px;
-        margin-top: 15px;
-    }
-
-    .payment-info p {
-        font-size: 14px;
-        color: #444;
-        line-height: 1.5;
-        margin-bottom: 10px;
-    }
-
-    .payment-info ul {
-        list-style: disc inside;
-        font-size: 14px;
-        color: #333;
-        padding-left: 10px;
-        margin-top: 10px;
-    }
-
-    .payment-info ul li {
-        margin-bottom: 6px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .cart-container {
-            flex-direction: column;
-        }
-
-        .cart-summary,
-        .cart-items {
-            flex: 1 1 100%;
-        }
-    }
-    .cart-item:nth-child(even) {
-        background-color: #fdf1f2;
-    }
-
-    .cart-item:nth-child(odd) {
-        background-color: #fff;
-    }
-
-    .checkout-steps {
-        display: flex;
-        justify-content: space-between;
-        margin: 20px 0;
-        font-size: 14px;
-        color: #999;
-        background-color: #fff0f3;
-        padding: 10px;
-        border-radius: 8px;
-    }
-
-    .step {
-        flex: 1;
-        text-align: center;
-    }
-
-    .step.active {
-        font-weight: bold;
-        color: #e60023;
-    }
-
-    .security-icons {
-        font-size: 14px;
-        color: #666;
-        margin: 10px 0 20px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .security-icons i {
-        color: #e60023;
-        margin-right: 4px;
-    }
-
-
-    footer{
-        display: flex;
-        flex-wrap: wrap;
-        margin-top: auto;
-        background-color: #000000;
-        padding: 25px 0;
-
-    }
-
-    ul{
-        list-style: none;
-    }
-
-    .footer-col {
-        width: 25%;
-        padding: 0 15px;
-    }
-
-    .footer-col h4{
-        position: relative;
-        margin-bottom: 35px;
-        font-weight: 500;
-        font-size: 22px;
-        color: #FFFFFF;
-        text-transform: capitalize;
-    }
-
-    .footer-col h4:before{
-        content: "";
-        position: absolute;
-        left: 0;
-        bottom: -6px;
-        background-color: #FFFFFF;
-        height: 2px;
-        width: 40px;
-    }
-
-    ul li:not(:last-child){
-        margin-bottom: 10px;
-    }
-
-    ul li a{
-        display: block;
-        font-size: 16px;
-        text-transform: capitalize;
-        color: white;
-        text-decoration: none;
-        transition: all 0.4s ease;
-    }
-
-    ul li a:hover{
-        color: white;
-        padding-left: 8px ;
-    }
-
-    .links a{
-        display: inline-block;
-        height: 40px;
-        width: 40px;
-        color: #f8f8f8;
-        background-color: rgba(40, 130, 214, 0.8);
-        margin: 0 8pc 8px 0;
-        text-align: center;
-        line-height: 40px;
-        border-radius: 50%;
-        transition: all 0.4s ease;
-    }
-
-    .links a:hover{
-        color: #000000;
-        background-color: #f8f8f8;
-    }
-
-    footer .sec-contact .info{
-        position: relative;
-    }
-
-    .footer-col .info li{
-        display: grid;
-        grid-template-columns: 30px 1fr;
-        margin-bottom: 16px;
-    }
-
-    .footer-col .info li span{
-        color: #FFFFFF;
-        font-size: 20px;
-    }
-    .footer-col p{
-        color: #FFFFFF;
-    }
-
-    .footer-col .info li a{
-        color: #FFFFFF;
-        text-decoration: none;
-    }
-
-    .img3{
-        position: absolute;
-        width: 32px;
-        margin-top: 0;
-        right: 59px;
-    }
-
-    .copyright{
-        width: 100%;
-        background: #000000;
-        padding: 10px 100px 20px;
-        text-align: center;
-        color: #f8f8f8;
-        border: 1px solid rgba(0,0,0,0.15);
-    }
-</style>
-<header class="header">
-    <div class="header_container">
-        <div class="bars">
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-        </div>
-        <div class="logo">
-            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
-            <h2 class="name-project"> MarketS</h2>
-        </div>
-
-        <nav class="nav-menu">
-            <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>
-
-            <!-- Botón usuario -->
-            <a th:if="${nombreUsuario != null}"
-               th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
-               class="btn-icon btn-user">
-                <i class="fa-solid fa-user"></i>
-                <span th:text="${nombreUsuario}"></span>
-            </a>
-
-            <a href="#" class="btn-icon">
-                <i class="fa-solid fa-bell"></i>
-            </a>
-
-            <a th:href="@{/carrito}" class="btn-icon btn-cart" th:if="${nombreUsuario != null}">
-                <i class="fa-solid fa-cart-shopping"></i>
-                <span th:text=" ${nombreUsuario} "></span>
-            </a>
-
-
-            <!-- Mostrar solo si NO está logueado -->
-            <a th:if="${nombreUsuario == null}" th:href="@{/login}">
-                <button class="btn6"><strong>Iniciar Sesión</strong></button>
-            </a>
-            <a th:if="${nombreUsuario == null}" th:href="@{/register}">
-                <button class="btn6"><strong>Registrarse</strong></button>
-            </a>
-
-            <!-- Modo oscuro -->
-            <button id="toggle-dark-mode" class="modo-btn">
-                <i class="fa-solid fa-moon"></i>
-                <span class="modo-text">Modo Oscuro</span>
-            </button>
-        </nav>
-    </div>
-</header>
-
-
-<div class="cart-container">
-    <div class="cart-items">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-back">
-            <i class="fa-solid fa-arrow-left"></i> Volver
-        </a>
-
-        <div class="checkout-steps">
-            <span class="step active">1. Carrito</span>
-            <span class="step">2. Pago</span>
-            <span class="step">3. Confirmación</span>
-        </div>
-
-        <h2>Tu Carrito</h2>
-        <ul>
-            <li th:if="${carrito == null or #lists.isEmpty(carrito)}">
-                <p>El carrito está vacío.</p>
-            </li>
-
-            <li class="cart-item" th:each="item : ${carrito}">
-                <div class="item-details">
-                    <strong th:text="${item.nombre}"></strong>
-                    <p>Precio: $<span class="precio" th:data-id="${item.id}"
-                                      th:text="${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}"></span></p>
-
-
-                    <div class="quantity-controls">
-                        <form th:action="@{'/carrito/decrementar/' + ${item.id}}" method="post" style="display:inline;">
-                            <button type="submit" class="btn decrease">-</button>
-                        </form>
-                        <span class="cantidad" th:data-id="${item.id}"
-                              th:text="${item.cantidad}"></span>
-                        <form th:action="@{'/carrito/incrementar/' + ${item.id}}" method="post" style="display:inline;">
-                            <button type="submit" class="btn increase">+</button>
-                        </form>
-
-                    </div>
-
-                    <p>Total: $<span class="total-product" th:data-id="${item.id}"
-                                     th:text="${#numbers.formatDecimal(item.precio * item.cantidad, 1, 'COMMA', 2, 'POINT')}"></span></p>
-
-
-
-                    <form th:action="@{/carrito/eliminar/{id}(id=${item.id})}" method="post">
-                        <input type="hidden" name="_method" value="delete"/>
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
-                </div>
-            </li>
-        </ul>
-
-        <a th:href="@{'/productos/index'}" class="btn">Volver a la tienda</a>
-    </div>
-
-    <div class="cart-summary">
-        <h2>Resumen del Pedido</h2>
-        <div class="totals">
-            <p><strong>Total artículos:</strong> $<span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></p>
-            <p><strong>Descuento:</strong> -$<span th:text="${#numbers.formatDecimal(descuentoAplicado, 1, 'COMMA', 2, 'POINT')}"></span></p>
-            <p><strong>Total:</strong> $<span th:text="${#numbers.formatDecimal(totalFinal, 1, 'COMMA', 2, 'POINT')}"></span></p>
-        </div>
-
-        <span class="warning-text">Por favor consulte el monto de su pago real final.</span>
-        <span class="warning-text">La disponibilidad y el precio de los artículos no están garantizados hasta que se finalice el pago.</span>
-        <span class="warning-text">No se te cobrará hasta que revises este pedido en la página siguiente</span>
-
-        <button id="place-order" class="btn btn-success">Realizar Pedido</button>
-
-        <div class="security-icons">
-            <i class="fas fa-lock"></i> Pago seguro &nbsp; | &nbsp;
-            <i class="fas fa-shield-alt"></i> Protección al comprador
-        </div>
-
-        <div class="payment-info">
-            <h3>Opciones de pago seguro</h3>
-            <p>MarketS se compromete a proteger su información de pago. Seguimos los estándares PCI DSS, utilizamos un cifrado sólido y realizamos revisiones periódicas del sistema para proteger tu privacidad.</p>
-
-            <ul>
-                <li>Métodos de pago verificados</li>
-                <li>Certificación de seguridad activa</li>
-            </ul>
-
-            <h3>Privacidad segura</h3>
-            <p>Proteger tu privacidad es muy importante para nosotros. Tu información se mantendrá segura y libre de riesgos.</p>
-
-            <h3>Protección al comprador</h3>
-            <ul>
-                <li>Entrega garantizada</li>
-                <li>$4.000 de crédito por retraso</li>
-                <li>Reembolso por 15 días sin actualizaciones</li>
-                <li>Devolución si el artículo está dañado</li>
-                <li>Reembolso por 60 días sin entrega</li>
-            </ul>
-        </div>
-    </div>
-</div>
-<footer>
-    <div class="footer-col">
-        <h4>Nuestras Redes</h4>
-        <div class="links">
-            <a href="#"><i class="fa-brands fa-facebook"></i></a>
-            <a href="#"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-        </div>
-    </div>
-    <div class="footer-col">
-        <h4> Acerca De MarketS</h4>
-        <ul>
-            <li> <a href="#">Sobre Nosotros</a></li>
-            <li> <a href="#">Nuestras Políticas</a></li>
-            <li> <a href="#">Términos De Servicio</a></li>
-            <li> <a href="#">Políticas De Privacidad</a></li>
-            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>
-        </ul>
-    </div>
-    <div class="footer-col">
-        <h4> Contacto </h4>
-        <ul class="info">
-            <li>
-                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>
-            </li>
-            <li>
-                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>
-            </li>
-        </ul>
-    </div>
-    <div class="footer-col">
-        <h4> Métodos De Pago</h4>
-        <ul>
-            <img th:src="@{/img/pay.png}" alt="">
-            <img class="img3" th:src="@{/img/Nequi.webp}" alt="">
-        </ul>
-    </div>
-</footer>
-<div class="copyright">
-    <p>©2024 MarketS. ALL Rights Reserved.</p>
-</div>
-<script th:src="@{/JS/cambioColor.js}" defer></script>
-
-</body>
-</html>
+<!--<!DOCTYPE html>-->
+<!--<html lang="es" xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Carrito de Compras - MarketS</title>-->
+<!--    <link rel="icon" href="data:;base64,iVBORw0KGgo=">-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />-->
+<!--</head>-->
+<!--<body>-->
+<!--<style>-->
+<!--    /* TODOS TUS ESTILOS ACTUALES SE MANTIENEN */-->
+<!--    *{-->
+<!--        margin: 0;-->
+<!--        padding: 0;-->
+<!--        box-sizing: border-box;-->
+<!--        line-height: 1.2;-->
+<!--    }-->
+<!--    body {-->
+<!--        margin: 0;-->
+<!--        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;-->
+<!--        background-color: #fff;-->
+<!--        color: #333;-->
+<!--    }-->
+
+<!--    /* ... [MANTÉN TODOS TUS ESTILOS EXACTAMENTE IGUAL] ... */-->
+
+<!--    /* ESTILOS ESPECÍFICOS PARA EL NUEVO SISTEMA */-->
+<!--    .checkout-steps {-->
+<!--        display: flex;-->
+<!--        justify-content: center;-->
+<!--        margin-bottom: 30px;-->
+<!--        padding-bottom: 10px;-->
+<!--        border-bottom: 2px solid #eee;-->
+<!--    }-->
+
+<!--    .step-indicator {-->
+<!--        padding: 12px 25px;-->
+<!--        margin: 0 5px;-->
+<!--        color: #666;-->
+<!--        border-bottom: 3px solid transparent;-->
+<!--        font-weight: 500;-->
+<!--        font-size: 16px;-->
+<!--        position: relative;-->
+<!--    }-->
+
+<!--    .step-indicator.active {-->
+<!--        color: #e60023;-->
+<!--        border-bottom-color: #e60023;-->
+<!--        font-weight: bold;-->
+<!--    }-->
+
+<!--    .step-indicator .step-number {-->
+<!--        display: inline-block;-->
+<!--        width: 24px;-->
+<!--        height: 24px;-->
+<!--        line-height: 24px;-->
+<!--        text-align: center;-->
+<!--        background: #ddd;-->
+<!--        color: #666;-->
+<!--        border-radius: 50%;-->
+<!--        margin-right: 8px;-->
+<!--        font-size: 14px;-->
+<!--    }-->
+
+<!--    .step-indicator.active .step-number {-->
+<!--        background: #e60023;-->
+<!--        color: white;-->
+<!--    }-->
+
+<!--    /* Paso 1: Carrito (siempre visible cuando currentStep == 1) */-->
+<!--    .cart-step-container {-->
+<!--        display: flex;-->
+<!--        flex-wrap: wrap;-->
+<!--        gap: 20px;-->
+<!--    }-->
+
+<!--    /* Paso 2: Pago (solo visible cuando currentStep == 2) */-->
+<!--    .pago-step-container {-->
+<!--        width: 100%;-->
+<!--        max-width: 900px;-->
+<!--        margin: 0 auto;-->
+<!--        padding: 20px;-->
+<!--    }-->
+
+<!--    /* Paso 3: Confirmación (solo visible cuando currentStep == 3) */-->
+<!--    .confirmacion-step-container {-->
+<!--        width: 100%;-->
+<!--        max-width: 800px;-->
+<!--        margin: 0 auto;-->
+<!--        padding: 30px;-->
+<!--        text-align: center;-->
+<!--    }-->
+
+<!--    .mercado-pago-section {-->
+<!--        text-align: center;-->
+<!--        margin: 30px 0;-->
+<!--        padding: 30px;-->
+<!--        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-->
+<!--        border-radius: 15px;-->
+<!--        color: white;-->
+<!--        box-shadow: 0 5px 15px rgba(0,0,0,0.1);-->
+<!--    }-->
+
+<!--    .btn-mercadopago {-->
+<!--        display: inline-block;-->
+<!--        background: white;-->
+<!--        color: #009ee3;-->
+<!--        padding: 18px 50px;-->
+<!--        font-size: 22px;-->
+<!--        border-radius: 10px;-->
+<!--        text-decoration: none;-->
+<!--        font-weight: bold;-->
+<!--        box-shadow: 0 4px 15px rgba(0,0,0,0.2);-->
+<!--        transition: all 0.3s;-->
+<!--        margin: 15px 0;-->
+<!--    }-->
+
+<!--    .btn-mercadopago:hover {-->
+<!--        transform: translateY(-2px);-->
+<!--        box-shadow: 0 6px 20px rgba(0,0,0,0.25);-->
+<!--    }-->
+
+<!--    .metodo-alternativo {-->
+<!--        text-align: center;-->
+<!--        margin: 30px 0;-->
+<!--        padding: 20px;-->
+<!--        background: #f8f9fa;-->
+<!--        border-radius: 10px;-->
+<!--        border: 1px solid #dee2e6;-->
+<!--    }-->
+
+<!--    .mensaje-confirmacion {-->
+<!--        font-size: 1.2em;-->
+<!--        margin: 20px 0;-->
+<!--        padding: 20px;-->
+<!--        background: #d4edda;-->
+<!--        color: #155724;-->
+<!--        border-radius: 8px;-->
+<!--        border: 1px solid #c3e6cb;-->
+<!--    }-->
+
+<!--    .pedido-detalles {-->
+<!--        background: #f8f9fa;-->
+<!--        padding: 20px;-->
+<!--        border-radius: 10px;-->
+<!--        margin: 20px 0;-->
+<!--        text-align: left;-->
+<!--    }-->
+
+<!--    .acciones-pedido {-->
+<!--        display: flex;-->
+<!--        gap: 15px;-->
+<!--        justify-content: center;-->
+<!--        margin-top: 30px;-->
+<!--        flex-wrap: wrap;-->
+<!--    }-->
+
+<!--    .btn-back {-->
+<!--        display: inline-flex;-->
+<!--        align-items: center;-->
+<!--        gap: 8px;-->
+<!--        margin-bottom: 20px;-->
+<!--        text-decoration: none;-->
+<!--        color: #666;-->
+<!--    }-->
+
+<!--    .btn-back:hover {-->
+<!--        color: #e60023;-->
+<!--    }-->
+
+<!--    @keyframes fadeIn {-->
+<!--        from { opacity: 0; transform: translateY(10px); }-->
+<!--        to { opacity: 1; transform: translateY(0); }-->
+<!--    }-->
+
+<!--    /* RESPONSIVE */-->
+<!--    @media (max-width: 768px) {-->
+<!--        .checkout-steps {-->
+<!--            flex-direction: column;-->
+<!--            align-items: center;-->
+<!--        }-->
+
+<!--        .step-indicator {-->
+<!--            margin: 5px 0;-->
+<!--            width: 100%;-->
+<!--            text-align: center;-->
+<!--        }-->
+
+<!--        .cart-step-container {-->
+<!--            flex-direction: column;-->
+<!--        }-->
+
+<!--        .acciones-pedido {-->
+<!--            flex-direction: column;-->
+<!--        }-->
+<!--    }-->
+<!--</style>-->
+
+<!--<header class="header">-->
+<!--    <div class="header_container">-->
+<!--        <div class="bars">-->
+<!--            <div class="line"></div>-->
+<!--            <div class="line"></div>-->
+<!--            <div class="line"></div>-->
+<!--        </div>-->
+<!--        <div class="logo">-->
+<!--            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">-->
+<!--            <h2 class="name-project"> MarketS</h2>-->
+<!--        </div>-->
+
+<!--        <nav class="nav-menu">-->
+<!--            <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>-->
+
+<!--            &lt;!&ndash; Botón usuario &ndash;&gt;-->
+<!--            <a th:if="${nombreUsuario != null}"-->
+<!--               th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"-->
+<!--               class="btn-icon btn-user">-->
+<!--                <i class="fa-solid fa-user"></i>-->
+<!--                <span th:text="${nombreUsuario}"></span>-->
+<!--            </a>-->
+
+<!--            <a href="#" class="btn-icon">-->
+<!--                <i class="fa-solid fa-bell"></i>-->
+<!--            </a>-->
+
+<!--            <a th:href="@{/carrito}" class="btn-icon btn-cart" th:if="${nombreUsuario != null}">-->
+<!--                <i class="fa-solid fa-cart-shopping"></i>-->
+<!--                <span th:text="${nombreUsuario}"></span>-->
+<!--            </a>-->
+
+<!--            &lt;!&ndash; Mostrar solo si NO está logueado &ndash;&gt;-->
+<!--            <a th:if="${nombreUsuario == null}" th:href="@{/login}">-->
+<!--                <button class="btn6"><strong>Iniciar Sesión</strong></button>-->
+<!--            </a>-->
+<!--            <a th:if="${nombreUsuario == null}" th:href="@{/register}">-->
+<!--                <button class="btn6"><strong>Registrarse</strong></button>-->
+<!--            </a>-->
+
+<!--            &lt;!&ndash; Modo oscuro &ndash;&gt;-->
+<!--            <button id="toggle-dark-mode" class="modo-btn">-->
+<!--                <i class="fa-solid fa-moon"></i>-->
+<!--                <span class="modo-text">Modo Oscuro</span>-->
+<!--            </button>-->
+<!--        </nav>-->
+<!--    </div>-->
+<!--</header>-->
+
+<!--<div class="cart-container">-->
+<!--    &lt;!&ndash; INDICADORES DE PASOS (solo visual, no clickeables) &ndash;&gt;-->
+<!--    <div class="checkout-steps">-->
+<!--        <div class="step-indicator" th:classappend="${currentStep == '1'} ? 'active' : ''">-->
+<!--            <span class="step-number">1</span> Carrito-->
+<!--        </div>-->
+<!--        <div class="step-indicator" th:classappend="${currentStep == '2'} ? 'active' : ''">-->
+<!--            <span class="step-number">2</span> Pago-->
+<!--        </div>-->
+<!--        <div class="step-indicator" th:classappend="${currentStep == '3'} ? 'active' : ''">-->
+<!--            <span class="step-number">3</span> Confirmación-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; =========== PASO 1: CARRITO =========== &ndash;&gt;-->
+<!--    &lt;!&ndash; Solo se muestra cuando currentStep == '1' &ndash;&gt;-->
+<!--    <div th:if="${currentStep == '1'}">-->
+<!--        <div class="cart-step-container">-->
+<!--            <div class="cart-items">-->
+<!--                <a href="javascript:history.back()" class="btn-back">-->
+<!--                    <i class="fa-solid fa-arrow-left"></i> Volver-->
+<!--                </a>-->
+
+<!--                <h2>Tu Carrito</h2>-->
+
+<!--                &lt;!&ndash; CARRITO VACÍO &ndash;&gt;-->
+<!--                <div th:if="${carrito == null or #lists.isEmpty(carrito)}">-->
+<!--                    <p>El carrito está vacío.</p>-->
+<!--                    <a th:href="@{'/productos/index'}" class="btn">Volver a la tienda</a>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; CARRITO CON PRODUCTOS &ndash;&gt;-->
+<!--                <div th:if="${carrito != null and !#lists.isEmpty(carrito)}">-->
+<!--                    <ul>-->
+<!--                        <li class="cart-item" th:each="item : ${carrito}">-->
+<!--                            <div class="item-details">-->
+<!--                                <strong th:text="${item.nombre}"></strong>-->
+<!--                                <p>Precio: $<span class="precio" th:text="${#numbers.formatDecimal(item.precio, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+
+<!--                                &lt;!&ndash; CONTROLES DE CANTIDAD - FUNCIONALIDAD COMPLETA &ndash;&gt;-->
+<!--                                <div class="quantity-controls">-->
+<!--                                    <form th:action="@{'/carrito/decrementar/' + ${item.id}}" method="post">-->
+<!--                                        <button type="submit" class="btn">-</button>-->
+<!--                                    </form>-->
+<!--                                    <span class="cantidad" th:text="${item.cantidad}"></span>-->
+<!--                                    <form th:action="@{'/carrito/incrementar/' + ${item.id}}" method="post">-->
+<!--                                        <button type="submit" class="btn">+</button>-->
+<!--                                    </form>-->
+<!--                                </div>-->
+
+<!--                                <p>Total: $<span class="total-product"-->
+<!--                                                 th:text="${#numbers.formatDecimal(item.precio * item.cantidad, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+
+<!--                                <form th:action="@{/carrito/eliminar/{id}(id=${item.id})}" method="post">-->
+<!--                                    <input type="hidden" name="_method" value="delete"/>-->
+<!--                                    <button type="submit" class="btn btn-danger">Eliminar</button>-->
+<!--                                </form>-->
+<!--                            </div>-->
+<!--                        </li>-->
+<!--                    </ul>-->
+
+<!--                    <a th:href="@{'/productos/index'}" class="btn">Continuar comprando</a>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; RESUMEN DEL PEDIDO (solo si hay productos) &ndash;&gt;-->
+<!--            <div class="cart-summary" th:if="${carrito != null and !#lists.isEmpty(carrito)}">-->
+<!--                <h2>Resumen del Pedido</h2>-->
+<!--                <div class="totals">-->
+<!--                    <p><strong>Subtotal:</strong> $<span th:text="${#numbers.formatDecimal(subtotal, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+<!--                    <p><strong>Descuento:</strong> -$<span th:text="${#numbers.formatDecimal(descuentoAplicado, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+<!--                    <p><strong>Total Final:</strong> $<span th:text="${#numbers.formatDecimal(totalFinal, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+<!--                </div>-->
+
+<!--                <div class="warning-text">-->
+<!--                    <p>El precio puede variar hasta la confirmación del pago.</p>-->
+<!--                    <p>No se te cobrará hasta que revises el pedido en la página siguiente.</p>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; FORMULARIO PARA CREAR PEDIDO - ESTE ES EL QUE FUNCIONA &ndash;&gt;-->
+<!--                <form th:action="@{/pedido/crear}" method="post">-->
+<!--                    <button type="submit" class="btn btn-success" id="btn-realizar-pedido">-->
+<!--                        <i class="fa fa-shopping-cart"></i> Realizar Pedido-->
+<!--                    </button>-->
+<!--                </form>-->
+
+<!--                <div class="security-icons">-->
+<!--                    <i class="fas fa-lock"></i> Pago seguro-->
+<!--                    <i class="fas fa-shield-alt"></i> Protección al comprador-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; =========== PASO 2: PAGO =========== &ndash;&gt;-->
+<!--    &lt;!&ndash; Solo se muestra cuando currentStep == '2' &ndash;&gt;-->
+<!--    <div th:if="${currentStep == '2'}">-->
+<!--        <div class="pago-step-container">-->
+<!--            <a th:href="@{/carrito}" class="btn-back">-->
+<!--                <i class="fa-solid fa-arrow-left"></i> Volver al Carrito-->
+<!--            </a>-->
+
+<!--            <h2>Proceso de Pago</h2>-->
+
+<!--            &lt;!&ndash; SI HAY PEDIDO CREADO &ndash;&gt;-->
+<!--            <div th:if="${pedido}">-->
+<!--                <div class="pedido-detalles">-->
+<!--                    <h3>Pedido #<span th:text="${pedido.id}"></span></h3>-->
+<!--                    <p><strong>Fecha:</strong> <span th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy HH:mm')}"></span></p>-->
+<!--                    <p><strong>Estado:</strong> <span th:text="${pedido.estado}"></span></p>-->
+<!--                    <p><strong>Total a pagar:</strong>-->
+<!--                        <span style="font-size: 24px; color: #e60023; font-weight: bold;">-->
+<!--                            $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></span>-->
+<!--                        </span>-->
+<!--                    </p>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; SECCIÓN MERCADO PAGO &ndash;&gt;-->
+<!--                <div class="mercado-pago-section">-->
+<!--                    <h2><i class="fas fa-credit-card"></i> Pagar con MercadoPago</h2>-->
+
+<!--                    &lt;!&ndash; SI HAY URL DE PAGO DE MERCADO PAGO &ndash;&gt;-->
+<!--                    <div th:if="${paymentUrl}">-->
+<!--                        <a th:href="${paymentUrl}" target="_blank"  class="btn-mercadopago">-->
+<!--                            <i class="fas fa-lock"></i> PAGAR AHORA-->
+<!--                        </a>-->
+<!--                        &lt;!&ndash; En el PASO 2 (Pago), después del botón de MercadoPago &ndash;&gt;-->
+<!--                        <div class="instrucciones-pago" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #e60023;">-->
+<!--                            <h4><i class="fas fa-info-circle"></i> Instrucciones para pagar:</h4>-->
+<!--                            <ol style="margin: 10px 0 10px 20px;">-->
+<!--                                <li>Haz clic en <strong>"PAGAR AHORA"</strong> (se abrirá una ventana emergente)</li>-->
+<!--                                <li>En MercadoPago Sandbox, usa estos datos de prueba:-->
+<!--                                    <ul style="margin: 5px 0 5px 20px;">-->
+<!--                                        <li><strong>Email:</strong> test_user_123456@testuser.com</li>-->
+<!--                                        <li><strong>CVV:</strong> Cualquier número de 3 dígitos</li>-->
+<!--                                        <li><strong>Fecha:</strong> Cualquier fecha futura</li>-->
+<!--                                    </ul>-->
+<!--                                </li>-->
+<!--                                <li>Después de pagar, cierra la ventana de MercadoPago</li>-->
+<!--                                <li>Serás redirigido automáticamente a la confirmación</li>-->
+<!--                            </ol>-->
+<!--                            <p><small><i class="fas fa-exclamation-triangle"></i> Si no se abre la ventana emergente, permite ventanas emergentes en tu navegador.</small></p>-->
+<!--                        </div>-->
+<!--                        <p>Serás redirigido a MercadoPago para completar tu compra de forma segura</p>-->
+<!--                    </div>-->
+
+<!--                    &lt;!&ndash; SI HAY ERROR CON MERCADO PAGO &ndash;&gt;-->
+<!--                    <div th:if="${errorMercadoPago}">-->
+<!--                        <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; color: #333;">-->
+<!--                            <h4><i class="fas fa-exclamation-triangle"></i> Error con MercadoPago</h4>-->
+<!--                            <p th:text="${errorMercadoPago}"></p>-->
+<!--                            <button onclick="window.location.reload()" class="btn">-->
+<!--                                <i class="fas fa-redo"></i> Reintentar-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+
+<!--                    &lt;!&ndash; ICONOS DE SEGURIDAD &ndash;&gt;-->
+<!--                    <div style="display: flex; justify-content: center; gap: 30px; margin-top: 20px;">-->
+<!--                        <div><i class="fas fa-shield-alt"></i><p>Seguro</p></div>-->
+<!--                        <div><i class="fas fa-lock"></i><p>Encriptado</p></div>-->
+<!--                        <div><i class="fas fa-credit-card"></i><p>Varios métodos</p></div>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; MÉTODO ALTERNATIVO (solo si MercadoPago falló) &ndash;&gt;-->
+<!--                <div th:if="${errorMercadoPago}" class="metodo-alternativo">-->
+<!--                    <h3>¿Problemas con MercadoPago?</h3>-->
+<!--                    <p>Usa el método de prueba:</p>-->
+<!--                    <form th:action="@{'/pedido/pagar/' + ${pedido.id}}" method="post">-->
+<!--                        <input type="hidden" name="origen" value="directo">-->
+<!--                        <button type="submit" class="btn">-->
+<!--                            <i class="fas fa-money-bill"></i> Marcar como Pagado (Prueba)-->
+<!--                        </button>-->
+<!--                    </form>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; ACCIONES ADICIONALES &ndash;&gt;-->
+<!--                <div class="acciones-pedido">-->
+<!--                    <a th:href="@{/productos/index}" class="btn" style="background: #28a745; color: white;">-->
+<!--                        <i class="fas fa-store"></i> Seguir Comprando-->
+<!--                    </a>-->
+<!--                    <a th:href="@{/carrito}" class="btn" style="background: #6c757d; color: white;">-->
+<!--                        <i class="fas fa-shopping-cart"></i> Volver al Carrito-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; SI NO HAY PEDIDO (debería redirigir al paso 1) &ndash;&gt;-->
+<!--            <div th:unless="${pedido}">-->
+<!--                <div style="text-align: center; padding: 40px;">-->
+<!--                    <i class="fas fa-shopping-cart fa-3x" style="color: #ccc;"></i>-->
+<!--                    <h3>No hay pedido para mostrar</h3>-->
+<!--                    <p>Primero debes crear un pedido desde el carrito</p>-->
+<!--                    <a th:href="@{/carrito}" class="btn">-->
+<!--                        Volver al Carrito-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; =========== PASO 3: CONFIRMACIÓN =========== &ndash;&gt;-->
+<!--    &lt;!&ndash; Solo se muestra cuando currentStep == '3' &ndash;&gt;-->
+<!--    <div th:if="${currentStep == '3'}">-->
+<!--        <div class="confirmacion-step-container">-->
+<!--            <h2><i class="fas fa-check-circle" style="color: #28a745;"></i> ¡Compra Exitosa!</h2>-->
+
+<!--            &lt;!&ndash; MENSAJE DE CONFIRMACIÓN &ndash;&gt;-->
+<!--            <div class="mensaje-confirmacion">-->
+<!--                <h3>¡Gracias por tu compra!</h3>-->
+<!--                <p>Tu pedido ha sido procesado correctamente.</p>-->
+<!--                <p th:if="${pedido}">Número de pedido: <strong>#<span th:text="${pedido.id}"></span></strong></p>-->
+<!--                <p>Recibirás un correo con los detalles de tu compra.</p>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; DETALLES DEL PEDIDO &ndash;&gt;-->
+<!--            <div class="pedido-detalles" th:if="${pedido}">-->
+<!--                <h4>Detalles del Pedido:</h4>-->
+<!--                <p><strong>Número de pedido:</strong> <span th:text="${pedido.id}"></span></p>-->
+<!--                <p><strong>Fecha:</strong> <span th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy HH:mm')}"></span></p>-->
+<!--                <p><strong>Estado:</strong> <span style="color: #28a745;" th:text="${pedido.estado}"></span></p>-->
+<!--                <p><strong>Total pagado:</strong> $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></span></p>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; ACCIONES POST-COMPRA &ndash;&gt;-->
+<!--            <div class="acciones-pedido">-->
+<!--                <a th:href="@{/productos/index}" class="btn btn-success">-->
+<!--                    <i class="fas fa-store"></i> Volver a la Tienda-->
+<!--                </a>-->
+<!--                <a th:href="@{/cliente/pedidos}" class="btn">-->
+<!--                    <i class="fas fa-clipboard-list"></i> Ver Mis Pedidos-->
+<!--                </a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; MENSAJES DEL SISTEMA &ndash;&gt;-->
+<!--    &lt;!&ndash; Mensajes de error &ndash;&gt;-->
+<!--    <div th:if="${error}" style="color: red; padding: 10px; background: #ffe6e6; margin-top: 20px;">-->
+<!--        <strong>Error:</strong> <span th:text="${error}"></span>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Mensajes de éxito &ndash;&gt;-->
+<!--    <div th:if="${mensaje}" style="color: green; padding: 10px; background: #e6ffe6; margin-top: 20px;">-->
+<!--        <span th:text="${mensaje}"></span>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<footer>-->
+<!--    <div class="footer-col">-->
+<!--        <h4>Nuestras Redes</h4>-->
+<!--        <div class="links">-->
+<!--            <a href="#"><i class="fa-brands fa-facebook"></i></a>-->
+<!--            <a href="#"><i class="fa-brands fa-instagram"></i></a>-->
+<!--            <a href="#"><i class="fa-brands fa-tiktok"></i></a>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="footer-col">-->
+<!--        <h4> Acerca De MarketS</h4>-->
+<!--        <ul>-->
+<!--            <li> <a href="#">Sobre Nosotros</a></li>-->
+<!--            <li> <a href="#">Nuestras Políticas</a></li>-->
+<!--            <li> <a href="#">Términos De Servicio</a></li>-->
+<!--            <li> <a href="#">Políticas De Privacidad</a></li>-->
+<!--            <li> <a href="#">Políticas De Reembolsos y Devoluciones</a></li>-->
+<!--        </ul>-->
+<!--    </div>-->
+<!--    <div class="footer-col">-->
+<!--        <h4> Contacto </h4>-->
+<!--        <ul class="info">-->
+<!--            <li>-->
+<!--                <span><i class="fa-solid fa-phone"></i></span><p>+57 123 4567 890</p>-->
+<!--            </li>-->
+<!--            <li>-->
+<!--                <span><i class="fa-solid fa-envelope"></i></span><p>MarketS@gmail.com</p>-->
+<!--            </li>-->
+<!--        </ul>-->
+<!--    </div>-->
+<!--    <div class="footer-col">-->
+<!--        <h4> Métodos De Pago</h4>-->
+<!--        <ul>-->
+<!--            <img th:src="@{/img/pay.png}" alt="">-->
+<!--            <img class="img3" th:src="@{/img/Nequi.webp}" alt="">-->
+<!--        </ul>-->
+<!--    </div>-->
+<!--</footer>-->
+
+<!--<div class="copyright">-->
+<!--    <p>©2024 MarketS. ALL Rights Reserved.</p>-->
+<!--</div>-->
+
+<!--<script th:inline="javascript">-->
+<!--    /*<![CDATA[*/-->
+<!--        // CÓDIGO MINIMALISTA - SOLO PARA MEJORAR LA EXPERIENCIA-->
+
+<!--        // Cuando se envía el formulario de crear pedido, mostrar loading-->
+<!--        document.addEventListener('DOMContentLoaded', function() {-->
+<!--            const btnRealizarPedido = document.getElementById('btn-realizar-pedido');-->
+<!--            if (btnRealizarPedido) {-->
+<!--                btnRealizarPedido.addEventListener('click', function() {-->
+<!--                    // Cambiar texto mientras se procesa-->
+<!--                    this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';-->
+<!--                    this.disabled = true;-->
+<!--                });-->
+<!--            }-->
+
+<!--            // Modo oscuro (si tienes este script)-->
+<!--            const toggleDarkMode = document.getElementById('toggle-dark-mode');-->
+<!--            if (toggleDarkMode) {-->
+<!--                toggleDarkMode.addEventListener('click', function() {-->
+<!--                    document.body.classList.toggle('dark-mode');-->
+<!--                    const modoText = this.querySelector('.modo-text');-->
+<!--                    if (document.body.classList.contains('dark-mode')) {-->
+<!--                        modoText.textContent = 'Modo Claro';-->
+<!--                        this.querySelector('i').className = 'fa-solid fa-sun';-->
+<!--                    } else {-->
+<!--                        modoText.textContent = 'Modo Oscuro';-->
+<!--                        this.querySelector('i').className = 'fa-solid fa-moon';-->
+<!--                    }-->
+<!--                });-->
+<!--            }-->
+<!--        });-->
+<!--    /*]]>*/-->
+<!--</script>-->
+
+<!--<script th:src="@{/JS/cambioColor.js}" defer></script>-->
+<!--<script th:inline="javascript">-->
+<!--    /*<![CDATA[*/-->
+<!--    document.addEventListener('DOMContentLoaded', function() {-->
+<!--        // 1. Botón de realizar pedido - loading-->
+<!--        const btnRealizarPedido = document.getElementById('btn-realizar-pedido');-->
+<!--        if (btnRealizarPedido) {-->
+<!--            btnRealizarPedido.addEventListener('click', function() {-->
+<!--                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';-->
+<!--                this.disabled = true;-->
+<!--            });-->
+<!--        }-->
+
+<!--        // 2. Función para abrir MercadoPago en popup-->
+<!--        function abrirMercadoPagoPopup(url, pedidoId) {-->
+<!--            console.log('Abriendo MercadoPago en popup para pedido:', pedidoId);-->
+
+<!--            // Dimensiones del popup-->
+<!--            const width = 800;-->
+<!--            const height = 600;-->
+<!--            const left = (screen.width - width) / 2;-->
+<!--            const top = (screen.height - height) / 2;-->
+
+<!--            // Configuración del popup-->
+<!--            const features = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no`;-->
+
+<!--            // Abrir popup-->
+<!--            const popup = window.open(url, 'MercadoPago', features);-->
+
+<!--            if (popup) {-->
+<!--                console.log('Popup abierto exitosamente');-->
+
+<!--                // Verificar cada segundo si el popup se cerró-->
+<!--                const checkPopup = setInterval(function() {-->
+<!--                    if (popup.closed) {-->
+<!--                        console.log('Popup cerrado, redirigiendo a confirmación...');-->
+<!--                        clearInterval(checkPopup);-->
+
+<!--                        // Redirigir automáticamente a confirmación-->
+<!--                        window.location.href = '/carrito?step=3&pedidoId=' + pedidoId;-->
+<!--                    }-->
+<!--                }, 1000);-->
+
+<!--                // También verificar si hay un mensaje de retorno (para navegadores que bloquean popups)-->
+<!--                setTimeout(function() {-->
+<!--                    if (popup.closed || typeof popup.closed === 'undefined') {-->
+<!--                        console.log('Popup posiblemente bloqueado, mostrando instrucciones');-->
+<!--                        mostrarInstruccionesPopup(pedidoId);-->
+<!--                    }-->
+<!--                }, 1000);-->
+
+<!--            } else {-->
+<!--                console.log('Popup bloqueado por el navegador');-->
+<!--                mostrarInstruccionesPopup(pedidoId);-->
+<!--            }-->
+
+<!--            return false;-->
+<!--        }-->
+
+<!--        // 3. Función para mostrar instrucciones si el popup está bloqueado-->
+<!--        function mostrarInstruccionesPopup(pedidoId) {-->
+<!--            const html = `-->
+<!--                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">-->
+<!--                    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; text-align: center;">-->
+<!--                        <h3 style="color: #e60023; margin-bottom: 20px;">Permitir ventanas emergentes</h3>-->
+<!--                        <p>Tu navegador bloqueó la ventana emergente. Por favor:</p>-->
+<!--                        <ol style="text-align: left; margin: 20px 0;">-->
+<!--                            <li>Haz clic en el icono de bloqueo (🔒) en la barra de direcciones</li>-->
+<!--                            <li>Selecciona "Permitir ventanas emergentes"</li>-->
+<!--                            <li>Haz clic en "PAGAR AHORA" nuevamente</li>-->
+<!--                        </ol>-->
+<!--                        <p>O usa este enlace directo:</p>-->
+<!--                        <a href="#" id="enlace-directo" style="color: #e60023; font-weight: bold;">Abrir MercadoPago</a>-->
+<!--                        <div style="margin-top: 20px;">-->
+<!--                            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #e60023; color: white; border: none; border-radius: 5px; cursor: pointer;">-->
+<!--                                Cerrar-->
+<!--                            </button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            `;-->
+
+<!--            document.body.insertAdjacentHTML('beforeend', html);-->
+
+<!--            // Configurar enlace directo-->
+<!--            setTimeout(function() {-->
+<!--                const enlaceDirecto = document.getElementById('enlace-directo');-->
+<!--                if (enlaceDirecto) {-->
+<!--                    enlaceDirecto.href = document.querySelector('.btn-mercadopago').href;-->
+<!--                    enlaceDirecto.target = '_blank';-->
+<!--                }-->
+<!--            }, 100);-->
+<!--        }-->
+
+<!--        // 4. Asignar la función al botón de MercadoPago-->
+<!--        const btnMercadoPago = document.querySelector('.btn-mercadopago');-->
+<!--        if (btnMercadoPago) {-->
+<!--            // Obtener el ID del pedido desde el template-->
+<!--            const pedidoId = [[${pedido != null ? pedido.id : 'null'}]];-->
+<!--            const paymentUrl = btnMercadoPago.getAttribute('href');-->
+
+<!--            // Reemplazar el enlace por el botón con función-->
+<!--            if (pedidoId !== 'null' && paymentUrl) {-->
+<!--                const nuevoBoton = document.createElement('button');-->
+<!--                nuevoBoton.className = 'btn-mercadopago';-->
+<!--                nuevoBoton.innerHTML = '<i class="fas fa-lock"></i> PAGAR AHORA';-->
+<!--                nuevoBoton.onclick = function() {-->
+<!--                    return abrirMercadoPagoPopup(paymentUrl, pedidoId);-->
+<!--                };-->
+
+<!--                btnMercadoPago.parentNode.replaceChild(nuevoBoton, btnMercadoPago);-->
+<!--            }-->
+<!--        }-->
+
+<!--        // 5. Modo oscuro-->
+<!--        const toggleDarkMode = document.getElementById('toggle-dark-mode');-->
+<!--        if (toggleDarkMode) {-->
+<!--            toggleDarkMode.addEventListener('click', function() {-->
+<!--                document.body.classList.toggle('dark-mode');-->
+<!--                const modoText = this.querySelector('.modo-text');-->
+<!--                if (document.body.classList.contains('dark-mode')) {-->
+<!--                    modoText.textContent = 'Modo Claro';-->
+<!--                    this.querySelector('i').className = 'fa-solid fa-sun';-->
+<!--                } else {-->
+<!--                    modoText.textContent = 'Modo Oscuro';-->
+<!--                    this.querySelector('i').className = 'fa-solid fa-moon';-->
+<!--                }-->
+<!--            });-->
+<!--        }-->
+<!--    });-->
+<!--    /*]]>*/-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
