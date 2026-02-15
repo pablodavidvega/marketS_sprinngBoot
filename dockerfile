@@ -9,3 +9,4 @@ RUN mvn clean package -DskipTests
 EXPOSE 8080
 
 CMD ["java", "-jar", "target/MarketS-0.0.1-SNAPSHOT.jar"]
+# Forzar rebuild completo Feb 15
