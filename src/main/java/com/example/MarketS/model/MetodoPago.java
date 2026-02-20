@@ -2,7 +2,7 @@ package com.example.MarketS.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "metodos_pago")
+@Table(name = "_métodos_pago")
 public class MetodoPago {
 
     @Id
