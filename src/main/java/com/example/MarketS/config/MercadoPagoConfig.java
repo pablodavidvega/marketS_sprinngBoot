@@ -1,5 +1,6 @@
 package com.example.MarketS.config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,7 +13,8 @@ public class MercadoPagoConfig {
     @Value("${app.url:http://localhost:8081}")
     private String appUrl;
 
-    public MercadoPagoConfig() {
+    @PostConstruct
+    public void init() {
         System.out.println("==================================================");
         System.out.println("CONFIGURACION MERCADO PAGO - MODO API REST");
         System.out.println("Token cargado: " + (accessToken != null ?
