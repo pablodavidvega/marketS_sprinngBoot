@@ -310,6 +310,16 @@ public class PedidoController {
         System.out.println("3b. Tipo de carritoObj: " + (carritoObj != null ? carritoObj.getClass().getName() : "null"));
 
         Map<Integer, Integer> carrito = new HashMap<>();
+        Map<String, Map<String, Object>> carritoSesion =
+                (Map<String, Map<String, Object>>) session.getAttribute("carrito");
+
+        if (carritoSesion != null) {
+            for (Map.Entry<String, Map<String, Object>> entry : carritoSesion.entrySet()) {
+                Integer productId = Integer.valueOf(entry.getKey());
+                Integer cantidad = (Integer) entry.getValue().get("cantidad");
+                carrito.put(productId, cantidad);
+            }
+        }
 
         if (carritoObj instanceof Map<?, ?>) {
             Map<?, ?> raw = (Map<?, ?>) carritoObj;
