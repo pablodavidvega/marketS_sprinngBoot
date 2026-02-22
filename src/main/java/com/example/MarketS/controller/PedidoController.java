@@ -49,6 +49,8 @@ public class PedidoController {
     public String crearPedido(HttpSession session, Model model,
                               RedirectAttributes redirectAttributes) {
 
+        System.out.println("SESSION ID: " + session.getId());
+        System.out.println("CARRITO SESSION: " + session.getAttribute("carrito"));
         System.out.println("\n=== 🚀 PEDIDO CONTROLLER: crearPedido() ===");
 
         try {
