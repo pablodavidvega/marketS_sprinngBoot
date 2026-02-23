@@ -56,6 +56,7 @@ public class PedidoController {
         try {
             System.out.println("1. Creando pedido...");
             String resultado = procesarCrearPedido(session, model);
+            System.out.println("Resultado procesarCrearPedido: " + resultado);
 
             Pedido pedido = (Pedido) model.getAttribute("pedido");
             if (pedido == null) {
