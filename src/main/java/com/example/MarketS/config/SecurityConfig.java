@@ -35,7 +35,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         // Solo desactiva para APIs específicas si es necesario
                         .ignoringRequestMatchers(
-                                "/enviar-correo/**"  // Solo APIs REST que necesiten POST sin CSRF
+                                "/enviar-correo/**",  // Solo APIs REST que necesiten POST sin CSRF
+                                            "/pedido/**"
                         )
                 )
                 
