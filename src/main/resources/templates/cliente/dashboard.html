@@ -18,7 +18,7 @@
 
 <div class="wrapper">
     <!-- Sidebar lateral (inicialmente oculto) -->
-    <aside id="sidebar" class="sidebar collapsed">
+    <aside id="sidebar" class="sidebar">
         <ul>
             <li><a th:href="@{/productos/index}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
             <li><a th:href="@{/cliente/perfil}"><i class="fas fa-user"></i> <span>Perfil</span></a></li>
@@ -59,7 +59,7 @@
 <script>
     const logo = document.getElementById('logoToggle');
     const sidebar = document.getElementById('sidebar');
-    let expanded = false;
+    let expanded = true;
 
     logo.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
