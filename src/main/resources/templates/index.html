@@ -28,11 +28,20 @@
                 <span class="nav-user">
                     ¡Hola, <strong th:text="${nombreUsuario}">Usuario</strong>!
                 </span>
-                <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
-                   class="btn-icon"
-                   th:if="${nombreUsuario != null}">
-                    <i class="fa-solid fa-user"></i>
-                </a>
+                <form th:action="@{/logout}" method="post" class="salir-usuario">
+                    <span class="panel-text">Salir</span>
+                    <button type="submit" class="btn-icon">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </form>
+                <div class="panel-usuario">
+                    <span class="panel-text">Panel</span>
+                    <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+                       class="btn-icon"
+                       th:if="${nombreUsuario != null}">
+                        <i class="fa-solid fa-user"></i>
+                    </a>
+                </div>
                 <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
                 <a th:href="@{/carrito}" class="btn-icon">
                     <i class="fa-solid fa-cart-shopping"></i>

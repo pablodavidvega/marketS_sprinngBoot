@@ -168,7 +168,20 @@ body.dark-mode .footer-col .info p {
     padding: 10px;
     gap: 20px;
 }
-
+button.btn-icon {
+    color: #ffffff;
+    font-size: 1.1em;
+    padding: 8px 10px;
+    text-decoration: none;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    width: 50px;
+    background-color: #444552;
+}
 .nav-logged a.btn-icon,
 .nav-not-logged a.btn-icon {
     color: #ffffff;
@@ -241,6 +254,10 @@ button{
 button:hover{
     background: white;
     color: #000;
+}
+
+.panel-usuario, .salir-usuario {
+    margin-bottom: 20px;
 }
 
 .btn6:hover{
@@ -455,6 +472,7 @@ button:hover{
 #product-1 .pro img{
     width: 60%;
     border-radius: 20px;
+    color: #fff
 }
 
 #product-1 .pro .content-container{
