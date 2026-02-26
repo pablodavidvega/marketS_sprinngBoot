@@ -69,7 +69,7 @@
     }
 
     body.dark-mode .cart-items {
-        background: #1e1e1e;
+        background: #333;
         color: #f1f1f1;
         box-shadow: none;
     }
@@ -84,7 +84,8 @@
     }
 
     body.dark-mode .cart-item:nth-child(even) {
-        background-color: #252525;
+        background-color: #333;
+        color: #fff;
     }
 
     body.dark-mode .item-details p,
@@ -191,7 +192,7 @@
     /* header start*/
     .header{
         position: relative;
-        background-color: #000000;
+        background-color: #B3B3B3;
         height: 105px;
         padding: 20px 0;
         box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -326,7 +327,7 @@
 
     .cart-items {
         flex: 1 1 60%;
-        background: #f9f9f9;
+        background: #333;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -334,7 +335,7 @@
 
     .cart-items h2 {
         margin-bottom: 15px;
-        color: #e60023;
+        color: #fff;
     }
 
     .cart-item {
@@ -486,11 +487,13 @@
         }
     }
     .cart-item:nth-child(even) {
-        background-color: #fdf1f2;
+        background-color: #333;
+        color: #fff
     }
 
     .cart-item:nth-child(odd) {
-        background-color: #fff;
+        background-color: #333;
+        color: #fff;
     }
 
     .checkout-steps {
@@ -499,7 +502,7 @@
         margin: 20px 0;
         font-size: 14px;
         color: #999;
-        background-color: #fff0f3;
+        background-color: #333;
         padding: 10px;
         border-radius: 8px;
     }
@@ -517,7 +520,7 @@
     .step-indicator.active {
         font-weight: bold;
         color: #fff;
-        border-bottom-color: #e60023;
+        border-bottom-color: #fff;
     }
 
     .security-icons {
@@ -827,8 +830,9 @@
             <div class="line"></div>
         </div>
         <div class="logo">
-            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
-            <h2 class="name-project"> MarketS</h2>
+            <a href="/productos/index" class="logo">
+                <img src="/img/icon.jpg" alt="Logo De MarketS" style="width: 70px;">
+            </a>
         </div>
 
         <nav class="nav-menu">
@@ -858,12 +862,6 @@
             <a th:if="${nombreUsuario == null}" th:href="@{/register}">
                 <button class="btn6"><strong>Registrarse</strong></button>
             </a>
-
-            <!-- Modo oscuro -->
-            <button id="toggle-dark-mode" class="modo-btn">
-                <i class="fa-solid fa-moon"></i>
-                <span class="modo-text">Modo Oscuro</span>
-            </button>
         </nav>
     </div>
 </header>
