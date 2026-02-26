@@ -155,6 +155,7 @@ body.dark-mode .footer-col .info p {
 .logo{
     display: flex;
     align-items: center;
+    align-self: start;
 }
 .logo img{
     height: 70px;
