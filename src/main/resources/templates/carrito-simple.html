@@ -245,8 +245,8 @@
     }
 
     .nav-menu > a.btn-icon:hover {
-        background-color: #7a0c0c;
-        box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+        background-color: #1a1616;
+        box-shadow: 0 0 5px #170e0e, 0 0 10px #171313;
         color: #fff;
     }
 
@@ -658,6 +658,7 @@
 
     .step-container.active {
         display: block;
+        background-color: #333;
     }
 
     /* Estilos para el paso de pago (tomados del carrito-simple que funciona) */
@@ -671,10 +672,10 @@
         text-align: center;
         margin: 30px 0;
         padding: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(77deg, #777777 0%, #698cff 100%);
         border-radius: 15px;
         color: white;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .btn-mercadopago {
@@ -745,11 +746,17 @@
         gap: 8px;
         margin-bottom: 20px;
         text-decoration: none;
-        color: #b6a7a7;
+        color: #fff;
+        border: solid 2px;
+        padding: 12px;
+        font-family: Poppins, monospace;
+        border-radius: 6px;
     }
 
     .btn-back:hover {
-        color: #fff;
+        color: #000;
+        background-color: #fff;
+        padding: 12px;
     }
 
     @keyframes fadeIn {
@@ -845,11 +852,6 @@
                 <i class="fa-solid fa-user"></i>
                 <span th:text="${nombreUsuario}"></span>
             </a>
-
-            <a href="#" class="btn-icon">
-                <i class="fa-solid fa-bell"></i>
-            </a>
-
             <a th:href="@{/carrito}" class="btn-icon btn-cart" th:if="${nombreUsuario != null}">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span th:text="${nombreUsuario}"></span>
