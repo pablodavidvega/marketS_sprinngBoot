@@ -103,6 +103,10 @@ body {
     background: rgba(169, 50, 38, 0.8);
 }
 
+.logout-btn i {
+    transform: rotate(180deg);
+}
+
 .sidebar i {
     font-size: 1.2rem;
     min-width: 20px;

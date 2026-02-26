@@ -69,7 +69,7 @@
     }
 
     body.dark-mode .cart-items {
-        background: #1e1e1e;
+        background: #333;
         color: #f1f1f1;
         box-shadow: none;
     }
@@ -84,7 +84,8 @@
     }
 
     body.dark-mode .cart-item:nth-child(even) {
-        background-color: #252525;
+        background-color: #333;
+        color: #fff;
     }
 
     body.dark-mode .item-details p,
@@ -191,7 +192,7 @@
     /* header start*/
     .header{
         position: relative;
-        background-color: #000000;
+        background-color: #B3B3B3;
         height: 105px;
         padding: 20px 0;
         box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -244,8 +245,8 @@
     }
 
     .nav-menu > a.btn-icon:hover {
-        background-color: #7a0c0c;
-        box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+        background-color: #1a1616;
+        box-shadow: 0 0 5px #170e0e, 0 0 10px #171313;
         color: #fff;
     }
 
@@ -326,7 +327,7 @@
 
     .cart-items {
         flex: 1 1 60%;
-        background: #f9f9f9;
+        background: #333;
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -334,7 +335,7 @@
 
     .cart-items h2 {
         margin-bottom: 15px;
-        color: #e60023;
+        color: #fff;
     }
 
     .cart-item {
@@ -486,11 +487,13 @@
         }
     }
     .cart-item:nth-child(even) {
-        background-color: #fdf1f2;
+        background-color: #333;
+        color: #fff
     }
 
     .cart-item:nth-child(odd) {
-        background-color: #fff;
+        background-color: #333;
+        color: #fff;
     }
 
     .checkout-steps {
@@ -499,7 +502,7 @@
         margin: 20px 0;
         font-size: 14px;
         color: #999;
-        background-color: #fff0f3;
+        background-color: #333;
         padding: 10px;
         border-radius: 8px;
     }
@@ -508,7 +511,7 @@
         flex: 1;
         text-align: center;
         padding: 10px;
-        color: #666;
+        color: #b6a7a7;
         border-bottom: 3px solid transparent;
         transition: all 0.3s;
         font-weight: 500;
@@ -516,8 +519,8 @@
 
     .step-indicator.active {
         font-weight: bold;
-        color: #e60023;
-        border-bottom-color: #e60023;
+        color: #fff;
+        border-bottom-color: #fff;
     }
 
     .security-icons {
@@ -655,6 +658,7 @@
 
     .step-container.active {
         display: block;
+        background-color: #333;
     }
 
     /* Estilos para el paso de pago (tomados del carrito-simple que funciona) */
@@ -668,10 +672,10 @@
         text-align: center;
         margin: 30px 0;
         padding: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(77deg, #777777 0%, #698cff 100%);
         border-radius: 15px;
         color: white;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .btn-mercadopago {
@@ -742,11 +746,17 @@
         gap: 8px;
         margin-bottom: 20px;
         text-decoration: none;
-        color: #666;
+        color: #fff;
+        border: solid 2px;
+        padding: 12px;
+        font-family: Poppins, monospace;
+        border-radius: 6px;
     }
 
     .btn-back:hover {
-        color: #e60023;
+        color: #000;
+        background-color: #fff;
+        padding: 12px;
     }
 
     @keyframes fadeIn {
@@ -827,8 +837,9 @@
             <div class="line"></div>
         </div>
         <div class="logo">
-            <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
-            <h2 class="name-project"> MarketS</h2>
+            <a href="/productos/index" class="logo">
+                <img src="/img/icon.jpg" alt="Logo De MarketS" style="width: 70px;">
+            </a>
         </div>
 
         <nav class="nav-menu">
@@ -841,11 +852,6 @@
                 <i class="fa-solid fa-user"></i>
                 <span th:text="${nombreUsuario}"></span>
             </a>
-
-            <a href="#" class="btn-icon">
-                <i class="fa-solid fa-bell"></i>
-            </a>
-
             <a th:href="@{/carrito}" class="btn-icon btn-cart" th:if="${nombreUsuario != null}">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span th:text="${nombreUsuario}"></span>
@@ -858,12 +864,6 @@
             <a th:if="${nombreUsuario == null}" th:href="@{/register}">
                 <button class="btn6"><strong>Registrarse</strong></button>
             </a>
-
-            <!-- Modo oscuro -->
-            <button id="toggle-dark-mode" class="modo-btn">
-                <i class="fa-solid fa-moon"></i>
-                <span class="modo-text">Modo Oscuro</span>
-            </button>
         </nav>
     </div>
 </header>
