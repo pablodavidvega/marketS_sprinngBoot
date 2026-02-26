@@ -14,7 +14,7 @@
 </header>
 
 <div class="wrapper">
-    <aside id="sidebar" class="sidebar collapsed">
+    <aside id="sidebar" class="sidebar">
         <ul>
             <li th:class="'menu-item ' + (${activePage} == 'dashboard' ? 'active' : '')">
                 <a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a>
@@ -95,7 +95,7 @@
 <script>
     const logo = document.getElementById('logoToggle');
     const sidebar = document.getElementById('sidebar');
-    let expanded = false;
+    let expanded = true;
     logo.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
         expanded = !expanded;

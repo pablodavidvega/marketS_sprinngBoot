@@ -169,6 +169,7 @@ body.dark-mode .footer-col .info p {
     gap: 20px;
 }
 button.btn-icon {
+    transform: rotate(180deg);
     color: #ffffff;
     font-size: 1.1em;
     padding: 8px 10px;
