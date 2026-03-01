@@ -306,7 +306,9 @@ button:hover{
 }
 
 button:hover{
-    background-color: darkred;
+    background-color: #7a0c0c;
+    box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+    color: #fff;
 }
 
 /*end hero*/
