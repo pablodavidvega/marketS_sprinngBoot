@@ -1,4 +1,4 @@
-<div th:fragment="carrusel">
+<div th:fragment="carrusel" xmlns:th="http://www.w3.org/1999/xhtml">
   <style>
     .mi-carrusel {
       position: relative;
@@ -115,17 +115,18 @@
         </div>
       </div>
 
-      <div class="slide" style="background-image: url('/img/banner1.jpg');">
-        <div class="overlay"></div>
-        <div class="slide-content light">
-          <h2>¡Oferta Relámpago!</h2>
-          <h1>Solo por 24 Horas</h1>
-          <p>50% de descuento en productos seleccionados</p>
-          <a class="btn-carrusel" href="#">Comprar ya</a>
+        <div class="slide" th:style="'background-image: url(' + @{/img/banner1.jpg} + ');'">
+            <div class="overlay"></div>
+            <div class="slide-content light">
+                <h2>¡Oferta Relámpago!</h2>
+                <h1>Solo por 24 Horas</h1>
+                <p>50% de descuento en productos seleccionados</p>
+                <a class="btn-carrusel" href="#">Comprar ya</a>
+            </div>
         </div>
-      </div>
 
-      <div class="slide" style="background-image: url('/img/img1.jpg');">
+
+        <div class="slide" th:style="'background-image: url(' + @{/img/img1.jpg} + ');'">
         <div class="slide-content">
           <h2>Nuevas Colecciones</h2>
           <h1>Lo último en</h1>
