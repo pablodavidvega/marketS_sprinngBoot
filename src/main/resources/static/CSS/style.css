@@ -263,7 +263,7 @@ button:hover{
 }
 
 .btn6:hover{
-    background-color: #FFFFFF;
+    background-color: #ff3c3c;
     box-shadow: 0 0 5px #FFFFFF, 0 0 25px #ff0000,
     0 0 50px #FFFFFF, 0 0 100px #FFFFFF, 0 0 300px #FFFFFF;
 }
@@ -306,7 +306,9 @@ button:hover{
 }
 
 button:hover{
-    background-color: darkred;
+    background-color: #7a0c0c;
+    box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
+    color: #fff;
 }
 
 /*end hero*/
@@ -468,7 +470,8 @@ button:hover{
 }
 
 #product-1 .pro:hover{
-    box-shadow: 20px 20px 30px rgba(0,0,0,0.06);
+    box-shadow: 20px 20px 30px rgb(95 83 83 / 50%);
+    transform: scale(1.05);
 }
 
 #product-1 .pro img{
@@ -526,7 +529,7 @@ button:hover{
 }
 
 #product-1 .pro .content-container h5 a:hover {
-    color: #404044;
+    font-size: 16px;
 }
 
 /*start footer*/
@@ -738,6 +741,42 @@ footer .sec-contact .info{
 .controles button:hover {
     background: rgba(0,0,0,0.8);
 }
+
+.btn-mercadopago {
+        display: inline-block;
+        padding: 18px 50px;
+        font-size: 22px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        background: #333;
+        color: white;
+        border: 1px solid white;
+    }
+
+    .btn-mercadopago:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
+    }
+
+    .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #fff;
+            border: solid 2px;
+            padding: 12px;
+            font-family: Poppins, monospace;
+            border-radius: 6px;
+        }
+
+        .btn-back:hover {
+                color: #000;
+                background-color: #fff;
+                padding: 12px;
+            }
 
 
 

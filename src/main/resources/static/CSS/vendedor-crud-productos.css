@@ -48,3 +48,54 @@ background-color: #000000;
     align-content: center;
     font-size: 18px;
 }
+
+/* HEADER */
+.header{
+    background-color: #B3B3B3;
+    height: 105px;
+    padding: 20px 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+}
+
+.header_container{
+    width: 95%;
+    margin: auto;
+}
+
+.header_container .logo a{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+}
+
+.header_container .logo a .name-project{
+    color: #fff;
+    font-weight: 500;
+}
+
+.logo img{
+    width: auto;
+    height: 70px;
+    padding: 10px;
+}
+
+.btn-mercadopago {
+    display: inline-block;
+    padding: 10px;
+    font-size: 22px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    background: #333;
+    color: white;
+    border: 1px solid white;
+    height: 55px;
+    width: auto;
+}
+
+.btn-mercadopago:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
+    color: #fff;
+}

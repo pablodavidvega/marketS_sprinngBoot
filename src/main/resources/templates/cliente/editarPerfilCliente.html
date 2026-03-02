@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Editar Perfil - MarketS</title>
-  <link rel="icon" href="/img/icon.jpg">
+    <link rel="icon" href="/img/icon.jpg">
+    <link rel="stylesheet" th:href="@{/CSS/style.css}">
   <link rel="stylesheet" th:href="@{/CSS/editarPerfilCliente.css}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -16,10 +17,13 @@
       <div class="line"></div>
       <div class="line"></div>
     </div>
-    <div class="logo">
-      <img th:src="@{/img/icon.jpg}" alt="Logo De MarketS" class="logo-img">
-      <h2 class="name-project"> MarketS</h2>
-    </div>
+      <div class="logo">
+          <a href="/productos/index" class="logo">
+              <img src="/img/icon.jpg" alt="Logo De MarketS">
+          </a>
+          <h2 class="name-project"> MarketS</h2>
+      </div>
+
     <nav class="nav-menu">
       <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>
       <a th:href="@{/cliente/dashboard}" class="btn-icon"><i class="fa-solid fa-user"></i></a>
@@ -32,8 +36,10 @@
     </nav>
   </div>
 </header>
-
 <div class="container3">
+    <a href="/cliente/dashboard" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+    </a>
     <h1>Editar Perfil</h1>
 
   <div class="form-container">
@@ -86,14 +92,8 @@
           <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirmar nueva contraseña">
         </div>
 
-
-
         <div class="btn-field">
           <button type="submit" class="btn-register">Guardar Cambios</button>
-        </div>
-
-        <div class="existing-account">
-          <p><a th:href="@{/cliente/dashboard}">Volver al Panel</a></p>
         </div>
       </div>
     </form>

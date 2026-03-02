@@ -268,7 +268,7 @@
         }
 
         .btn6:hover{
-            background-color: #FFFFFF;
+            background-color: #ff3c3c;
             box-shadow: 0 0 5px #FFFFFF, 0 0 25px #FFFFFF,
             0 0 50px #FFFFFF, 0 0 100px #FFFFFF, 0 0 300px #FFFFFF;
         }
@@ -500,8 +500,6 @@
             <div th:unless="${nombreUsuario}" class="nav-not-logged">
                 <a href="#" class="btn-icon"><i class="fa-solid fa-user"></i></a>
                 <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
-                <a th:href="@{/login}"><button class="btn6"><strong>Iniciar Sesión</strong></button></a>
-                <a th:href="@{/usuarios/registro}"><button class="btn6"><strong>Registrarse</strong></button></a>
             </div>
 
             <button id="toggle-dark-mode" class="modo-btn">

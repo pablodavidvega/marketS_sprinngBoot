@@ -263,11 +263,21 @@ body.dark-mode .error-message {
 body.dark-mode .btn-register {
     background: linear-gradient(45deg, #00bfff, #0099cc);
     color: #1a1a1a;
+    background: #333;
+    color: white;
+    border: 1px solid white;
+    text-decoration: none;
+    padding: 0 20px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 200px;
+    height: 55px;
 }
 
 body.dark-mode .btn-register:hover {
-    background: linear-gradient(45deg, #0099cc, #00bfff);
-    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
 }
 
 /* ENLACE VOLVER */
