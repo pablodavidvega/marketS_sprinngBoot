@@ -22,7 +22,9 @@
     <h1 class="mb-4  title-my-products">Mis Productos</h1>
 
     <div class="mb-3 d-flex gap-2 flex-wrap align-items-center container-tabs">
-        <a th:href="@{/vendedor/dashboard}" class="btn btn-mercadopago  btn-back-dash btn-sm">Volver al Dashboard</a>
+        <a th:href="@{/vendedor/dashboard}" class="btn btn-back btn-sm">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Dashboard</a>
         <a th:href="@{/vendedor/productos/agregar}" class="btn btn-mercadopago btn-sm btn-new-product">Nuevo Producto</a>
 
         <form th:action="@{/vendedor/productos/buscar}" method="get" class="d-flex gap-1 form1-search-products">
