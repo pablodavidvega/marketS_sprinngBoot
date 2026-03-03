@@ -78,7 +78,7 @@
         }
         .header{
             position: relative;
-            background-color: #000000;
+            background-color: #B3B3B3;
             height: 105px;
             padding: 20px 0;
             box-shadow: 0 5px 15px rgba(0,0,0,0.06);
@@ -441,6 +441,45 @@
             color: #256b25;
         }
 
+       .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #fff;
+            border: solid 2px;
+            padding: 12px;
+            font-family: Poppins, monospace;
+            border-radius: 6px;
+        }
+
+        .btn-back:hover {
+            color: #000;
+            background-color: #fff;
+            padding: 12px;
+        }
+
+        .btn-mercadopago {
+            display: inline-block;
+            padding: 10px;
+            font-size: 22px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            background: #333;
+            color: white;
+            border: 1px solid white;
+            height: 55px;
+            width: 100%;
+        }
+
+    .btn-mercadopago:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
+        color: #fff;
+    }
+
     </style>
     <div class="header_container">
         <div class="bars">
@@ -462,7 +501,6 @@
                th:if="${nombreUsuario != null}">
                 <i class="fa-solid fa-user"></i>
             </a>
-            <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
             <button id="toggle-dark-mode" class="modo-btn">
                 <i class="fa-solid fa-moon"></i>
                 <span class="modo-text">Modo Oscuro</span>
@@ -470,11 +508,12 @@
         </nav>
     </div>
 </header>
-<a th:href="@{/vendedor/productos}" class="btn-volver">
-    <i class="fas fa-arrow-left"></i> Volver a mis productos
-</a>
 <section>
     <div class="container">
+        <a th:href="@{/vendedor/productos}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a mis productos
+        </a>
+
         <h1>Crear Producto</h1>
 
         <form th:action="@{/vendedor/productos/guardar}"
@@ -590,8 +629,8 @@
                        accept="image/*">
                 <p th:if="${#fields.hasErrors('imagenes')}" th:errors="*{imagenes}" class="text-danger"></p>
             </div>
-            <button type="submit" class="btn btn-primary">Crear Producto</button>
-            <a th:href="@{/vendedor/productos}" class="btn btn-success w-100 mt-2">Volver</a>
+            <button type="submit" class="btn btn-mercadopago">Crear Producto</button>
+            <a th:href="@{/vendedor/productos}" class="btn btn-mercadopago w-100 mt-2">Volver</a>
         </form>
     </div>
 </section>

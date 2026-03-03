@@ -74,7 +74,7 @@ background-color: #000000;
     font-weight: 500;
 }
 
-.logo img{
+.header_container .logo img{
     width: auto;
     height: 70px;
     padding: 10px;
@@ -99,3 +99,38 @@ background-color: #000000;
     box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
     color: #fff;
 }
+
+   .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #fff;
+        border: solid 2px;
+        padding: 12px;
+        font-family: Poppins, monospace;
+        border-radius: 6px;
+    }
+
+    .btn-back:hover {
+        color: #000;
+        background-color: #fff;
+        padding: 12px;
+    }
+
+     .btn-mercadopago {
+            display: inline-block;
+            padding: 18px 50px;
+            font-size: 22px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            background: #333;
+            color: white;
+            border: 1px solid white;
+    }
+
+    .btn-mercadopago:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
+    }
