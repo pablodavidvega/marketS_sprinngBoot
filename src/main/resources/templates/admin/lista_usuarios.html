@@ -30,10 +30,10 @@
   </aside>
 
   <main class="dashboard-main">
-    <h1>Lista de Usuarios</h1>
-      <a th:href="@{/admin/dashboard}" class="btn-volver">
+      <a th:href="@{/admin/dashboard}" class="btn-back">
           <i class="fas fa-arrow-left"></i> Volver al panel
       </a>
+    <h1 class="dashboard-tittle">Lista de Usuarios</h1>
     <form th:action="@{/admin/usuarios/filtrar}" method="get" class="filtro-form">
       <input type="text" name="valor" placeholder="Buscar..." style="flex:1;">
       <select name="tipo">
@@ -47,8 +47,7 @@
     </form>
 
     <p th:if="${mensaje}" th:text="${mensaje}"></p>
-    <a th:href="@{/admin/usuarios/reporte-pdf}"
-       style="display: inline-block; margin-bottom: 10px; background: #28a745; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none;">
+    <a class="btn-mercadopago" th:href="@{/admin/usuarios/reporte-pdf}">
       <i class="fas fa-file-pdf"></i> Lista de usuarios
     </a>
 
