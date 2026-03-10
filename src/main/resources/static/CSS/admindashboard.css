@@ -389,27 +389,14 @@ table tbody tr:nth-child(even) {
     gap: 30px;
     display: flex;
 }
-
-.btn-link-report {
-  color: #333;
-      margin-bottom: 25px;
-      font-weight: bold;
-      text-decoration: none;
-}
-
-.btn-link-report:hover {
-  color: #5363dc;
-}
 .cards-reporte-vendedor {
     justify-content: space-between
 }
-
 .reporte-graficas {
     width: 600px;
     height: auto;
     align-items: end;
 }
-
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -590,6 +577,10 @@ table tbody tr:nth-child(even) {
 
 #modalCerrar:hover {
     background: #a93226;
+}
+
+.reporte-wrapper, .reporte-lista {
+    background-color: #fff;
 }
 
 
