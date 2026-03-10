@@ -276,6 +276,7 @@ table tbody tr:nth-child(even) {
     color: #000;
     background-color: #fff;
     padding: 12px;
+}
 
 
 /* ==== Estilos específicos para la sección Enviar Correos ==== */
@@ -290,7 +291,7 @@ table tbody tr:nth-child(even) {
 
 .dashboard-main h1 i {
     margin-right: 10px;
-    color: #2b7a2b;
+    color: #fff;
 }
 
 /* Card contenedora del formulario */
@@ -448,6 +449,147 @@ table tbody tr:nth-child(even) {
 
 .reporte-graficas {
     display: flex;
+}
+
+
+/* ===== SECCIÓN ENVIAR CORREOS ===== */
+
+/* Contenedor de cards (igual que dashboard) */
+.cards {
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Card del formulario */
+.card-form {
+    background: #fff;
+    border-radius: 10px;
+    padding: 25px;
+    max-width: 650px;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Formulario */
+.form-correo {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Grupos de campos */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Labels */
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+/* Inputs */
+.form-group input,
+.form-group textarea {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #c0392b;
+}
+
+/* Texto pequeño */
+.form-group small {
+    font-size: 12px;
+    color: #777;
+    margin-top: 4px;
+}
+
+/* Botón enviar */
+.btn-enviar {
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.btn-enviar:hover {
+    background: #a93226;
+}
+
+/* Botón volver */
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: #fff;
+    border: solid 2px #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+}
+
+.btn-volver:hover {
+    background: #fff;
+    color: #333;
+}
+
+/* Alerta éxito */
+.alerta-exito {
+    margin-top: 20px;
+    padding: 12px;
+    background: #2ecc71;
+    color: white;
+    border-radius: 6px;
+    width: fit-content;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    text-align: center;
+    width: 350px;
+}
+
+#modalCerrar {
+    margin-top: 15px;
+    padding: 8px 18px;
+    background: #c0392b;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+}
+
+#modalCerrar:hover {
+    background: #a93226;
 }
 
 
