@@ -59,19 +59,15 @@
 
         <!-- Botones de descarga con Strategy -->
         <div class="links-download" style="margin-bottom: 20px;">
-            <a th:href="@{/admin/dashboard}" class="btn-link-report" style="margin-right: 10px;">
-                <i class="fas fa-arrow-left"></i> Volver al Dashboard
-            </a>
-
-            <a th:href="@{/admin/reporte-pdf/descargar}" class="btn-link-report" target="_blank">
+            <a th:href="@{/admin/reporte-pdf/descargar}" class="btn-mercadopago" target="_blank">
                 <i class="fas fa-file-pdf"></i> Descargar PDF
             </a>
 
-            <a th:href="@{/admin/reporte-excel/descargar}" class="btn-link-report" target="_blank">
+            <a th:href="@{/admin/reporte-excel/descargar}" class="btn-mercadopago" target="_blank">
                 <i class="fas fa-file-excel"></i> Descargar Excel
             </a>
 
-            <a th:href="@{/admin/reporte-csv/descargar}" class="btn-link-report" target="_blank">
+            <a th:href="@{/admin/reporte-csv/descargar}" class="btn-mercadopago" target="_blank">
                 <i class="fas fa-file-csv"></i> Descargar CSV
             </a>
         </div>
@@ -79,8 +75,8 @@
 
         <!-- Información general -->
         <section class="info-general-reporte" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-            <h2 style="margin-bottom: 15px;">Resumen General</h2>
-            <ul style="list-style: none; padding: 0; line-height: 1.8;">
+            <h2 style="margin-bottom: 15px; color: #333">Resumen General</h2>
+            <ul class="reporte-lista" style="list-style: none; padding: 0; line-height: 1.8;">
                 <li><strong>Total de Productos:</strong> <span th:text="${reporte.totalProductos}">0</span></li>
                 <li><strong>Total de Categorías:</strong> <span th:text="${reporte.totalCategorias}">0</span></li>
                 <li><strong>Total de Marcas:</strong> <span th:text="${reporte.totalMarcas}">0</span></li>
@@ -90,9 +86,11 @@
         </section>
 
         <!-- Gráficos -->
-        <div class="reporte-graficas" style="margin-top: 40px;">
-            <canvas id="graficoCategorias" width="400" height="200"></canvas>
-            <canvas id="graficoPreciosStock" width="400" height="200"></canvas>
+        <div class="reporte-wrapper">
+            <div class="reporte-graficas" style="margin-top: 40px;">
+                <canvas id="graficoCategorias" width="400" height="200"></canvas>
+                <canvas id="graficoPreciosStock" width="400" height="200"></canvas>
+            </div>
         </div>
     </main>
 
