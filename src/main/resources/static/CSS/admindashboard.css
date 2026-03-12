@@ -146,6 +146,11 @@ body {
     width: auto;
 }
 
+.btn-mercadopago i {
+    color: #fff;
+}
+
+
 .btn-mercadopago:hover {
     transform: translateY(-2px);
     box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
