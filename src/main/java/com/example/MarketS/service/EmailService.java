@@ -13,31 +13,30 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // Usuario para autenticación (puede ser diferente al remitente)
+    // Definimos la variable emailAccount
     @Value("${spring.mail.username:pablo.david.vega1@gmail.com}")
-    private String mailUsername;
-
-    // Remitente que aparecerá en el correo
-    @Value("${spring.mail.from:${spring.mail.username}}")
-    private String fromEmail;
+    private String emailAccount;  // 👈 Esta es la variable que faltaba
 
     @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
+        System.out.println("🔵 INTENTANDO enviar correo a: " + para);
+        System.out.println("🔵 Asunto: " + asunto);
+        System.out.println("🔵 Usando cuenta: " + emailAccount);
+
         try {
             SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom(fromEmail);  // 👈 Usamos fromEmail, no mailUsername
+            mail.setFrom(emailAccount);  // 👈 Ahora sí existe la variable
             mail.setTo(para);
             mail.setSubject(asunto);
             mail.setText(mensaje);
 
             mailSender.send(mail);
 
-            System.out.println("Correo enviado correctamente a: " + para);
-            System.out.println("Remitente: " + fromEmail);
+            System.out.println("✅ Correo ENVIADO correctamente a: " + para);
 
         } catch (Exception e) {
-            System.out.println("Error al enviar correo a: " + para);
-            System.out.println("Motivo: " + e.getMessage());
+            System.out.println("❌ ERROR al enviar correo a: " + para);
+            System.out.println("❌ Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
     }
