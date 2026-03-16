@@ -1,5 +1,5 @@
 package com.example.MarketS.controller;
-
+import org.springframework.beans.factory.annotation.Value;
 import com.example.MarketS.dto.LoginDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,7 +23,8 @@ public class LoginController {
     @Autowired
     private EmailService emailService;
 
-
+    @Value("${app.url}")
+    private String appUrl;
 
     @GetMapping("/login")
     public String mostrarFormularioLogin(Model model) {
@@ -68,10 +69,12 @@ public class LoginController {
         user.setResetTokenExpira(LocalDateTime.now().plusMinutes(30));
         userService.guardar(user);
 
+        String link = appUrl + "/reset-password?token=" + token;
+
         emailService.enviarCorreo(
                 email,
                 "Restablecer contraseña",
-                "http://localhost:8081/reset-password?token=" + token
+                "Haz clic en el siguiente enlace para restablecer tu contraseña:\n\n" + link
         );
 
         model.addAttribute("mensaje", "Revisa tu correo");

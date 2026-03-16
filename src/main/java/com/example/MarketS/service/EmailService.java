@@ -14,6 +14,7 @@ public class EmailService {
     @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
         SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setFrom("pablo.david.vega1@gmail.com");
         mail.setTo(para);
         mail.setSubject(asunto);
         mail.setText(mensaje);
