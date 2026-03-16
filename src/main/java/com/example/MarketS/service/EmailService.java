@@ -11,12 +11,28 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
     @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
-        SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setTo(para);
-        mail.setSubject(asunto);
-        mail.setText(mensaje);
-        mailSender.send(mail);
+
+        try {
+
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setFrom("MarketS@gmail.com"); // mismo correo configurado en Render
+            mail.setTo(para);
+            mail.setSubject(asunto);
+            mail.setText(mensaje);
+
+            mailSender.send(mail);
+
+            System.out.println("Correo enviado correctamente a: " + para);
+
+        } catch (Exception e) {
+
+            System.out.println("Error al enviar correo a: " + para);
+            System.out.println("Motivo: " + e.getMessage());
+            e.printStackTrace();
+
+        }
     }
 }
