@@ -16,7 +16,7 @@ public class EmailService {
     @Value("${spring.mail.username:pablo.david.vega1@gmail.com}")
     private String emailAccount;
 
-    @Async
+//    @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
         System.out.println("🔵 INTENTANDO enviar correo a: " + para);
         System.out.println("🔵 Asunto: " + asunto);
