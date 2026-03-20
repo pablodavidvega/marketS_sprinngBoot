@@ -1,12 +1,22 @@
-FROM maven:3.9.6-eclipse-temurin-21
+# ===== BUILD =====
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-COPY . .
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-RUN mvn dependency:resolve
-RUN mvn clean package -DskipTests -Dmaven.retry.failedDownloadCount=3
+COPY src ./src
 
-EXPOSE 8080
+RUN mvn clean package -DskipTests
 
-CMD ["java", "-jar", "target/MarketS-0.0.1-SNAPSHOT.jar"]
+# ===== RUN =====
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+COPY --from=build /app/target/MarketS-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 10000
+
+ENTRYPOINT ["java","-jar","app.jar"]
