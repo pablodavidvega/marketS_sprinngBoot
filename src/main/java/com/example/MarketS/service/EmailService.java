@@ -1,44 +1,43 @@
 package com.example.MarketS.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.sendgrid.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    @Value("${sendgrid.api.key}")
+    private String apiKey;
 
-    @Value("${spring.mail.username:pablo.david.vega1@gmail.com}")
+    @Value("${spring.mail.username:no-reply@tudominio.com}")
     private String emailAccount;
 
-//    @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
-        System.out.println("🔵 INTENTANDO enviar correo a: " + para);
-        System.out.println("🔵 Asunto: " + asunto);
-        System.out.println("🔵 Usando cuenta: " + emailAccount);
-        System.out.println("🔵 MailSender: " + mailSender.getClass().getName());
+
+        System.out.println("🔵 Enviando con SendGrid a: " + para);
 
         try {
-            SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom(emailAccount);
-            mail.setTo(para);
-            mail.setSubject(asunto);
-            mail.setText(mensaje);
+            Email from = new Email(emailAccount);
+            Email to = new Email(para);
+            Content content = new Content("text/plain", mensaje);
 
-            System.out.println("🟡 Intentando enviar con JavaMailSender...");
-            mailSender.send(mail);
-            System.out.println("✅ CORREO ENVIADO EXITOSAMENTE a: " + para);
+            Mail mail = new Mail(from, asunto, to, content);
+
+            SendGrid sg = new SendGrid(apiKey);
+            Request request = new Request();
+
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+
+            System.out.println("✅ Código respuesta: " + response.getStatusCode());
 
         } catch (Exception e) {
-            System.out.println("❌ ERROR EN ENVÍO DE CORREO");
-            System.out.println("❌ Tipo de error: " + e.getClass().getName());
-            System.out.println("❌ Mensaje: " + e.getMessage());
-            e.printStackTrace();  // Esto mostrará el error completo
+            System.out.println("❌ Error enviando con SendGrid");
+            e.printStackTrace();
         }
     }
 }
