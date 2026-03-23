@@ -27,7 +27,7 @@ public class MercadoPagoService {
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email) {
         try {
-            System.out.println("=== 🚀 MERCADO PAGO SERVICE: crearPreferencia ===");
+            System.out.println("=== MERCADO PAGO SERVICE: crearPreferencia ===");
             System.out.println("Pedido ID: " + pedidoId);
             System.out.println("Monto: $" + monto);
             System.out.println("Descripción: " + descripcion);
@@ -39,7 +39,7 @@ public class MercadoPagoService {
                     (token != null ? token.substring(0, Math.min(20, token.length())) : "NULL"));
 
             if (token == null || token.isEmpty()) {
-                System.err.println("❌ Token de MercadoPago no configurado");
+                System.err.println("Token de MercadoPago no configurado");
                 Map<String, Object> error = new HashMap<>();
                 error.put("success", false);
                 error.put("error", "Token de MercadoPago no configurado");
@@ -61,7 +61,7 @@ public class MercadoPagoService {
                     + "\"external_reference\": \"" + pedidoId + "\""
                     + "}";
 
-            System.out.println("📤 Request JSON enviado a MercadoPago:");
+            System.out.println("Request JSON enviado a MercadoPago:");
             System.out.println(requestJson);
 
             // Headers SIMPLES
@@ -71,7 +71,7 @@ public class MercadoPagoService {
 
             HttpEntity<String> request = new HttpEntity<>(requestJson, headers);
 
-            System.out.println("🔄 Enviando POST a MercadoPago...");
+            System.out.println("Enviando POST a MercadoPago...");
 
             ResponseEntity<String> response = restTemplate.exchange(
                     "https://api.mercadopago.com/checkout/preferences",
@@ -80,10 +80,10 @@ public class MercadoPagoService {
                     String.class
             );
 
-            System.out.println("✅ Response Status: " + response.getStatusCode());
+            System.out.println("Response Status: " + response.getStatusCode());
 
             String responseBody = response.getBody();
-            System.out.println("📥 Response recibida (primeros 300 chars):");
+            System.out.println("Response recibida (primeros 300 chars):");
             System.out.println(responseBody != null ?
                     responseBody.substring(0, Math.min(300, responseBody.length())) : "NULL");
 
@@ -98,18 +98,18 @@ public class MercadoPagoService {
 
                     if (root.has("sandbox_init_point")) {
                         sandboxUrl = root.get("sandbox_init_point").asText();
-                        System.out.println("✅ Sandbox URL encontrada: " + sandboxUrl);
+                        System.out.println("Sandbox URL encontrada: " + sandboxUrl);
                     }
 
                     if (root.has("id")) {
                         preferenceId = root.get("id").asText();
-                        System.out.println("✅ Preference ID: " + preferenceId);
+                        System.out.println("Preference ID: " + preferenceId);
                     }
 
                     // También intentar con init_point si sandbox no está
                     if (sandboxUrl.isEmpty() && root.has("init_point")) {
                         sandboxUrl = root.get("init_point").asText();
-                        System.out.println("✅ Usando init_point: " + sandboxUrl);
+                        System.out.println("Usando init_point: " + sandboxUrl);
                     }
 
                     if (!sandboxUrl.isEmpty()) {
@@ -119,20 +119,20 @@ public class MercadoPagoService {
                         resultado.put("preferenceId", preferenceId);
                         resultado.put("rawResponse", responseBody);
 
-                        System.out.println("🎉 ¡PREFERENCIA CREADA EXITOSAMENTE!");
-                        System.out.println("🔗 URL de pago: " + sandboxUrl);
-                        System.out.println("📋 ID de preferencia: " + preferenceId);
+                        System.out.println("¡PREFERENCIA CREADA EXITOSAMENTE!");
+                        System.out.println("URL de pago: " + sandboxUrl);
+                        System.out.println("ID de preferencia: " + preferenceId);
 
                         return resultado;
                     }
 
                 } catch (Exception e) {
-                    System.err.println("❌ Error parseando respuesta JSON: " + e.getMessage());
+                    System.err.println("Error parseando respuesta JSON: " + e.getMessage());
                 }
             }
 
             // Si llegamos aquí, hubo un error
-            System.err.println("❌ Error en respuesta de MercadoPago");
+            System.err.println("Error en respuesta de MercadoPago");
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
             errorResult.put("error", "Error en respuesta: " + response.getStatusCode());
@@ -141,7 +141,7 @@ public class MercadoPagoService {
             return errorResult;
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR en crearPreferencia:");
+            System.err.println("ERROR en crearPreferencia:");
             System.err.println("Tipo: " + e.getClass().getName());
             System.err.println("Mensaje: " + e.getMessage());
 
@@ -162,16 +162,16 @@ public class MercadoPagoService {
         try {
             String token = config.getAccessToken();
             if (token == null || token.isEmpty()) {
-                return "❌ Token no configurado";
+                return "Token no configurado";
             }
 
             String tokenStart = token.substring(0, Math.min(10, token.length()));
             boolean isTestToken = token.startsWith("TEST") || token.startsWith("APP_USR");
 
-            return "✅ Token encontrado (inicio: " + tokenStart + ")\n" +
+            return "Token encontrado (inicio: " + tokenStart + ")\n" +
                     "Es token de test: " + isTestToken;
         } catch (Exception e) {
-            return "❌ Error: " + e.getMessage();
+            return "Error: " + e.getMessage();
         }
     }
 
