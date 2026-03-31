@@ -1,5 +1,5 @@
 package com.example.MarketS.service;
-
+import com.example.MarketS.service.EmailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -22,11 +22,14 @@ public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
+    private final EmailService emailService;
 
     public PedidoService(PedidoRepository pedidoRepository,
-                         ProductoRepository productoRepository) {
+                         ProductoRepository productoRepository,
+                         EmailService emailService) {
         this.pedidoRepository = pedidoRepository;
         this.productoRepository = productoRepository;
+        this.emailService = emailService;
     }
 
     public Pedido crearPedido(User usuario, Map<Integer, Integer> carrito) {
@@ -89,6 +92,12 @@ public class PedidoService {
             System.out.println("Guardando en BD...");
             Pedido saved = pedidoRepository.save(pedido);
             System.out.println("✅ Pedido guardado ID: " + saved.getId());
+
+            // Enviar correo de confirmación
+            String emailUsuario = saved.getUsuario().getEmail();
+            if (emailUsuario != null && !emailUsuario.isBlank()) {
+                emailService.enviarConfirmacionPedido(emailUsuario, saved);
+            }
 
             return saved;
 
