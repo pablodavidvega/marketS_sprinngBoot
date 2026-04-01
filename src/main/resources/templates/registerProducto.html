@@ -629,6 +629,14 @@
                        accept="image/*">
                 <p th:if="${#fields.hasErrors('imagenes')}" th:errors="*{imagenes}" class="text-danger"></p>
             </div>
+            <!-- 🎥 VIDEO -->
+            <div class="mb-3">
+                <label for="video" class="form-label">Cargar video</label>
+                <input type="file" id="video"
+                       name="video"
+                       class="form-control"
+                       accept="video/mp4">
+            </div>
             <button type="submit" class="btn btn-mercadopago">Crear Producto</button>
             <a th:href="@{/vendedor/productos}" class="btn btn-mercadopago w-100 mt-2">Volver</a>
         </form>

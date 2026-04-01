@@ -25,6 +25,7 @@ public class Producto {
     private String estadoProducto;
     private String descripcion;
     private String imagen;
+    private String video;
     private Integer stock;
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)

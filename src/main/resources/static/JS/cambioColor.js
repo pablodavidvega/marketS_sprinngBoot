@@ -17,4 +17,19 @@ document.addEventListener("DOMContentLoaded", function () {
             localStorage.setItem("theme", "light");
         }
     });
+
+    document.querySelectorAll('.pro').forEach(card => {
+        const video = card.querySelector('video');
+
+        if (video) {
+            card.addEventListener('mouseenter', () => {
+                video.play();
+            });
+
+            card.addEventListener('mouseleave', () => {
+                video.pause();
+                video.currentTime = 0;
+            });
+        }
+    });
 });

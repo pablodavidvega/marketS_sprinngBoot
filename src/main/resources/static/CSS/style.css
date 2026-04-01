@@ -754,32 +754,60 @@ footer .sec-contact .info{
         background: #333;
         color: white;
         border: 1px solid white;
-    }
+}
 
-    .btn-mercadopago:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
-    }
+.btn-mercadopago:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 5px #ccc, 0 0 10px #ccc, 0 0 15px #ccc, 0 0 20px #ccc;
+}
 
-    .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: #fff;
-            border: solid 2px;
-            padding: 12px;
-            font-family: Poppins, monospace;
-            border-radius: 6px;
-        }
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: #fff;
+    border: solid 2px;
+    padding: 12px;
+    font-family: Poppins, monospace;
+    border-radius: 6px;
+}
 
-        .btn-back:hover {
-                color: #000;
-                background-color: #fff;
-                padding: 12px;
-            }
+.btn-back:hover {
+    color: #000;
+    background-color: #fff;
+    padding: 12px;
+}
 
+.media-container {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+}
+
+.img-producto,
+.video-producto {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    object-fit: cover;
+}
+
+.video-producto {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pro:hover .video-producto {
+    opacity: 1;
+}
+
+.pro:hover .img-producto {
+    opacity: 0;
+}
 
 
 

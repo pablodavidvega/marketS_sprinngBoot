@@ -114,32 +114,46 @@
 
 <!-- end barra lateral-->
     <section id="product-1">
-     <div class="productos2">
-        <div class="pro" th:each="prod : ${productos}">
-            <a th:href="@{/productos/ver/{id}(id=${prod.id})}">
-            <img th:src="@{/uploads/{file}(file=${prod.imagen})}" alt="Imagen producto">
-            </a>
-            <div class="content-container">
-                <span th:text="${prod.marca.nombreMarca}">Marca</span>
-                <h5>
-                    <a th:href="@{'/productos/ver/' + ${prod.id}}" th:text="${prod.nombre}">Nombre producto</a>
-                </h5>
-                <div class="star">
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                    <i class="fa-solid fa-star"></i>
-                </div>
-                <h4 th:text="${prod.precio}"></h4>
-            </div>
-            <div class="shop">
-                <a th:href="@{'/carrito/agregar'(id=${prod.id}, nombre=${prod.nombre}, precio=${prod.precio}, cantidad=1)}">
-                    <i class="fa-solid fa-cart-shopping"></i>
+        <div class="productos2">
+            <div class="pro" th:each="prod : ${productos}">
+
+                <a th:href="@{/productos/ver/{id}(id=${prod.id})}">
+
+                    <div class="media-container">
+                        <img th:src="@{/uploads/{file}(file=${prod.imagen})}" class="img-producto">
+
+                        <video class="video-producto" muted loop
+                               th:if="${prod.video != null}">
+                            <source th:src="@{/uploads/{file}(file=${prod.video})}" type="video/mp4">
+                        </video>
+                    </div>
+
+                    <div class="content-container">
+                        <span th:text="${prod.marca.nombreMarca}">Marca</span>
+
+                        <h5 th:text="${prod.nombre}">Nombre producto</h5>
+
+                        <div class="star">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+
+                        <h4 th:text="${prod.precio}"></h4>
+                    </div>
+
                 </a>
+
+                <div class="shop">
+                    <a th:href="@{'/carrito/agregar'(id=${prod.id}, nombre=${prod.nombre}, precio=${prod.precio}, cantidad=1)}">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </a>
+                </div>
+
             </div>
         </div>
-    </div>
     </section>
 </div>
 <footer>
