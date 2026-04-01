@@ -475,9 +475,11 @@ button:hover{
 }
 
 #product-1 .pro img{
-    width: 60%;
+    width: 90%;
+    height: 65%
     border-radius: 20px;
     color: #fff
+    object-fit: cover;
 }
 
 #product-1 .pro .content-container{

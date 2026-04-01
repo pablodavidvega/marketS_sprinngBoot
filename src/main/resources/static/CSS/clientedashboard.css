@@ -11,7 +11,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
+    height: 105px;
     padding: 0 1rem;
     position: fixed;
     width: 100%;
@@ -69,6 +69,7 @@ body {
 }
 
 .sidebar ul {
+    margin-top: 80px;
     list-style: none;
     padding: 0;
     margin: 0;
