@@ -35,6 +35,7 @@ public class ProductoDto {
 
     // Campos para imágenes
     private MultipartFile imagen;
+    private MultipartFile video;
     private List<MultipartFile> imagenes = new ArrayList<>();
     private MultipartFile nuevaImagen; // Para edición de imágenes
 
@@ -52,6 +53,8 @@ public class ProductoDto {
     private Integer stockOriginal;
 
     // Getters y Setters COMPLETOS
+    public MultipartFile getVideo() { return video; }
+    public void setVideo(MultipartFile video) { this.video = video; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

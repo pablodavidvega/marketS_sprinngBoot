@@ -554,7 +554,6 @@
                 </div>
                 <button type="button" class="btn btn-sm btn-success mt-2" onclick="agregarTalla()">+ Agregar Talla</button>
             </div>
-
             <div class="mb-3">
                 <label for="nuevaImagen" class="form-label">Carga una nueva imagen (opcional)</label>
                 <input type="file" id="nuevaImagen"
@@ -564,7 +563,13 @@
                        accept="image/*">
                 <p th:if="${#fields.hasErrors('nuevaImagen')}" th:errors="*{nuevaImagen}" class="text-danger"></p>
             </div>
-
+            <div class="mb-3">
+                <label for="video" class="form-label">Actualizar video (opcional)</label>
+                <input type="file" id="video"
+                       th:field="*{video}"
+                       class="form-control"
+                       accept="video/mp4">
+            </div>
             <button type="submit" class="btn btn-primary">Actualizar</button>
             <a th:href="@{/vendedor/productos}" class="btn btn-success w-100 mt-2">Volver</a>
         </form>

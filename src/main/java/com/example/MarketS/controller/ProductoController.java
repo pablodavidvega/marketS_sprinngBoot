@@ -32,22 +32,17 @@ public class ProductoController {
     private MarcaRepository marcaRepository;
     @Autowired
     private CategoriaRepository categoriaRepository;
-
     @Autowired
     private UserService userService;
 
     @GetMapping("/index")
     public String mostrarProductosAleatorios(Model model) {
         List<Producto> todos = productoRepository.findByActivoTrue();
-
         Collections.shuffle(todos);
-
         List<Producto> productosAleatorios = todos.stream()
                 .limit(30)
                 .toList();
-
         model.addAttribute("productos", productosAleatorios);
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
@@ -58,23 +53,14 @@ public class ProductoController {
                 model.addAttribute("rolUsuario", user.getRol().getRolname());
             }
         }
-
         return "index";
     }
-
-
-
-
     @GetMapping("/register")
     public String create(Model model) {
         model.addAttribute("productoDto", new ProductoDto());
         model.addAttribute("categorias", categoriaRepository.findAll());
         return "registerProducto";
     }
-
-
-
-
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id){
         Producto p = productoRepository.findById(id).orElse(null);
@@ -86,9 +72,6 @@ public class ProductoController {
         }
         return "redirect:/productos";
     }
-
-
-
     @GetMapping("/categoria/{id}")
     public String ProductosPorCategoria(@PathVariable("id") Long id, Model model) {
 
@@ -110,4 +93,4 @@ public class ProductoController {
 
         return "FiltrosCategorias";
     }
-    }
+}
