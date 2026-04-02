@@ -25,6 +25,8 @@ public class Producto {
     private String estadoProducto;
     private String descripcion;
     private String imagen;
+    private String imagen2;
+    private String imagen3;
     private String video;
     private Integer stock;
 

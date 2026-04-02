@@ -33,3 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+function cambiarImagen(elemento) {
+            document.getElementById("imagen-principal").src = elemento.src;
+        }

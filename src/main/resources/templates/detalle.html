@@ -470,6 +470,40 @@
         .btn-volver:hover {
             color: #256b25;
         }
+
+        .product-image-box {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.thumbnails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.thumb {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: 0.2s;
+}
+
+.thumb:hover {
+    border: 2px solid #00a650;
+    transform: scale(1.05);
+}
+
+.product-image {
+    width: 400px;
+    height: 400px;
+    object-fit: contain;
+    border-radius: 15px;
+}
     </style>
 </head>
 <body>
@@ -515,7 +549,32 @@
 <div class="product-detail-container">
     <div class="product-image-box">
         <a th:href="@{/productos/index}" class="btn-back btn-volver"><i class="fa-solid fa-arrow-left"></i> Volver</a>
-        <img class="product-image" th:src="@{'/uploads/' + ${producto.imagen}}" alt="Imagen del producto">
+        <div class="product-image-box">
+
+            <!-- Miniaturas -->
+            <div class="thumbnails">
+                <img th:if="${producto.imagen != null}"
+                     th:src="@{'/uploads/' + ${producto.imagen}}"
+                     class="thumb"
+                     onclick="cambiarImagen(this)">
+
+                <img th:if="${producto.imagen2 != null}"
+                     th:src="@{'/uploads/' + ${producto.imagen2}}"
+                     class="thumb"
+                     onclick="cambiarImagen(this)">
+
+                <img th:if="${producto.imagen3 != null}"
+                     th:src="@{'/uploads/' + ${producto.imagen3}}"
+                     class="thumb"
+                     onclick="cambiarImagen(this)">
+            </div>
+
+            <!-- Imagen principal -->
+            <img id="imagen-principal"
+                 class="product-image"
+                 th:src="@{'/uploads/' + ${producto.imagen}}"
+                 alt="Imagen del producto">
+        </div>
     </div>
     <div class="product-info-box">
         <h1 class="product-title" th:text="${producto.nombre}">Nombre del producto</h1>

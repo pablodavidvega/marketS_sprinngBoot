@@ -619,15 +619,21 @@
                 <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addTalla()">+ Añadir talla</button>
             </div>
 
-
             <div class="mb-3">
-                <label for="imagenes" class="form-label">Carga imágenes</label>
-                <input type="file" id="imagenes"
-                       th:field="*{imagenes}"
-                       class="form-control"
-                       multiple
-                       accept="image/*">
-                <p th:if="${#fields.hasErrors('imagenes')}" th:errors="*{imagenes}" class="text-danger"></p>
+                <div class="mb-3">
+                    <label class="form-label">Imagen principal</label>
+                    <input type="file" name="img1" class="form-control" accept="image/*">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Imagen secundaria</label>
+                    <input type="file" name="img2" class="form-control" accept="image/*">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Imagen adicional</label>
+                    <input type="file" name="img3" class="form-control" accept="image/*">
+                </div>
             </div>
             <!-- 🎥 VIDEO -->
             <div class="mb-3">

@@ -25,6 +25,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -297,29 +298,22 @@ public class VendedorController {
             producto.setMarca(marca);
         }
 
-        if (productoDto.getImagenes() != null && !productoDto.getImagenes().isEmpty()) {
-            MultipartFile archivo = productoDto.getImagenes().get(0); // primera imagen
-            if (!archivo.isEmpty()) {
-                String originalFilename = archivo.getOriginalFilename();
-                String extension = "";
+        // IMAGEN 1
+        if (productoDto.getImg1() != null && !productoDto.getImg1().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg1(), productoDto.getNombre());
+            producto.setImagen(nombre);
+        }
 
-                int i = originalFilename.lastIndexOf('.');
-                if (i >= 0) {
-                    extension = originalFilename.substring(i);
-                }
+// IMAGEN 2
+        if (productoDto.getImg2() != null && !productoDto.getImg2().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg2(), productoDto.getNombre());
+            producto.setImagen2(nombre);
+        }
 
-                // Generar nombre con el nombre del producto
-                String nombreArchivo = productoDto.getNombre()
-                        .replaceAll("\\s+", "_")
-                        .toLowerCase() + extension;
-
-                Path ruta = Paths.get("C:/uploads/hana");
-                if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-                Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-
-                producto.setImagen(nombreArchivo);
-            }
+// IMAGEN 3
+        if (productoDto.getImg3() != null && !productoDto.getImg3().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg3(), productoDto.getNombre());
+            producto.setImagen3(nombre);
         }
         // 🎥 GUARDAR VIDEO
         if (productoDto.getVideo() != null && !productoDto.getVideo().isEmpty()) {
@@ -370,6 +364,26 @@ public class VendedorController {
 
         productoRepository.save(producto);
         return "redirect:/vendedor/productos";
+    }
+    public String guardarImagen(MultipartFile archivo, String nombreProducto) throws IOException {
+        String originalFilename = archivo.getOriginalFilename();
+        String extension = "";
+
+        int i = originalFilename.lastIndexOf('.');
+        if (i >= 0) {
+            extension = originalFilename.substring(i);
+        }
+
+        String nombreArchivo = nombreProducto
+                .replaceAll("\\s+", "_")
+                .toLowerCase() + "_" + System.currentTimeMillis() + extension;
+
+        Path ruta = Paths.get("C:/uploads/hana");
+        if (!Files.exists(ruta)) Files.createDirectories(ruta);
+
+        Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
+
+        return nombreArchivo;
     }
 
     @GetMapping("/productos/desactivar/{id}")

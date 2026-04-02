@@ -34,9 +34,10 @@ public class ProductoDto {
     private String descripcion;
 
     // Campos para imágenes
-    private MultipartFile imagen;
+    private MultipartFile img1;
+    private MultipartFile img2;
+    private MultipartFile img3;
     private MultipartFile video;
-    private List<MultipartFile> imagenes = new ArrayList<>();
     private MultipartFile nuevaImagen; // Para edición de imágenes
 
     @NotBlank(message = "El nombre de la marca es obligatorio.")
@@ -53,6 +54,29 @@ public class ProductoDto {
     private Integer stockOriginal;
 
     // Getters y Setters COMPLETOS
+    public MultipartFile getImg1() {
+        return img1;
+    }
+
+    public void setImg1(MultipartFile img1) {
+        this.img1 = img1;
+    }
+
+    public MultipartFile getImg2() {
+        return img2;
+    }
+
+    public void setImg2(MultipartFile img2) {
+        this.img2 = img2;
+    }
+
+    public MultipartFile getImg3() {
+        return img3;
+    }
+
+    public void setImg3(MultipartFile img3) {
+        this.img3 = img3;
+    }
     public MultipartFile getVideo() { return video; }
     public void setVideo(MultipartFile video) { this.video = video; }
     public Long getId() { return id; }
@@ -72,12 +96,6 @@ public class ProductoDto {
 
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-
-    public MultipartFile getImagen() { return imagen; }
-    public void setImagen(MultipartFile imagen) { this.imagen = imagen; }
-
-    public List<MultipartFile> getImagenes() { return imagenes; }
-    public void setImagenes(List<MultipartFile> imagenes) { this.imagenes = imagenes; }
 
     public MultipartFile getNuevaImagen() { return nuevaImagen; }
     public void setNuevaImagen(MultipartFile nuevaImagen) { this.nuevaImagen = nuevaImagen; }
