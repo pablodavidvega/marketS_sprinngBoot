@@ -32,7 +32,6 @@
                 <span th:text="${nombreUsuario}"></span>
             </a>
 
-            <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
             <a th:href="@{/carrito}" class="btn-icon"><i class="fa-solid fa-cart-shopping"></i></a>
 
             <a th:if="${nombreUsuario == null}" th:href="@{/login}">

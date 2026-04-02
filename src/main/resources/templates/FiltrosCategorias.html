@@ -492,14 +492,12 @@
                    th:if="${nombreUsuario != null}">
                     <i class="fa-solid fa-user"></i>
                 </a>
-                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
                 <a th:href="@{/carrito}" class="btn-icon">
                     <i class="fa-solid fa-cart-shopping"></i>
                 </a>
             </div>
             <div th:unless="${nombreUsuario}" class="nav-not-logged">
                 <a href="#" class="btn-icon"><i class="fa-solid fa-user"></i></a>
-                <a href="#" class="btn-icon"><i class="fa-solid fa-bell"></i></a>
             </div>
 
             <button id="toggle-dark-mode" class="modo-btn">
