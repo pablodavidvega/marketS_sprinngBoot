@@ -554,13 +554,30 @@
                 <button type="button" class="btn btn-sm btn-success mt-2" onclick="agregarTalla()">+ Agregar Talla</button>
             </div>
             <div class="mb-3">
-                <label for="nuevaImagen" class="form-label">Carga una nueva imagen (opcional)</label>
-                <input type="file" id="nuevaImagen"
-                       th:field="*{nuevaImagen}"
-                       class="form-control"
-                       th:classappend="${#fields.hasErrors('nuevaImagen')} ? ' input-rojo' : ''"
-                       accept="image/*">
-                <p th:if="${#fields.hasErrors('nuevaImagen')}" th:errors="*{nuevaImagen}" class="text-danger"></p>
+                <label class="form-label">Imagen principal (opcional)</label>
+                <div th:if="${imagenActual != null and !#strings.isEmpty(imagenActual)}" class="mb-2">
+                    <img th:src="@{'/imagenes/' + ${imagenActual}}" alt="Imagen actual" class="img-1">
+                    <small class="form-text text-muted d-block">Imagen actual. Sube una nueva para reemplazarla.</small>
+                </div>
+                <input type="file" name="img1" class="form-control" accept="image/*">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Imagen secundaria (opcional)</label>
+                <div th:if="${imagen2Actual != null and !#strings.isEmpty(imagen2Actual)}" class="mb-2">
+                    <img th:src="@{'/imagenes/' + ${imagen2Actual}}" alt="Imagen 2 actual" class="img-1">
+                    <small class="form-text text-muted d-block">Imagen actual. Sube una nueva para reemplazarla.</small>
+                </div>
+                <input type="file" name="img2" class="form-control" accept="image/*">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Imagen adicional (opcional)</label>
+                <div th:if="${imagen3Actual != null and !#strings.isEmpty(imagen3Actual)}" class="mb-2">
+                    <img th:src="@{'/imagenes/' + ${imagen3Actual}}" alt="Imagen 3 actual" class="img-1">
+                    <small class="form-text text-muted d-block">Imagen actual. Sube una nueva para reemplazarla.</small>
+                </div>
+                <input type="file" name="img3" class="form-control" accept="image/*">
             </div>
             <div class="mb-3">
                 <label for="video" class="form-label">Actualizar video (opcional)</label>

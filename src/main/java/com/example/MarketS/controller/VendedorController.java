@@ -188,31 +188,20 @@ public class VendedorController {
             producto.setMarca(marca);
         }
 
-        // Mantener el código existente para manejar imágenes...
-        // Mantener el código existente para manejar imágenes...
-        if (productoDto.getNuevaImagen() != null && !productoDto.getNuevaImagen().isEmpty()) {
-            MultipartFile archivo = productoDto.getNuevaImagen();
-            if (!archivo.isEmpty()) {
-                String originalFilename = archivo.getOriginalFilename();
-                String extension = "";
-
-                int i = originalFilename.lastIndexOf('.');
-                if (i >= 0) {
-                    extension = originalFilename.substring(i);
-                }
-
-                // Generar nombre con el nombre del producto
-                String nombreArchivo = productoDto.getNombre()
-                        .replaceAll("\\s+", "_")
-                        .toLowerCase() + extension;
-
-                Path ruta = Paths.get("C:/uploads/hana");
-                if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-                Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-
-                producto.setImagen(nombreArchivo);
-            }
+        // IMAGEN 1
+        if (productoDto.getImg1() != null && !productoDto.getImg1().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg1(), productoDto.getNombre());
+            producto.setImagen(nombre);
+        }
+        // IMAGEN 2
+        if (productoDto.getImg2() != null && !productoDto.getImg2().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg2(), productoDto.getNombre());
+            producto.setImagen2(nombre);
+        }
+        // IMAGEN 3
+        if (productoDto.getImg3() != null && !productoDto.getImg3().isEmpty()) {
+            String nombre = guardarImagen(productoDto.getImg3(), productoDto.getNombre());
+            producto.setImagen3(nombre);
         }
 
         // ACTUALIZAR VIDEO
@@ -482,6 +471,9 @@ public class VendedorController {
                 model.addAttribute("productoDto", productoDto);
                 model.addAttribute("categorias", categoriaRepository.findAll());
                 model.addAttribute("usuario", usuario);
+                model.addAttribute("imagenActual", producto.getImagen());
+                model.addAttribute("imagen2Actual", producto.getImagen2());
+                model.addAttribute("imagen3Actual", producto.getImagen3());
 
                 return "vendedor/edit";
             }
