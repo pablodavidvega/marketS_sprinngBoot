@@ -203,22 +203,11 @@ body.dark-mode .footer-col .info p {
     font-size: 16px;
 }
 
-button{
-    background: red;
-    border: 2px;
-    border-radius: 20px;
-    color: #FFF;
-    text-transform: uppercase;
-    position: relative;
-    border: none;
-    height: 40px;
-    width: 120px;
-    transition: .3s linear;
+/* Reset base — estilos reales en /CSS/buttons.css */
+button {
+    box-sizing: border-box;
     cursor: pointer;
-}
-button:hover{
-    background: white;
-    color: #000;
+    font-family: inherit;
 }
 
 .btn6:hover{

@@ -86,6 +86,7 @@ a{
 }
 .logo{
     display: flex;
+    text-decoration: none;
     align-items: center;
 }
 .logo img{
@@ -237,6 +238,10 @@ button:hover{
     color: #888888;
 }
 
+.input-group {
+    flex-direction: column;
+}
+
 /* efecto focus */
 .input-field:focus-within {
     border-color: #ff0000;
@@ -334,6 +339,10 @@ ul{
 .footer-col {
     width: 25%;
     padding: 0 15px;
+}
+
+.footer-col {
+
 }
 
 .footer-col h4{

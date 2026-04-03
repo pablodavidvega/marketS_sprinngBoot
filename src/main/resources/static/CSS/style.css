@@ -63,6 +63,9 @@ body.dark-mode .sidebar {
     background-color: #1a1a1a;
 }
 
+body.dark-mode .sidebar .sBtn-text {
+    font-size: 20px;
+}
 
 body.dark-mode .btn-3,
 body.dark-mode .btn-4,
@@ -73,6 +76,9 @@ body.dark-mode .select-btn {
     text-decoration: none;
 }
 
+.btn-3 .service {
+    font-size: 20px;
+}
 
 body.dark-mode .name-project {
     color: white;
@@ -240,22 +246,11 @@ button.btn-icon {
 }
 
 
-button{
-    background: red;
-    border: 2px;
-    border-radius: 20px;
-    color: #FFF;
-    text-transform: uppercase;
-    position: relative;
-    border: none;
-    height: 50px;
-    width: 120px;
-    transition: .3s linear;
+/* Reset base — estilos reales en /CSS/buttons.css */
+button {
+    box-sizing: border-box;
     cursor: pointer;
-}
-button:hover{
-    background: white;
-    color: #000;
+    font-family: inherit;
 }
 
 .panel-usuario, .salir-usuario {
@@ -305,11 +300,7 @@ button:hover{
     cursor: pointer;
 }
 
-button:hover{
-    background-color: #7a0c0c;
-    box-shadow: 0 0 5px #7a0c0c, 0 0 10px #7a0c0c;
-    color: #fff;
-}
+/* hover global eliminado — cada clase define el suyo en buttons.css */
 
 /*end hero*/
 /*contenido*/
@@ -552,6 +543,9 @@ ul{
     width: 25%;
     padding: 0 15px;
 }
+.footer-col img{
+    height: 33px;
+}
 
 .footer-col h4{
     position: relative;
@@ -715,10 +709,6 @@ footer .sec-contact .info{
     border-radius: 5px;
     font-weight: bold;
     transition: 0.3s;
-}
-
-.btn-carrusel:hover {
-    background-color: darkred;
 }
 
 .controles {
