@@ -42,14 +42,9 @@ public class CarouselController {
         } else if (category != null && !category.isEmpty()) {
             productos = productoRepository.findByCategorias_NombreCategoriaIgnoreCase(category);
         } else {
-            productos = productoRepository.findAll();
+            productos = productoRepository.findByActivoTrue();
         }
 
-        for (Producto producto : productos) {
-            if (producto.getImagen() != null && !producto.getImagen().startsWith("/uploads/")) {
-                producto.setImagen("/uploads/" + producto.getImagen());
-            }
-        }
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {

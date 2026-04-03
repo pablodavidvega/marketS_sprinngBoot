@@ -26,7 +26,6 @@
         </div>
         <nav class="nav-menu">
             <a th:href="@{/productos/index}" class="active btn-icon"><strong>Inicio</strong></a>
-
             <a th:if="${nombreUsuario != null}"
                th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
                class="btn-icon">
@@ -67,7 +66,7 @@
     </div>
     <div class="productos">
         <div class="producto" th:each="producto : ${productos}">
-            <img th:src="${producto.imagen}" alt="Imagen del producto">
+            <img th:src="@{/uploads/{file}(file=${producto.imagen})}" alt="Imagen del producto">
             <h3 th:text="${producto.nombre}">Nombre del producto</h3>
             <p th:text="'Precio: $' + ${producto.precio}">Precio</p>
             <p th:text="${producto.descripcion}">Descripción</p>
