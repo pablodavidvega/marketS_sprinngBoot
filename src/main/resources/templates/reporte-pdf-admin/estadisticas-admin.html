@@ -29,19 +29,16 @@
                 <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
             </li>
             <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
-                <a th:href="@{/admin/enviar-correos}">
-                    <i class="fas fa-envelope"></i> <span>Enviar correos</span>
-                </a>
-            </li>
-            <li th:class="'menu-item ' + (${activePage} == 'reporteHallazgos' ? 'active' : '')">
-                <a th:href="@{/admin/reporte-hallazgos}">
-                    <i class="fas fa-chart-bar"></i> <span>Informe de Pruebas</span>
-                </a>
+                <a th:href="@{/admin/enviar-correos}"><i class="fas fa-envelope"></i> <span>Enviar correos</span></a>
             </li>
             <li th:class="'menu-item ' + (${activePage} == 'reporteVendedores' ? 'active' : '')">
-                <a th:href="@{/admin/reporte-vendedores}">
-                    <i class="fas fa-user-tie"></i> <span>Reporte vendedores</span>
-                </a>
+                <a th:href="@{/admin/reporte-pdf}"><i class="fas fa-user-tie"></i> <span>Reporte productos</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'cargaUsuarios' ? 'active' : '')">
+                <a th:href="@{/admin/carga-usuarios/form}"><i class="fas fa-file-upload"></i> <span>Carga de datos</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'servicioCliente' ? 'active' : '')">
+                <a th:href="@{/admin/servicio-cliente}"><i class="fas fa-headset"></i> <span>Servicio al Cliente</span></a>
             </li>
             <li>
                 <form th:action="@{/logout}" method="post">
@@ -99,6 +96,15 @@
 </div>
 
 <script th:inline="javascript">
+    const logo = document.getElementById('logoToggle');
+    const sidebar = document.getElementById('sidebar');
+    let expanded = false;
+    logo.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        expanded = !expanded;
+        logo.textContent = expanded ? 'MS' : 'MarketS';
+    });
+c
     const categoriasNombres = [[${categoriasNombres}]];
     const categoriasTotales = [[${categoriasTotales}]];
     const promedioPrecio = [[${reporte.promedioPrecio}]];

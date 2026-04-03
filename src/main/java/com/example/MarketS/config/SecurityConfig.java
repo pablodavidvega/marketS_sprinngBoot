@@ -51,6 +51,8 @@ public class SecurityConfig {
                                 "/productos/**",
                                 "/uploads/**",
                                 "/filtros",
+                                "/servicio-cliente",
+                                "/servicio-cliente/enviar",
                                 "/enviar-correo/**",
                                 "/api/pdf/**",
                                 "/api/usuarios/estadisticas",

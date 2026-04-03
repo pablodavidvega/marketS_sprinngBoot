@@ -38,6 +38,10 @@
                 <a th:href="@{/admin/carga-usuarios/form}">
                     <i class="fas fa-file-upload"></i> <span>Carga de datos</span>
                 </a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'servicioCliente' ? 'active' : '')">
+                <a th:href="@{/admin/servicio-cliente}"><i class="fas fa-headset"></i> <span>Servicio al Cliente</span></a>
+            </li>
             <li>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="logout-btn">
@@ -116,7 +120,7 @@
     logo.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
         expanded = !expanded;
-        logo.textContent = expanded ? 'MarketS' : 'MS';
+        logo.textContent = expanded ? 'MS' : 'MarketS';
     });
     
     const formCorreo = document.querySelector(".form-correo");

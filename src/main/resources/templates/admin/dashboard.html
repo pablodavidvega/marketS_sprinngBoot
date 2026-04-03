@@ -45,7 +45,9 @@
                     <span>Carga de datos</span>
                 </a>
             </li>
-
+            <li th:class="'menu-item ' + (${activePage} == 'servicioCliente' ? 'active' : '')">
+                <a th:href="@{/admin/servicio-cliente}"><i class="fas fa-headset"></i> <span>Servicio al Cliente</span></a>
+            </li>
             <li>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="logout-btn">
@@ -78,6 +80,10 @@
             <a th:href="@{/admin/carga-usuarios/form}" class="card">
                 <i class="fas fa-file-upload"></i>
                 <h3>Carga de datos</h3>
+            </a>
+            <a th:href="@{/admin/servicio-cliente}" class="card">
+                <i class="fas fa-headset"></i>
+                <h3>Servicio al Cliente</h3>
             </a>
         </div>
     </main>
