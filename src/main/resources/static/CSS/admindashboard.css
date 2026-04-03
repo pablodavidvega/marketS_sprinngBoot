@@ -226,10 +226,12 @@ table tbody tr:nth-child(even) {
 
 .select-rol-admin {
     background-color: yellow;
-    width: 120px;
-    height: 20px;
     margin-bottom: 10px;
     font-size: 12px;
+    padding: 10px;
+    color: #333;
+    font-weight: bold;
+    border-radius: 10px;
 }
 
 /* .btn-save-admin, .btn-delete-admin, .btn-back → definidos en buttons.css */

@@ -19,20 +19,37 @@
 <div class="wrapper">
   <aside id="sidebar" class="sidebar">
     <ul>
-      <li><a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
-
-      <li class="active"><a th:href="@{/admin/usuarios}"><i class="fas fa-users"></i> <span>Usuarios</span></a></li>
-      <li><a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a></li>
-      <li>
-        <form th:action="@{/logout}" method="post">
-          <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Salir</span></button>
-        </form>
-      </li>
+        <li th:class="'menu-item ' + (${activePage} == 'dashboard' ? 'active' : '')">
+            <a th:href="@{/admin/dashboard}"><i class="fas fa-home"></i> <span>Inicio</span></a>
+        </li>
+        <li th:class="'menu-item ' + (${activePage} == 'usuarios' ? 'active' : '')">
+            <a th:href="@{/admin/usuarios}"><i class="fas fa-users"></i> <span>Usuarios</span></a>
+        </li>
+        <li th:class="'menu-item ' + (${activePage} == 'nuevoAdmin' ? 'active' : '')">
+            <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
+        </li>
+        <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
+            <a th:href="@{/admin/enviar-correos}"><i class="fas fa-envelope"></i> <span>Enviar correos</span></a>
+        </li>
+        <li th:class="'menu-item ' + (${activePage} == 'reporteVendedores' ? 'active' : '')">
+            <a th:href="@{/admin/reporte-pdf}"><i class="fas fa-user-tie"></i> <span>Reporte productos</span></a>
+        </li>
+        <li th:class="'menu-item ' + (${activePage} == 'cargaUsuarios' ? 'active' : '')">
+            <a th:href="@{/admin/carga-usuarios/form}">
+                <i class="fas fa-file-upload"></i> <span>Carga de datos</span>
+            </a>
+        <li>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
+                </button>
+            </form>
+        </li>
     </ul>
   </aside>
 
   <main class="dashboard-main">
-      <a th:href="@{/admin/dashboard}" class="btn-back">
+      <a th:href="@{/admin/dashboard}" class="btn-volver">
           <i class="fas fa-arrow-left"></i> Volver al panel
       </a>
     <h1 class="dashboard-tittle">Lista de Usuarios</h1>
@@ -50,7 +67,7 @@
 
     <p th:if="${mensaje}" th:text="${mensaje}"></p>
     <a class="btn-mercadopago" th:href="@{/admin/usuarios/reporte-pdf}">
-      <i class="fas fa-file-pdf"></i> Lista de usuarios
+      <i class="fas fa-file-pdf"></i>PDF Lista de usuarios
     </a>
 
     <table>

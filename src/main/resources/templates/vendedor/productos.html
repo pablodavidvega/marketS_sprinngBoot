@@ -23,10 +23,10 @@
     <h1 class="mb-4  title-my-products">Mis Productos</h1>
 
     <div class="mb-3 d-flex gap-2 flex-wrap align-items-center container-tabs">
-        <a th:href="@{/vendedor/dashboard}" class="btn btn-back btn-sm">
+        <a th:href="@{/vendedor/dashboard}" class="btn btn-volver btn-sm">
             <i class="fas fa-arrow-left"></i>
             Volver al Dashboard</a>
-        <a th:href="@{/vendedor/productos/agregar}" class="btn btn-mercadopago btn-sm btn-new-product">Nuevo Producto</a>
+        <a th:href="@{/vendedor/productos/agregar}" class="btn btn-primary btn-sm btn-new-product">Nuevo Producto</a>
 
         <form th:action="@{/vendedor/productos/buscar}" method="get" class="d-flex gap-1 form1-search-products">
             <input type="text" name="keyword" class="form-control form-control-sm" placeholder="Buscar Producto" th:value="${keyword}" />
@@ -36,7 +36,7 @@
         </form>
         <form th:action="@{/vendedor/productos/reporte-pdf}" method="get" target="_blank" class=" d-flex gap-1 form-export-pdf">
             <input type="hidden" name="keyword" th:value="${keyword}" />
-            <button type="submit" class="btn btn-mercadopago btn-sm btn-export-pdf">Exportar PDF</button>
+            <button type="submit" class="btn btn-outline btn-sm btn-export-pdf">Exportar PDF</button>
         </form>
     </div>
 

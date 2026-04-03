@@ -581,6 +581,10 @@ body.dark-mode .promo-box button:hover {
     border: none;
 }
 
+.btn-primary i {
+    color: #333;
+}
+
 /* Success */
 .btn-success {
     background: linear-gradient(135deg, #00c46e, #00e676);

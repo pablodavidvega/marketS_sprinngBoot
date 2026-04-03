@@ -29,8 +29,15 @@
                 <a th:href="@{/admin/usuarios/nuevo-admin}"><i class="fas fa-user-plus"></i> <span>Agregar Admin</span></a>
             </li>
             <li th:class="'menu-item ' + (${activePage} == 'enviarCorreos' ? 'active' : '')">
-                <a th:href="@{/admin/enviar-correo}"><i class="fas fa-envelope"></i> <span>Enviar Correos</span></a>
+                <a th:href="@{/admin/enviar-correos}"><i class="fas fa-envelope"></i> <span>Enviar correos</span></a>
             </li>
+            <li th:class="'menu-item ' + (${activePage} == 'reporteVendedores' ? 'active' : '')">
+                <a th:href="@{/admin/reporte-pdf}"><i class="fas fa-user-tie"></i> <span>Reporte productos</span></a>
+            </li>
+            <li th:class="'menu-item ' + (${activePage} == 'cargaUsuarios' ? 'active' : '')">
+                <a th:href="@{/admin/carga-usuarios/form}">
+                    <i class="fas fa-file-upload"></i> <span>Carga de datos</span>
+                </a>
             <li>
                 <form th:action="@{/logout}" method="post">
                     <button type="submit" class="logout-btn">
@@ -79,7 +86,7 @@
                         <textarea id="mensaje" name="mensaje" rows="6" placeholder="Escribe el mensaje aquí" required></textarea>
                     </div>
 
-                    <button type="submit" class="btn-mercadopago">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-paper-plane"></i> Enviar
                     </button>
                 </form>
