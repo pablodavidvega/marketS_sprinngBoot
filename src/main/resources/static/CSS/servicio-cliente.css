@@ -1,126 +1,116 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
+/* Overrides body height hardcodeado en style.css para esta vista */
 body {
-    font-family: "Poppins", monospace;
-    background-color: #f8f9fa;
-    color: #333;
-    transition: 0.3s ease;
+    height: auto;
+    min-height: 100vh;
 }
 
-body.dark-mode {
-    background-color: #121212;
-    color: #e0e0e0;
+/* ── SECCIÓN PRINCIPAL ── */
+.sc-main {
+    flex: 1;
+    padding: 30px 40px 60px;
+    overflow-x: hidden;
+}
+
+/* ── ALERTA ── */
+.sc-alerta {
+    margin-bottom: 20px;
 }
 
 /* ── HERO ── */
 .sc-hero {
     background: linear-gradient(135deg, #3483fa 0%, #2b6ee0 100%);
     color: white;
-    padding: 60px 20px;
+    padding: 40px 30px;
+    border-radius: 12px;
     text-align: center;
+    margin-bottom: 30px;
 }
 
 .sc-hero h1 {
-    font-size: 2.2rem;
+    font-size: 1.9rem;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .sc-hero p {
-    font-size: 1rem;
+    font-size: 0.95rem;
     opacity: 0.9;
-    max-width: 500px;
-    margin: 0 auto;
+    margin: 0;
 }
 
 /* ── INFO CARDS ── */
 .sc-info {
     display: flex;
-    justify-content: center;
-    gap: 24px;
+    gap: 20px;
     flex-wrap: wrap;
-    padding: 40px 20px;
-    max-width: 900px;
-    margin: 0 auto;
+    margin-bottom: 30px;
 }
 
 .sc-info-card {
-    background: white;
-    border-radius: 12px;
-    padding: 28px 32px;
-    text-align: center;
     flex: 1;
-    min-width: 200px;
-    max-width: 260px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    min-width: 180px;
+    background: white;
+    border-radius: 10px;
+    padding: 22px 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .sc-info-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
 
 .sc-info-card i {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: #3483fa;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .sc-info-card h4 {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: #444;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
 .sc-info-card p {
-    font-size: 0.88rem;
-    color: #666;
+    font-size: 0.85rem;
+    color: #333;
+    margin-bottom: 2px;
 }
 
-body.dark-mode .sc-info-card {
-    background: #1e1e1e;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+.sc-info-card span {
+    font-size: 0.78rem;
+    color: #888 !important;
 }
 
-body.dark-mode .sc-info-card h4 { color: #ccc; }
-body.dark-mode .sc-info-card p  { color: #aaa; }
-
-/* ── CONTENIDO PRINCIPAL ── */
+/* ── FAQ + FORMULARIO ── */
 .sc-content {
     display: flex;
-    gap: 32px;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px 60px;
+    gap: 30px;
     flex-wrap: wrap;
+    margin-bottom: 40px;
 }
 
 /* ── FAQ ── */
 .sc-faq {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
 }
 
-.sc-faq h2 {
-    font-size: 1.4rem;
+.sc-faq > h2 {
+    font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 20px;
     color: #222;
+    margin-bottom: 16px;
 }
-
-body.dark-mode .sc-faq h2 { color: #eee; }
 
 .sc-faq .accordion-button {
     font-family: "Poppins", monospace;
     font-weight: 600;
-    font-size: 0.92rem;
-    background-color: white;
+    font-size: 0.88rem;
     color: #333;
 }
 
@@ -131,77 +121,49 @@ body.dark-mode .sc-faq h2 { color: #eee; }
 }
 
 .sc-faq .accordion-body {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     color: #555;
     line-height: 1.6;
-}
-
-body.dark-mode .sc-faq .accordion-button {
-    background-color: #1e1e1e;
-    color: #ddd;
-}
-
-body.dark-mode .sc-faq .accordion-button:not(.collapsed) {
-    background-color: #1a2a3a;
-    color: #4e9fff;
-}
-
-body.dark-mode .sc-faq .accordion-body {
-    background-color: #1e1e1e;
-    color: #bbb;
-}
-
-body.dark-mode .sc-faq .accordion-item {
-    border-color: #333;
 }
 
 /* ── FORMULARIO ── */
 .sc-form-box {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
     background: white;
-    border-radius: 12px;
-    padding: 32px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 28px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
-body.dark-mode .sc-form-box {
-    background: #1e1e1e;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-}
-
-.sc-form-box h2 {
-    font-size: 1.4rem;
+.sc-form-box > h2 {
+    font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 20px;
     color: #222;
+    margin-bottom: 20px;
 }
-
-body.dark-mode .sc-form-box h2 { color: #eee; }
 
 .sc-form-box label {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: #444;
-    margin-bottom: 4px;
     display: block;
+    margin-bottom: 4px;
 }
-
-body.dark-mode .sc-form-box label { color: #ccc; }
 
 .sc-form-box input,
 .sc-form-box select,
 .sc-form-box textarea {
     width: 100%;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border: 1.5px solid #ddd;
     border-radius: 8px;
     font-family: "Poppins", monospace;
-    font-size: 0.88rem;
-    margin-bottom: 16px;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
     background: #fafafa;
-    transition: border-color 0.2s;
     outline: none;
+    transition: border-color 0.2s;
 }
 
 .sc-form-box input:focus,
@@ -211,6 +173,106 @@ body.dark-mode .sc-form-box label { color: #ccc; }
     background: white;
 }
 
+.sc-form-box textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+/* ── MIS SOLICITUDES ── */
+.sc-mis-solicitudes {
+    margin-top: 10px;
+}
+
+.sc-mis-solicitudes > h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 16px;
+}
+
+.sc-empty {
+    color: #888;
+    font-size: 0.88rem;
+}
+
+.sc-tabla {
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    border-collapse: collapse;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.sc-tabla th {
+    background: #3483fa;
+    color: white;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.sc-tabla td {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #333;
+}
+
+.sc-tabla tr:last-child td { border-bottom: none; }
+.sc-tabla tr:hover td { background: #f7faff; }
+
+/* ── BADGES DE ESTADO ── */
+.badge-sc {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-pendiente  { background: #333; color: #856404; }
+.badge-en_proceso { background: #cfe2ff; color: #084298; }
+.badge-resuelto   { background: #d1e7dd; color: #0f5132; }
+
+/* ── RESPUESTA ── */
+.sc-respuesta {
+    background: #eef4ff;
+    border-left: 3px solid #3483fa;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: #333;
+}
+
+.sc-pendiente {
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+/* ── DARK MODE — solo para clases nuevas ── */
+body.dark-mode .sc-info-card {
+    background: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+body.dark-mode .sc-info-card h4 { color: #ccc !important; }
+body.dark-mode .sc-info-card p  { color: #bbb !important; }
+
+body.dark-mode .sc-faq > h2,
+body.dark-mode .sc-form-box > h2,
+body.dark-mode .sc-mis-solicitudes > h2 { color: #eee; }
+
+body.dark-mode .sc-faq .accordion-button { background: #1e1e1e; color: #ddd; }
+body.dark-mode .sc-faq .accordion-button:not(.collapsed) { background: #1a2a3a; color: #4e9fff; }
+body.dark-mode .sc-faq .accordion-body  { background: #1e1e1e; color: #bbb; }
+body.dark-mode .sc-faq .accordion-item  { border-color: #333; }
+
+body.dark-mode .sc-form-box {
+    background: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+body.dark-mode .sc-form-box label { color: #ccc; }
 body.dark-mode .sc-form-box input,
 body.dark-mode .sc-form-box select,
 body.dark-mode .sc-form-box textarea {
@@ -218,150 +280,12 @@ body.dark-mode .sc-form-box textarea {
     border-color: #444;
     color: #eee;
 }
-
 body.dark-mode .sc-form-box input:focus,
 body.dark-mode .sc-form-box select:focus,
-body.dark-mode .sc-form-box textarea:focus {
-    border-color: #4e9fff;
-    background: #2a2a2a;
-}
+body.dark-mode .sc-form-box textarea:focus { border-color: #4e9fff; }
 
-.sc-form-box textarea {
-    resize: vertical;
-    min-height: 120px;
-}
-
-.sc-btn-enviar {
-    width: 100%;
-    padding: 12px;
-    background: #3483fa;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-family: "Poppins", monospace;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-}
-
-.sc-btn-enviar:hover {
-    background: #2b6ee0;
-    transform: translateY(-1px);
-}
-
-/* ── ALERTA ÉXITO ── */
-.sc-alerta {
-    max-width: 1100px;
-    margin: 20px auto 0;
-    padding: 0 20px;
-}
-
-.sc-alerta .alert {
-    border-radius: 10px;
-    font-size: 0.9rem;
-}
-
-/* ── MIS SOLICITUDES ── */
-.sc-mis-solicitudes {
-    max-width: 1100px;
-    margin: 0 auto 60px;
-    padding: 0 20px;
-}
-
-.sc-mis-solicitudes h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #222;
-}
-
-body.dark-mode .sc-mis-solicitudes h2 { color: #eee; }
-
-.sc-tabla {
-    width: 100%;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    border-collapse: collapse;
-}
-
-body.dark-mode .sc-tabla {
-    background: #1e1e1e;
-}
-
-.sc-tabla th {
-    background: #3483fa;
-    color: white;
-    padding: 12px 16px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-align: left;
-}
-
-.sc-tabla td {
-    padding: 12px 16px;
-    font-size: 0.85rem;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-}
-
-body.dark-mode .sc-tabla td {
-    border-bottom: 1px solid #2a2a2a;
-    color: #ccc;
-}
-
-.sc-tabla tr:last-child td { border-bottom: none; }
-
-.sc-tabla tr:hover td { background: #f7faff; }
+body.dark-mode .sc-tabla { background: #1e1e1e; }
+body.dark-mode .sc-tabla td { border-color: #2a2a2a; color: #ccc; }
 body.dark-mode .sc-tabla tr:hover td { background: #232323; }
 
-/* ── BADGES DE ESTADO ── */
-.badge-pendiente  { background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
-.badge-en_proceso { background: #cfe2ff; color: #084298; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
-.badge-resuelto   { background: #d1e7dd; color: #0f5132; padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
-
-/* ── RESPUESTA INLINE ── */
-.sc-respuesta {
-    background: #eef4ff;
-    border-left: 4px solid #3483fa;
-    padding: 10px 14px;
-    border-radius: 0 8px 8px 0;
-    font-size: 0.85rem;
-    color: #333;
-    margin-top: 4px;
-}
-
-body.dark-mode .sc-respuesta {
-    background: #1a2a3a;
-    color: #bcd6ff;
-}
-
-/* ── FOOTER (reutiliza el global) ── */
-footer {
-    background: #444552;
-    color: white;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    padding: 40px 60px;
-    justify-content: space-between;
-}
-
-footer h4 { margin-bottom: 14px; font-size: 1rem; }
-footer a  { color: #ccc; text-decoration: none; font-size: 0.88rem; }
-footer a:hover { color: white; }
-footer ul { list-style: none; }
-footer ul li { margin-bottom: 6px; }
-footer .links { display: flex; gap: 14px; font-size: 1.2rem; }
-footer .info li { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
-footer .info li span { color: #3483fa; }
-
-.copyright {
-    background: #33343f;
-    color: #aaa;
-    text-align: center;
-    padding: 12px;
-    font-size: 0.8rem;
-}
+body.dark-mode .sc-respuesta { background: #1a2a3a; color: #bcd6ff; }
