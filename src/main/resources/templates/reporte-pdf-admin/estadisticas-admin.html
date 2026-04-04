@@ -104,7 +104,7 @@
         expanded = !expanded;
         logo.textContent = expanded ? 'MS' : 'MarketS';
     });
-c
+
     const categoriasNombres = [[${categoriasNombres}]];
     const categoriasTotales = [[${categoriasTotales}]];
     const promedioPrecio = [[${reporte.promedioPrecio}]];
@@ -126,17 +126,48 @@ c
         }
     });
 
-    // Gráfico barras
+    // Gráfico barras — ejes Y independientes
     const ctxBarras = document.getElementById('graficoPreciosStock').getContext('2d');
     new Chart(ctxBarras, {
         type: 'bar',
         data: {
             labels: ['Precio Promedio', 'Stock Promedio'],
-            datasets: [{
-                label: 'Promedios',
-                data: [promedioPrecio, promedioStock],
-                backgroundColor: ['#36A2EB','#FFCE56']
-            }]
+            datasets: [
+                {
+                    label: 'Precio Promedio ($)',
+                    data: [promedioPrecio, null],
+                    backgroundColor: '#36A2EB',
+                    yAxisID: 'yPrecio'
+                },
+                {
+                    label: 'Stock Promedio (uds)',
+                    data: [null, promedioStock],
+                    backgroundColor: '#FFCE56',
+                    yAxisID: 'yStock'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                yPrecio: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: 'Precio ($)' },
+                    ticks: {
+                        callback: value => '$' + value.toLocaleString('es-CO')
+                    }
+                },
+                yStock: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { display: true, text: 'Stock (uds)' },
+                    grid: { drawOnChartArea: false }
+                }
+            }
         }
     });
 </script>
