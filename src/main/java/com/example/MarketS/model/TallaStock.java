@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(name = "talla_stock")
 @Getter
 @Setter
 public class TallaStock {

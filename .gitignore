@@ -24,6 +24,7 @@ C:/uploads/
 src/main/resources/static/img/
 node_modules/
 src/main/resources/application-dev.properties
+.env
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

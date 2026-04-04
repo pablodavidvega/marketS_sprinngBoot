@@ -11,7 +11,7 @@
 	<groupId>com.example</groupId>
 	<artifactId>MarketS</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>MarketS</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -102,8 +102,9 @@
 			<optional>true</optional>
 		</dependency>
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -113,7 +114,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
-<!--			<scope>provided</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
