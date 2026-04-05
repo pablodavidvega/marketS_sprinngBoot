@@ -121,11 +121,10 @@
                 <a th:href="@{/productos/ver/{id}(id=${prod.id})}">
 
                     <div class="media-container">
-                        <img th:src="@{/uploads/{file}(file=${prod.imagen})}" class="img-producto">
-
+                        <img th:src="${prod.imagen}" class="img-producto">
                         <video class="video-producto" muted loop
                                th:if="${prod.video != null}">
-                            <source th:src="@{/uploads/{file}(file=${prod.video})}" type="video/mp4">
+                            <source th:src="${prod.video}">
                         </video>
                     </div>
 
