@@ -63,7 +63,7 @@
             <td th:text="${producto.id}">1</td>
             <td th:text="${producto.nombre}">Nombre</td>
             <td th:text="${producto.precio}">0</td>
-            <td th:text="${#dates.format(producto.fechaAgregacion, 'yyyy-MM-dd')}">Fecha</td>
+            <td th:text="${producto.fechaAgregacion != null ? #dates.format(producto.fechaAgregacion, 'yyyy-MM-dd') : '-'}">Fecha</td>
             <td th:text="${producto.estadoProducto}">Estado</td>
             <td th:text="${producto.descripcion}">Descripción</td>
             <td th:text="${producto.marca != null ? producto.marca.nombreMarca : 'Sin marca'}"></td>
