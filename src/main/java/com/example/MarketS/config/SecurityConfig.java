@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 @Configuration
 public class SecurityConfig {
 
@@ -33,10 +35,11 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf
-                        // Solo desactiva para APIs específicas si es necesario
-                        .ignoringRequestMatchers(
-                                "/enviar-correo/**"  // Solo APIs REST que necesiten POST sin CSRF
-                        )
+                        // Cookie-based CSRF: el token vive en el browser, no en la sesión del server.
+                        // Esto resuelve el problema en Render donde la sesión se pierde al reiniciar.
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers("/enviar-correo/**")
                 )
                 
                 .authorizeHttpRequests(auth -> auth
