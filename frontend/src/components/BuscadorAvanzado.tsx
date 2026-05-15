@@ -195,7 +195,7 @@ export default function BuscadorAvanzado({ onSearch, initialValue = '' }: Props)
           <li className="border-t border-gray-100">
             <button
               type="button"
-              onMouseDown={handleSubmit as unknown as React.MouseEventHandler}
+              onMouseDown={() => { setAbierto(false); onSearch(query.trim()) }}
               className="w-full px-4 py-2 text-sm text-primary-600 hover:bg-primary-50 text-center font-medium"
             >
               Ver todos los resultados para "{query}"

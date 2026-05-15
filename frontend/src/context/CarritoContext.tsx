@@ -71,6 +71,12 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('carrito', JSON.stringify(state))
   }, [state])
 
+  useEffect(() => {
+    function handleLogout() { dispatch({ type: 'LIMPIAR' }) }
+    window.addEventListener('auth:logout', handleLogout)
+    return () => window.removeEventListener('auth:logout', handleLogout)
+  }, [])
+
   const cantidadTotal = state.items.reduce((sum, i) => sum + i.cantidad, 0)
   const total = state.items.reduce((sum, i) => sum + i.precio * i.cantidad, 0)
 

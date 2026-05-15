@@ -33,8 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    localStorage.removeItem('carrito')
     setToken(null)
     setUser(null)
+    window.dispatchEvent(new Event('auth:logout'))
   }
 
   const hasRole = (...roles: string[]) =>

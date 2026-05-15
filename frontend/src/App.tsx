@@ -12,6 +12,10 @@ import VendedorDashboardPage from './pages/vendedor/DashboardPage'
 import VendedorProductosPage from './pages/vendedor/ProductosPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
+import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+import EditarPerfilPage from './pages/perfil/EditarPerfilPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
   return (
@@ -22,9 +26,20 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<RegistroPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/productos/:id" element={<DetallePage />} />
           <Route path="/carrito" element={<CarritoPage />} />
           <Route path="/pedidos/confirmacion" element={<ConfirmacionPage />} />
+
+          <Route
+            path="/perfil/editar"
+            element={
+              <ProtectedRoute roles={['CLIENTE', 'VENDEDOR', 'ADMIN']}>
+                <EditarPerfilPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/cliente/dashboard"
@@ -69,7 +84,7 @@ export default function App() {
             }
           />
 
-          <Route path="*" element={<HomePage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>

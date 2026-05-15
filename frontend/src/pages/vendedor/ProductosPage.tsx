@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   getVendedorProductos,
   activarProducto,
@@ -34,12 +34,12 @@ export default function VendedorProductosPage() {
   const [accionId, setAccionId] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  function cargar() {
+  const cargar = useCallback(() => {
     setLoading(true)
     getVendedorProductos({ keyword: busqueda || undefined, page: pagina, size: 10 })
       .then(r => setData(r.data))
       .finally(() => setLoading(false))
-  }
+  }, [pagina, busqueda])
 
   useEffect(() => {
     Promise.all([getCategorias(), getMarcas()]).then(([c, m]) => {
@@ -48,7 +48,7 @@ export default function VendedorProductosPage() {
     })
   }, [])
 
-  useEffect(() => { cargar() }, [pagina, busqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { cargar() }, [cargar])
 
   function abrirNuevo() {
     setEditando(null)
