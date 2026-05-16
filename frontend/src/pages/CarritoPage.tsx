@@ -23,11 +23,7 @@ export default function CarritoPage() {
         items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad }))
       )
       limpiar()
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl
-      } else {
-        navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`)
-      }
+      window.location.href = data.paymentUrl!
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
       setError(msg || 'Error al procesar el pedido. Intenta de nuevo.')

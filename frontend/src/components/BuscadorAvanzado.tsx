@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSugerencias } from '../api/productos'
 import type { SugerenciaProducto } from '../types'
+import { buildImageUrl } from '../utils/image'
 
 interface Props {
   onSearch: (q: string) => void
@@ -151,9 +152,7 @@ export default function BuscadorAvanzado({ onSearch, initialValue = '' }: Props)
       {abierto && sugerencias.length > 0 && (
         <ul className="absolute top-full left-0 right-16 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
           {sugerencias.map((s, i) => {
-            const imgSrc = s.imagen
-              ? s.imagen.startsWith('http') ? s.imagen : `/uploads/${s.imagen}`
-              : null
+            const imgSrc = buildImageUrl(s.imagen)
 
             return (
               <li key={s.id}>

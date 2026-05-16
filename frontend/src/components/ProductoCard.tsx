@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
+import { buildImageUrl } from '../utils/image'
 
 interface Props {
   producto: Producto
@@ -9,11 +10,7 @@ interface Props {
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
 
-  const imagenUrl = producto.imagen
-    ? producto.imagen.startsWith('http')
-      ? producto.imagen
-      : `/uploads/${producto.imagen}`
-    : null
+  const imagenUrl = buildImageUrl(producto.imagen)
 
   function handleAgregar(e: React.MouseEvent) {
     e.preventDefault()

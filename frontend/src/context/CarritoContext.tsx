@@ -1,5 +1,6 @@
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from 'react'
 import type { CarritoItem } from '../types'
+import { useAuth } from './AuthContext'
 
 interface CarritoState {
   items: CarritoItem[]
@@ -10,6 +11,7 @@ type CarritoAction =
   | { type: 'QUITAR'; payload: { productoId: number } }
   | { type: 'ACTUALIZAR'; payload: { productoId: number; cantidad: number } }
   | { type: 'LIMPIAR' }
+  | { type: 'CARGAR'; payload: CarritoItem[] }
 
 interface CarritoContextType {
   items: CarritoItem[]
@@ -50,14 +52,20 @@ function reducer(state: CarritoState, action: CarritoAction): CarritoState {
       }
     case 'LIMPIAR':
       return { items: [] }
+    case 'CARGAR':
+      return { items: action.payload }
     default:
       return state
   }
 }
 
-function init(): CarritoState {
+function storageKey(email?: string | null) {
+  return email ? `carrito_${email}` : 'carrito_guest'
+}
+
+function loadFromStorage(email?: string | null): CarritoState {
   try {
-    const stored = localStorage.getItem('carrito')
+    const stored = localStorage.getItem(storageKey(email))
     return stored ? JSON.parse(stored) : { items: [] }
   } catch {
     return { items: [] }
@@ -65,11 +73,20 @@ function init(): CarritoState {
 }
 
 export function CarritoProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, init)
+  const { user } = useAuth()
+  const prevEmailRef = useRef<string | null>(user?.email ?? null)
+  const [state, dispatch] = useReducer(reducer, undefined, () => loadFromStorage(user?.email))
 
   useEffect(() => {
-    localStorage.setItem('carrito', JSON.stringify(state))
-  }, [state])
+    const email = user?.email ?? null
+    if (prevEmailRef.current !== email) {
+      prevEmailRef.current = email
+      const saved = loadFromStorage(email)
+      dispatch({ type: 'CARGAR', payload: saved.items })
+      return
+    }
+    localStorage.setItem(storageKey(email), JSON.stringify(state))
+  }, [user?.email, state])
 
   const cantidadTotal = state.items.reduce((sum, i) => sum + i.cantidad, 0)
   const total = state.items.reduce((sum, i) => sum + i.precio * i.cantidad, 0)

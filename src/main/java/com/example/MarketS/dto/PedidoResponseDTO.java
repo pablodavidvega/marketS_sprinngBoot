@@ -60,6 +60,8 @@ public class PedidoResponseDTO {
 
     private static String normalizeUrl(String imagen) {
         if (imagen == null || imagen.isBlank()) return null;
-        return imagen.startsWith("/uploads/") ? imagen : "/uploads/" + imagen;
+        String s = imagen.startsWith("/uploads/") ? imagen.substring(9) : imagen;
+        if (s.startsWith("http://") || s.startsWith("https://")) return s;
+        return "/uploads/" + s;
     }
 }

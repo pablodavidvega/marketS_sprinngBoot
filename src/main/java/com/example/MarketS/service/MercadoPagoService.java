@@ -163,7 +163,7 @@ public class MercadoPagoService {
                 .append("\"title\": \"").append(escapeJsonString(descripcion)).append("\",")
                 .append("\"quantity\": 1,")
                 .append("\"currency_id\": \"COP\",")
-                .append("\"unit_price\": ").append(monto)
+                .append("\"unit_price\": ").append((long) Math.round(monto))
                 .append("}],")
                 .append("\"external_reference\": \"").append(pedidoId).append("\"");
 
@@ -172,8 +172,11 @@ public class MercadoPagoService {
                 .append("\"success\": \"").append(escapeJsonString(successUrl)).append("\",")
                 .append("\"failure\": \"").append(escapeJsonString(failureUrl)).append("\",")
                 .append("\"pending\": \"").append(escapeJsonString(pendingUrl)).append("\"")
-                .append("},")
-                .append("\"auto_return\": \"approved\"");
+                .append("}");
+            // auto_return solo funciona con URLs HTTPS (producción); localhost la rechaza MP
+            if (successUrl.startsWith("https://")) {
+                json.append(",\"auto_return\": \"approved\"");
+            }
         }
 
         json.append("}");

@@ -82,13 +82,21 @@ public class PedidoApiController {
                 successUrl, failureUrl, pendingUrl
         );
 
-        String paymentUrl   = Boolean.TRUE.equals(mpResult.get("success")) ? (String) mpResult.get("paymentUrl") : null;
-        String preferenceId = Boolean.TRUE.equals(mpResult.get("success")) ? (String) mpResult.get("preferenceId") : null;
-
-        if (paymentUrl != null) {
-            pedido.setEstado("PROCESANDO_PAGO");
-            pedidoRepository.save(pedido);
+        if (!Boolean.TRUE.equals(mpResult.get("success"))) {
+            String mpError = mpResult.containsKey("error") ? (String) mpResult.get("error") : "Error desconocido";
+            System.err.println("ERROR MercadoPago al crear preferencia: " + mpError);
+            System.err.println("Detalle respuesta MP: " + mpResult);
+            return ResponseEntity.status(500).body(Map.of(
+                    "mensaje", "No se pudo iniciar el pago: " + mpError,
+                    "pedidoId", pedido.getId()
+            ));
         }
+
+        String paymentUrl   = (String) mpResult.get("paymentUrl");
+        String preferenceId = (String) mpResult.get("preferenceId");
+
+        pedido.setEstado("PROCESANDO_PAGO");
+        pedidoRepository.save(pedido);
 
         return ResponseEntity.ok(PedidoResponseDTO.from(pedido, paymentUrl, preferenceId));
     }
@@ -185,9 +193,14 @@ public class PedidoApiController {
     }
 
     private ResponseEntity<Void> redirigirFrontend(Long pedidoId, String status) {
+        String frontendStatus = switch (status) {
+            case "approved" -> "exito";
+            case "pending"  -> "pendiente";
+            default         -> "fallo";
+        };
         String path = pedidoId != null
-                ? "/pedidos/" + pedidoId + "/confirmacion?status=" + status
-                : "/pedidos?status=" + status;
+                ? "/pedidos/confirmacion?status=" + frontendStatus + "&pedido_id=" + pedidoId
+                : "/pedidos/confirmacion?status=" + frontendStatus;
         return ResponseEntity.status(302)
                 .location(URI.create(frontendUrl + path))
                 .build();

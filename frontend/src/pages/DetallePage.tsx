@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getProducto } from '../api/productos'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
+import { buildImageUrl } from '../utils/image'
 
 export default function DetallePage() {
   const { id } = useParams<{ id: string }>()
@@ -34,7 +35,7 @@ export default function DetallePage() {
 
   const imagenes = [producto.imagen, producto.imagen2, producto.imagen3]
     .filter(Boolean)
-    .map(img => img!.startsWith('http') ? img! : `/uploads/${img}`)
+    .map(img => buildImageUrl(img)!)
 
   function handleAgregar() {
     if (!producto) return

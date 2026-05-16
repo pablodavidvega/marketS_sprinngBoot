@@ -8,6 +8,7 @@ import {
 } from '../../api/productos'
 import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
+import { buildImageUrl } from '../../utils/image'
 
 const emptyForm = {
   nombre: '',
@@ -152,7 +153,7 @@ export default function VendedorProductosPage() {
                         <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                           {p.imagen && (
                             <img
-                              src={p.imagen.startsWith('http') ? p.imagen : `/uploads/${p.imagen}`}
+                              src={buildImageUrl(p.imagen)!}
                               alt=""
                               className="w-full h-full object-cover"
                             />
