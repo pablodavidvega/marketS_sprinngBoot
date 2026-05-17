@@ -1,0 +1,16 @@
+import api from './axios'
+import type { AuthResponse, PerfilUsuario } from '../types'
+
+export const login = (email: string, password: string) =>
+  api.post<AuthResponse>('/api/auth/login', { email, password })
+
+export const registro = (data: {
+  username: string
+  email: string
+  password: string
+  confirmPassword: string
+  phone: string
+  address: string
+  tipoUsuario: string
+  city?: string
+}) => api.post<PerfilUsuario>('/api/auth/registro', data)
