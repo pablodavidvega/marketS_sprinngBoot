@@ -21,45 +21,25 @@ public class MercadoPagoService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Crear preferencia de pago usando API REST - VERSIÓN SIMPLIFICADA
-     */
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email) {
-        try {
-            System.out.println("=== MERCADO PAGO SERVICE: crearPreferencia ===");
-            System.out.println("Pedido ID: " + pedidoId);
-            System.out.println("Monto: $" + monto);
-            System.out.println("Descripción: " + descripcion);
-            System.out.println("Email: " + email);
+        return crearPreferencia(pedidoId, monto, descripcion, email, null, null, null);
+    }
 
-            // Verificar token
+    public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
+                                                String descripcion, String email,
+                                                String successUrl, String failureUrl, String pendingUrl) {
+        try {
             String token = config.getAccessToken();
-            System.out.println("Token (primeros 20 chars): " +
-                    (token != null ? token.substring(0, Math.min(20, token.length())) : "NULL"));
 
             if (token == null || token.isEmpty()) {
-                System.err.println("Token de MercadoPago no configurado");
                 Map<String, Object> error = new HashMap<>();
                 error.put("success", false);
                 error.put("error", "Token de MercadoPago no configurado");
                 return error;
             }
 
-            // URL base - IMPORTANTE: Cambia localhost:8081 si usas otro puerto
-            String baseUrl = "http://localhost:8081"; // Asegúrate que sea correcto
-
-            // ========== JSON MÍNIMO QUE FUNCIONA ==========
-            // Solo los campos esenciales, sin back_urls ni auto_return
-            String requestJson = "{"
-                    + "\"items\": [{"
-                    + "\"title\": \"" + escapeJsonString(descripcion) + "\","
-                    + "\"quantity\": 1,"
-                    + "\"currency_id\": \"COP\","
-                    + "\"unit_price\": " + monto
-                    + "}],"
-                    + "\"external_reference\": \"" + pedidoId + "\""
-                    + "}";
+            String requestJson = buildPreferenceJson(pedidoId, monto, descripcion, successUrl, failureUrl, pendingUrl);
 
             System.out.println("Request JSON enviado a MercadoPago:");
             System.out.println(requestJson);
@@ -173,6 +153,34 @@ public class MercadoPagoService {
         } catch (Exception e) {
             return "Error: " + e.getMessage();
         }
+    }
+
+    private String buildPreferenceJson(Long pedidoId, Double monto, String descripcion,
+                                        String successUrl, String failureUrl, String pendingUrl) {
+        StringBuilder json = new StringBuilder()
+                .append("{")
+                .append("\"items\": [{")
+                .append("\"title\": \"").append(escapeJsonString(descripcion)).append("\",")
+                .append("\"quantity\": 1,")
+                .append("\"currency_id\": \"COP\",")
+                .append("\"unit_price\": ").append((long) Math.round(monto))
+                .append("}],")
+                .append("\"external_reference\": \"").append(pedidoId).append("\"");
+
+        if (successUrl != null && failureUrl != null && pendingUrl != null) {
+            json.append(",\"back_urls\": {")
+                .append("\"success\": \"").append(escapeJsonString(successUrl)).append("\",")
+                .append("\"failure\": \"").append(escapeJsonString(failureUrl)).append("\",")
+                .append("\"pending\": \"").append(escapeJsonString(pendingUrl)).append("\"")
+                .append("}");
+            // auto_return solo funciona con URLs HTTPS (producción); localhost la rechaza MP
+            if (successUrl.startsWith("https://")) {
+                json.append(",\"auto_return\": \"approved\"");
+            }
+        }
+
+        json.append("}");
+        return json.toString();
     }
 
     private String escapeJsonString(String input) {

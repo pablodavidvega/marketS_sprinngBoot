@@ -46,7 +46,6 @@
         <!-- ... cabecera y estilos iguales ... -->
 
         <form th:action="@{/usuarios/registro}" method="post" th:object="${registroVendedorDTO}">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
             <!-- Selector de Tipo de Cuenta -->
             <div class="role-selector">
@@ -176,7 +175,8 @@
         const rolInputs = document.querySelectorAll('input[name="tipoUsuario"]');
 
         function toggleVendedorFields() {
-            const isVendedor = document.querySelector('input[name="tipoUsuario"]:checked').value === 'VENDEDOR';
+            const checked = document.querySelector('input[name="tipoUsuario"]:checked');
+            const isVendedor = checked !== null && checked.value === 'VENDEDOR';
             vendedorFields.style.display = isVendedor ? 'block' : 'none';
             document.getElementById('ciudad-field').required = isVendedor;
         }

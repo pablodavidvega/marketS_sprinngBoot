@@ -1,21 +1,44 @@
 package com.example.MarketS.config;
 
 import com.example.MarketS.security.CustomUserDetailsService;
+import com.example.MarketS.security.JwtAuthenticationFilter;
+import com.example.MarketS.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+    @Value("${cors.allowed-origins:http://localhost:3000}")
+    private String allowedOriginsRaw;
+
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService, JwtTokenProvider jwtTokenProvider) {
         this.customUserDetailsService = customUserDetailsService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Bean
@@ -28,20 +51,46 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // Cadena 1: /api/** → stateless + JWT
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
 
         http
-                .csrf(csrf -> csrf
-                        // Solo desactiva para APIs específicas si es necesario
-                        .ignoringRequestMatchers(
-                                "/enviar-correo/**"  // Solo APIs REST que necesiten POST sin CSRF
-                        )
-                )
-                
+                .securityMatcher("/api/**")
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/marcas/**").permitAll()
+                        .requestMatchers("/api/pdf/**").permitAll()
+                        .requestMatchers("/api/tasas/**").permitAll()
+                        .requestMatchers("/api/usuarios/estadisticas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/pedidos/mp/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-                        //PÚBLICOS
+        return http.build();
+    }
+
+    // Cadena 2: todo lo demás → sesión + Thymeleaf (sin cambios)
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers("/enviar-correo/**")
+                )
+
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/login",
                                 "/usuarios/registro", "/usuarios/registro/**",
@@ -54,23 +103,13 @@ public class SecurityConfig {
                                 "/servicio-cliente",
                                 "/servicio-cliente/enviar",
                                 "/enviar-correo/**",
-                                "/api/pdf/**",
-                                "/api/usuarios/estadisticas",
-                                "/login",
                                 "/forgot-password",
                                 "/reset-password"
                         ).permitAll()
-
-                        // ROLES
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/vendedor/**").hasAnyAuthority("ROLE_VENDEDOR", "ROLE_ADMIN")
                         .requestMatchers("/cliente/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_VENDEDOR", "ROLE_ADMIN")
-
-                        // 🛒 PEDIDOS Y CARRITO
-                        .requestMatchers("/pedido/**", "/carrito/**")
-                        .authenticated()
-
-                        // SIEMPRE AL FINAL
+                        .requestMatchers("/pedido/**", "/carrito/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
@@ -79,8 +118,6 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        // NO forzar siempre la URL por defecto: permitir que Spring redirija a la petición original (savedRequest)
-                        // No forzar la URL por defecto: permitir redirección a la request guardada, si no existe ir a /redireccionar-por-rol
                         .defaultSuccessUrl("/redireccionar-por-rol", false)
                         .permitAll()
                 )
@@ -100,4 +137,21 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .toList();
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(origins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
 }
