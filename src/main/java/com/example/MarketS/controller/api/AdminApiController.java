@@ -32,10 +32,10 @@ public class AdminApiController {
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> dashboard() {
         return ResponseEntity.ok(Map.of(
-                "totalUsuarios",   userService.listarTodos().size(),
-                "totalClientes",   userService.listarPorRol("ROLE_CLIENTE").size(),
-                "totalVendedores", userService.listarPorRol("ROLE_VENDEDOR").size(),
-                "totalAdmins",     userService.listarPorRol("ROLE_ADMIN").size()
+                "totalUsuarios",   userService.contarTodos(),
+                "totalClientes",   userService.contarPorRol("ROLE_CLIENTE"),
+                "totalVendedores", userService.contarPorRol("ROLE_VENDEDOR"),
+                "totalAdmins",     userService.contarPorRol("ROLE_ADMIN")
         ));
     }
 
