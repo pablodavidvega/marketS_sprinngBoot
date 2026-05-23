@@ -18,10 +18,11 @@ export default function LoginPage() {
       const { data } = await loginApi(form.email, form.password)
       login(data.token, data.email, data.role)
       if (data.role === 'ADMIN') navigate('/admin/dashboard')
-      else if (data.role === 'VENDEDOR') navigate('/vendedor/productos')
-      else navigate('/cliente/dashboard')
+      else if (data.role === 'VENDEDOR') navigate('/vendedor')
+      else navigate('/')  // CLIENTE → home (tienda), no panel de cuenta
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      const response = (err as { response?: { data?: { mensaje?: string; error?: string } } })?.response
+      const msg = response?.data?.mensaje || response?.data?.error || (err as Error).message
       setError(msg || 'Credenciales incorrectas')
     } finally {
       setLoading(false)

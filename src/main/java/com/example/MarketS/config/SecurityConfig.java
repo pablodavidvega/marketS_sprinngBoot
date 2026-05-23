@@ -118,7 +118,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/redireccionar-por-rol", false)
+                        .defaultSuccessUrl("/redireccionar-por-rol", true)
                         .permitAll()
                 )
 

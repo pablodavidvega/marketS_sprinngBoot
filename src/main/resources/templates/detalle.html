@@ -320,7 +320,7 @@ footer {
                 <span class="nav-user">
                     ¡Hola, <strong th:text="${nombreUsuario}">Usuario</strong>!
                 </span>
-                <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+                <a th:href="${rolUsuario == 'ROLE_ADMIN'} ? @{/admin/dashboard} : (${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/editar-perfil})"
                    class="btn-icon"
                    th:if="${nombreUsuario != null}">
                     <i class="fa-solid fa-user"></i>

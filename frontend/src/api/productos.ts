@@ -30,11 +30,7 @@ export const desactivarProducto = (id: number) =>
   api.patch<Producto>(`/api/vendedor/productos/${id}/desactivar`)
 
 export const crearProducto = (formData: FormData) =>
-  api.post<Producto>('/api/vendedor/productos', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  api.post<Producto>('/api/vendedor/productos', formData)
 
 export const actualizarProducto = (id: number, formData: FormData) =>
-  api.put<Producto>(`/api/vendedor/productos/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  api.put<Producto>(`/api/vendedor/productos/${id}`, formData)

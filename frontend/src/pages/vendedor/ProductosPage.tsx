@@ -91,7 +91,9 @@ export default function VendedorProductosPage() {
     setGuardando(true)
     try {
       const fd = new FormData()
-      Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v) })
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== '') fd.append(k, v)
+      })
       imagenes.forEach((img, i) => {
         fd.append(i === 0 ? 'imagen' : i === 1 ? 'imagen2' : 'imagen3', img)
       })

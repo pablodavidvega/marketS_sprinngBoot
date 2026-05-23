@@ -6,6 +6,7 @@ import com.example.MarketS.model.*;
 import com.example.MarketS.repository.*;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.UserService;
+import com.example.MarketS.service.CloudStorageService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -33,25 +34,25 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('ROLE_VENDEDOR', 'ROLE_ADMIN')")
 public class VendedorApiController {
 
-    @Value("${app.upload.path:/tmp/uploads/}")
-    private String uploadPath;
-
     private final ProductoService productoService;
     private final ProductoRepository productoRepository;
     private final UserService userService;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
+    private final CloudStorageService cloudStorageService;
 
     public VendedorApiController(ProductoService productoService,
                                   ProductoRepository productoRepository,
                                   UserService userService,
                                   CategoriaRepository categoriaRepository,
-                                  MarcaRepository marcaRepository) {
+                                  MarcaRepository marcaRepository,
+                                  CloudStorageService cloudStorageService) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
         this.userService = userService;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
+        this.cloudStorageService = cloudStorageService;
     }
 
     // GET /api/vendedor/productos?page=0&size=20&keyword=x
@@ -96,15 +97,15 @@ public class VendedorApiController {
             Authentication auth,
             @RequestParam @NotBlank String nombre,
             @RequestParam @NotNull @Positive Double precio,
-            @RequestParam String descripcion,
-            @RequestParam String estadoProducto,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
-            @RequestParam @NotNull Long categoriaId,
-            @RequestParam @NotBlank String nombreMarca,
+            @RequestParam(required = false) String descripcion,
+            @RequestParam(required = false, defaultValue = "") String estadoProducto,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) Long marcaId,
             @RequestParam(required = false) Integer stock,
-            @RequestParam(required = false) MultipartFile img1,
-            @RequestParam(required = false) MultipartFile img2,
-            @RequestParam(required = false) MultipartFile img3,
+            @RequestParam(value = "imagen", required = false) MultipartFile img1,
+            @RequestParam(value = "imagen2", required = false) MultipartFile img2,
+            @RequestParam(value = "imagen3", required = false) MultipartFile img3,
             @RequestParam(required = false) MultipartFile video) throws IOException {
 
         User usuario = resolverUsuario(auth);
@@ -113,13 +114,14 @@ public class VendedorApiController {
         producto.setNombre(nombre);
         producto.setPrecio(precio);
         producto.setDescripcion(descripcion);
-        producto.setEstadoProducto(estadoProducto);
-        producto.setFechaAgregacion(fechaAgregacion);
+        producto.setEstadoProducto(estadoProducto != null && !estadoProducto.isBlank() ? estadoProducto : "Disponible");
+        producto.setFechaAgregacion(fechaAgregacion != null ? fechaAgregacion : new Date());
         producto.setVendedor(usuario);
-        producto.setStock(stock);
+        producto.setStock(stock != null ? stock : 0);
+        producto.setActivo(true);
 
         aplicarCategoria(producto, categoriaId);
-        aplicarMarca(producto, nombreMarca);
+        aplicarMarca(producto, marcaId);
 
         if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
@@ -137,15 +139,15 @@ public class VendedorApiController {
             Authentication auth,
             @RequestParam @NotBlank String nombre,
             @RequestParam @NotNull @Positive Double precio,
-            @RequestParam String descripcion,
-            @RequestParam String estadoProducto,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
-            @RequestParam @NotNull Long categoriaId,
-            @RequestParam @NotBlank String nombreMarca,
+            @RequestParam(required = false) String descripcion,
+            @RequestParam(required = false, defaultValue = "") String estadoProducto,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) Long marcaId,
             @RequestParam(required = false) Integer stock,
-            @RequestParam(required = false) MultipartFile img1,
-            @RequestParam(required = false) MultipartFile img2,
-            @RequestParam(required = false) MultipartFile img3,
+            @RequestParam(value = "imagen", required = false) MultipartFile img1,
+            @RequestParam(value = "imagen2", required = false) MultipartFile img2,
+            @RequestParam(value = "imagen3", required = false) MultipartFile img3,
             @RequestParam(required = false) MultipartFile video,
             @RequestParam(required = false) List<String> tallas,
             @RequestParam(required = false) List<Integer> tallaStocks) throws IOException {
@@ -160,8 +162,12 @@ public class VendedorApiController {
         producto.setNombre(nombre);
         producto.setPrecio(precio);
         producto.setDescripcion(descripcion);
-        producto.setEstadoProducto(estadoProducto);
-        producto.setFechaAgregacion(fechaAgregacion);
+        if (estadoProducto != null && !estadoProducto.isBlank()) {
+            producto.setEstadoProducto(estadoProducto);
+        }
+        if (fechaAgregacion != null) {
+            producto.setFechaAgregacion(fechaAgregacion);
+        }
 
         if (stock != null && stock >= 0) {
             producto.setStock(stock);
@@ -169,7 +175,7 @@ public class VendedorApiController {
         }
 
         aplicarCategoria(producto, categoriaId);
-        aplicarMarca(producto, nombreMarca);
+        aplicarMarca(producto, marcaId);
 
         if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
@@ -225,30 +231,22 @@ public class VendedorApiController {
     }
 
     private void aplicarCategoria(Producto producto, Long categoriaId) {
-        categoriaRepository.findById(categoriaId).ifPresent(producto::setCategorias);
+        if (categoriaId != null) {
+            categoriaRepository.findById(categoriaId).ifPresent(producto::setCategorias);
+        } else {
+            producto.setCategorias(null);
+        }
     }
 
-    private void aplicarMarca(Producto producto, String nombreMarca) {
-        Marca marca = marcaRepository.findByNombreMarca(nombreMarca)
-                .orElseGet(() -> marcaRepository.save(new Marca(nombreMarca)));
-        producto.setMarca(marca);
+    private void aplicarMarca(Producto producto, Long marcaId) {
+        if (marcaId != null) {
+            marcaRepository.findById(marcaId).ifPresent(producto::setMarca);
+        } else {
+            producto.setMarca(null);
+        }
     }
 
     private String guardarArchivo(MultipartFile archivo, String prefijo) throws IOException {
-        String originalFilename = archivo.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".")
-                ? originalFilename.substring(originalFilename.lastIndexOf('.'))
-                : "";
-        String nombreArchivo = prefijo.replaceAll("\\s+", "_").toLowerCase()
-                + "_" + System.currentTimeMillis() + extension;
-
-        String pathNormalizado = uploadPath.startsWith("file:")
-                ? uploadPath.substring(5)
-                : uploadPath;
-        Path ruta = Paths.get(pathNormalizado);
-        if (!Files.exists(ruta)) Files.createDirectories(ruta);
-        Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-
-        return nombreArchivo;
+        return cloudStorageService.subirArchivo(archivo, "");
     }
 }
