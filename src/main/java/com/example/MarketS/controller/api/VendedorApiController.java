@@ -85,7 +85,7 @@ public class VendedorApiController {
     public ResponseEntity<ProductoResponseDTO> detalle(@PathVariable Long id, Authentication auth) {
         User usuario = resolverUsuario(auth);
         return productoRepository.findById(id.intValue())
-                .filter(p -> p.getVendedor().equals(usuario))
+                .filter(p -> p.getVendedor().getId().equals(usuario.getId()))
                 .map(ProductoResponseDTO::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -155,7 +155,7 @@ public class VendedorApiController {
         User usuario = resolverUsuario(auth);
         Producto producto = productoRepository.findById(id.intValue()).orElse(null);
 
-        if (producto == null || !producto.getVendedor().equals(usuario)) {
+        if (producto == null || !producto.getVendedor().getId().equals(usuario.getId())) {
             return ResponseEntity.notFound().build();
         }
 
@@ -217,7 +217,7 @@ public class VendedorApiController {
     private ResponseEntity<ProductoResponseDTO> cambiarEstadoActivo(Long id, Authentication auth, boolean activo) {
         User usuario = resolverUsuario(auth);
         Producto producto = productoRepository.findById(id.intValue()).orElse(null);
-        if (producto == null || !producto.getVendedor().equals(usuario)) {
+        if (producto == null || !producto.getVendedor().getId().equals(usuario.getId())) {
             return ResponseEntity.notFound().build();
         }
         producto.setActivo(activo);

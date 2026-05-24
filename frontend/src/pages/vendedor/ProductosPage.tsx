@@ -76,10 +76,21 @@ export default function VendedorProductosPage() {
 
   async function handleToggle(p: Producto) {
     setAccionId(p.id)
+    setError('')
     try {
       if (p.activo) await desactivarProducto(p.id)
       else await activarProducto(p.id)
       cargar()
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 403) {
+        setError('No tienes permiso para modificar este producto')
+      } else if (status === 404) {
+        setError('Producto no encontrado')
+      } else {
+        setError(data?.mensaje || data?.message || data?.error || 'Error al cambiar el estado del producto')
+      }
     } finally {
       setAccionId(null)
     }
@@ -105,8 +116,17 @@ export default function VendedorProductosPage() {
       setModalOpen(false)
       cargar()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
-      setError(msg || 'Error al guardar el producto')
+      const data = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 403) {
+        setError('No tienes permiso para realizar esta acción')
+      } else if (status === 404) {
+        setError('Producto no encontrado')
+      } else if (status === 400) {
+        setError(data?.mensaje || data?.message || 'Datos inválidos, revisa los campos')
+      } else {
+        setError(data?.mensaje || data?.message || data?.error || 'Error al guardar el producto')
+      }
     } finally {
       setGuardando(false)
     }
@@ -118,6 +138,14 @@ export default function VendedorProductosPage() {
         <h1 className="text-2xl font-bold text-gray-800">Mis productos</h1>
         <button onClick={abrirNuevo} className="btn-primary">+ Nuevo producto</button>
       </div>
+
+      {/* Error global (toggle activar/desactivar) */}
+      {error && !modalOpen && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 ml-4 text-lg leading-none">&times;</button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex gap-2 mb-4">
