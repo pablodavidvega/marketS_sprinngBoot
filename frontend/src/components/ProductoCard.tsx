@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
@@ -9,8 +10,25 @@ interface Props {
 
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoActivo, setVideoActivo] = useState(false)
 
   const imagenUrl = buildImageUrl(producto.imagen)
+  const videoUrl  = buildImageUrl(producto.video)
+
+  // ── Hover: reproducir / pausar video ──────────────────────────────────────
+  function handleMouseEnter() {
+    if (!videoUrl || !videoRef.current) return
+    setVideoActivo(true)
+    videoRef.current.play().catch(() => {})
+  }
+
+  function handleMouseLeave() {
+    if (!videoRef.current) return
+    videoRef.current.pause()
+    videoRef.current.currentTime = 0
+    setVideoActivo(false)
+  }
 
   function handleAgregar(e: React.MouseEvent) {
     e.preventDefault()
@@ -24,31 +42,66 @@ export default function ProductoCard({ producto }: Props) {
   }
 
   return (
-    <div className="card group flex flex-col">
+    <div
+      className="card group flex flex-col"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <Link to={`/productos/${producto.id}`} className="block flex-1">
-        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
+        {/* ── Miniatura (imagen + video overlay) ──────────────────────── */}
+        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
+          {/* Imagen de fondo */}
           {imagenUrl ? (
             <img
               src={imagenUrl}
               alt={producto.nombre}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+                videoActivo ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
+              }`}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+            <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-sm transition-opacity duration-300 ${videoActivo ? 'opacity-0' : 'opacity-100'}`}>
               Sin imagen
             </div>
           )}
+
+          {/* Video (se muestra sobre la imagen al hacer hover) */}
+          {videoUrl && (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              muted
+              loop
+              playsInline
+              preload="none"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                videoActivo ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          )}
+
+          {/* Badge "▶ Video" — visible sólo cuando no está reproduciendo */}
+          {videoUrl && !videoActivo && (
+            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 pointer-events-none">
+              <span>▶</span> Video
+            </div>
+          )}
         </div>
+
+        {/* ── Info del producto ─────────────────────────────────────────── */}
         {producto.categoriaNombre && (
           <span className="badge badge-primary text-xs mb-1 inline-block">
             {producto.categoriaNombre}
           </span>
         )}
-        <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">{producto.nombre}</h3>
+        <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">
+          {producto.nombre}
+        </h3>
         <p className="text-primary-600 font-bold text-lg">
           ${producto.precio.toLocaleString('es-CO')}
         </p>
       </Link>
+
       <button
         onClick={handleAgregar}
         disabled={producto.stock === 0}

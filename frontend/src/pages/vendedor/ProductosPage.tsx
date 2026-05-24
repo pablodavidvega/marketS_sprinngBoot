@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   getVendedorProductos,
   activarProducto,
@@ -10,6 +10,92 @@ import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
 import { buildImageUrl } from '../../utils/image'
 
+// ─── Slot reutilizable para imagen o video ─────────────────────────────────
+function MediaSlot({
+  label,
+  required = false,
+  type = 'image',
+  currentUrl,
+  file,
+  onChange,
+}: {
+  label: string
+  required?: boolean
+  type?: 'image' | 'video'
+  currentUrl: string | null
+  file: File | null
+  onChange: (f: File | null) => void
+}) {
+  const [preview, setPreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!file) { setPreview(null); return }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  const existing = currentUrl ? buildImageUrl(currentUrl) : null
+  const displayUrl = preview ?? existing
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="block text-xs font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+
+      {/* Preview imagen actual o nueva */}
+      {type === 'image' && displayUrl && (
+        <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+          <img src={displayUrl} alt="" className="w-full h-full object-cover" />
+          {existing && !file && (
+            <span className="absolute bottom-0 left-0 right-0 text-center text-[10px] bg-black/40 text-white py-0.5">
+              actual
+            </span>
+          )}
+          {file && (
+            <span className="absolute bottom-0 left-0 right-0 text-center text-[10px] bg-primary-600/80 text-white py-0.5">
+              nueva
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Indicador video */}
+      {type === 'video' && (
+        <div className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
+          file
+            ? 'bg-primary-50 text-primary-700 border border-primary-200'
+            : existing
+              ? 'bg-gray-50 text-gray-500 border border-gray-200'
+              : 'bg-gray-50 text-gray-400 border border-dashed border-gray-300'
+        }`}>
+          <span className="text-base">🎬</span>
+          <span className="truncate">
+            {file
+              ? `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`
+              : existing
+                ? 'Video actual guardado'
+                : 'Sin video'}
+          </span>
+        </div>
+      )}
+
+      <input
+        type="file"
+        accept={type === 'image' ? 'image/*' : 'video/mp4,video/*'}
+        className="input py-1 text-xs"
+        onChange={e => onChange(e.target.files?.[0] ?? null)}
+      />
+      {existing && !file && type === 'image' && (
+        <p className="text-[10px] text-gray-400">Sube una nueva para reemplazar</p>
+      )}
+    </div>
+  )
+}
+
+// ─── Form vacío ────────────────────────────────────────────────────────────
 const emptyForm = {
   nombre: '',
   descripcion: '',
@@ -19,22 +105,29 @@ const emptyForm = {
   marcaId: '',
 }
 
+// ─── Página principal ──────────────────────────────────────────────────────
 export default function VendedorProductosPage() {
-  const [data, setData] = useState<VendedorProductosResponse | null>(null)
+  const [data, setData]         = useState<VendedorProductosResponse | null>(null)
   const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [marcas, setMarcas] = useState<{ id: number; nombre: string }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [pagina, setPagina] = useState(0)
+  const [marcas, setMarcas]     = useState<{ id: number; nombre: string }[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [pagina, setPagina]     = useState(0)
   const [busqueda, setBusqueda] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editando, setEditando] = useState<Producto | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [imagenes, setImagenes] = useState<File[]>([])
-  const [guardando, setGuardando] = useState(false)
-  const [error, setError] = useState('')
-  const [accionId, setAccionId] = useState<number | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [form, setForm]         = useState(emptyForm)
 
+  // medios individuales
+  const [imagen1, setImagen1]   = useState<File | null>(null)
+  const [imagen2, setImagen2]   = useState<File | null>(null)
+  const [imagen3, setImagen3]   = useState<File | null>(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError]       = useState('')
+  const [accionId, setAccionId] = useState<number | null>(null)
+
+  // ── Carga de lista ────────────────────────────────────────────────────────
   function cargar() {
     setLoading(true)
     getVendedorProductos({ keyword: busqueda || undefined, page: pagina, size: 10 })
@@ -51,10 +144,19 @@ export default function VendedorProductosPage() {
 
   useEffect(() => { cargar() }, [pagina, busqueda]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Helpers de media ───────────────────────────────────────────────────────
+  function resetMedia() {
+    setImagen1(null)
+    setImagen2(null)
+    setImagen3(null)
+    setVideoFile(null)
+  }
+
+  // ── Abrir modal ───────────────────────────────────────────────────────────
   function abrirNuevo() {
     setEditando(null)
     setForm(emptyForm)
-    setImagenes([])
+    resetMedia()
     setError('')
     setModalOpen(true)
   }
@@ -62,76 +164,82 @@ export default function VendedorProductosPage() {
   function abrirEditar(p: Producto) {
     setEditando(p)
     setForm({
-      nombre: p.nombre,
+      nombre:      p.nombre,
       descripcion: p.descripcion ?? '',
-      precio: String(p.precio),
-      stock: String(p.stock),
+      precio:      String(p.precio),
+      stock:       String(p.stock),
       categoriaId: String(p.categoriaId ?? ''),
-      marcaId: String(p.marcaId ?? ''),
+      marcaId:     String(p.marcaId ?? ''),
     })
-    setImagenes([])
+    resetMedia()
     setError('')
     setModalOpen(true)
   }
 
+  // ── Toggle activo/inactivo ─────────────────────────────────────────────────
   async function handleToggle(p: Producto) {
     setAccionId(p.id)
     setError('')
     try {
       if (p.activo) await desactivarProducto(p.id)
-      else await activarProducto(p.id)
+      else          await activarProducto(p.id)
       cargar()
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
+      const d      = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
       const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 403) {
-        setError('No tienes permiso para modificar este producto')
-      } else if (status === 404) {
-        setError('Producto no encontrado')
-      } else {
-        setError(data?.mensaje || data?.message || data?.error || 'Error al cambiar el estado del producto')
-      }
+      if (status === 403)      setError('No tienes permiso para modificar este producto')
+      else if (status === 404) setError('Producto no encontrado')
+      else                     setError(d?.mensaje || d?.message || d?.error || 'Error al cambiar el estado del producto')
     } finally {
       setAccionId(null)
     }
   }
 
+  // ── Guardar (crear o editar) ───────────────────────────────────────────────
   async function handleGuardar(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    // Validación de medios obligatorios al CREAR
+    if (!editando) {
+      const faltantes: string[] = []
+      if (!imagen1)   faltantes.push('Imagen principal')
+      if (!imagen2)   faltantes.push('Imagen secundaria')
+      if (!imagen3)   faltantes.push('Imagen adicional')
+      if (!videoFile) faltantes.push('Video')
+      if (faltantes.length > 0) {
+        setError(`Faltan campos obligatorios: ${faltantes.join(', ')}`)
+        return
+      }
+    }
+
     setGuardando(true)
     try {
       const fd = new FormData()
-      Object.entries(form).forEach(([k, v]) => {
-        if (v !== '') fd.append(k, v)
-      })
-      imagenes.forEach((img, i) => {
-        fd.append(i === 0 ? 'imagen' : i === 1 ? 'imagen2' : 'imagen3', img)
-      })
-      if (editando) {
-        await actualizarProducto(editando.id, fd)
-      } else {
-        await crearProducto(fd)
-      }
+      Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
+      if (imagen1)   fd.append('imagen',  imagen1)
+      if (imagen2)   fd.append('imagen2', imagen2)
+      if (imagen3)   fd.append('imagen3', imagen3)
+      if (videoFile) fd.append('video',   videoFile)
+
+      if (editando) await actualizarProducto(editando.id, fd)
+      else          await crearProducto(fd)
+
       setModalOpen(false)
       cargar()
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
+      const d      = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
       const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 403) {
-        setError('No tienes permiso para realizar esta acción')
-      } else if (status === 404) {
-        setError('Producto no encontrado')
-      } else if (status === 400) {
-        setError(data?.mensaje || data?.message || 'Datos inválidos, revisa los campos')
-      } else {
-        setError(data?.mensaje || data?.message || data?.error || 'Error al guardar el producto')
-      }
+      if (status === 403)      setError('No tienes permiso para realizar esta acción')
+      else if (status === 404) setError('Producto no encontrado')
+      else if (status === 400) setError(d?.mensaje || d?.message || 'Datos inválidos, revisa los campos')
+      else                     setError(d?.mensaje || d?.message || d?.error || 'Error al guardar el producto')
     } finally {
       setGuardando(false)
     }
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -147,7 +255,7 @@ export default function VendedorProductosPage() {
         </div>
       )}
 
-      {/* Search */}
+      {/* Búsqueda */}
       <div className="flex gap-2 mb-4">
         <input
           className="input flex-1 max-w-sm"
@@ -157,7 +265,7 @@ export default function VendedorProductosPage() {
         />
       </div>
 
-      {/* Table */}
+      {/* Tabla */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
@@ -189,7 +297,15 @@ export default function VendedorProductosPage() {
                             />
                           )}
                         </div>
-                        <span className="font-medium text-gray-800 line-clamp-1">{p.nombre}</span>
+                        <div>
+                          <span className="font-medium text-gray-800 line-clamp-1">{p.nombre}</span>
+                          <div className="flex gap-1 mt-0.5">
+                            {p.imagen  && <span className="text-[10px] text-gray-400">📷 img1</span>}
+                            {p.imagen2 && <span className="text-[10px] text-gray-400">📷 img2</span>}
+                            {p.imagen3 && <span className="text-[10px] text-gray-400">📷 img3</span>}
+                            {p.video   && <span className="text-[10px] text-gray-400">🎬 video</span>}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-primary-600 font-semibold">
@@ -218,13 +334,13 @@ export default function VendedorProductosPage() {
                               : 'bg-green-100 text-green-700 hover:bg-green-200'
                           }`}
                         >
-                          {p.activo ? 'Desactivar' : 'Activar'}
+                          {accionId === p.id ? '...' : p.activo ? 'Desactivar' : 'Activar'}
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {(!data?.contenido.length) && (
+                {!data?.contenido.length && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                       No tienes productos aún
@@ -235,7 +351,7 @@ export default function VendedorProductosPage() {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Paginación */}
           {data && data.totalPaginas > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <button
@@ -260,108 +376,185 @@ export default function VendedorProductosPage() {
         </>
       )}
 
-      {/* Modal */}
+      {/* ── MODAL ──────────────────────────────────────────────────────────── */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
               <h2 className="text-lg font-semibold text-gray-800">
                 {editando ? 'Editar producto' : 'Nuevo producto'}
               </h2>
-              <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
             </div>
 
-            <form onSubmit={handleGuardar} className="p-5 flex flex-col gap-4">
+            <form onSubmit={handleGuardar} className="p-5 flex flex-col gap-5">
+              {/* Error */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
                   {error}
                 </div>
               )}
 
+              {/* ── Datos básicos ─────────────────────────────────────────── */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                <input
-                  className="input"
-                  value={form.nombre}
-                  onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                  required
-                />
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Datos del producto
+                </h3>
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input
+                      className="input"
+                      value={form.nombre}
+                      onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                      placeholder="Nombre del producto"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea
+                      className="input min-h-[80px] resize-none"
+                      value={form.descripcion}
+                      onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
+                      placeholder="Descripción del producto"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="input"
+                        value={form.precio}
+                        onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="input"
+                        value={form.stock}
+                        onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                      <select
+                        className="input"
+                        value={form.categoriaId}
+                        onChange={e => setForm(f => ({ ...f, categoriaId: e.target.value }))}
+                      >
+                        <option value="">Sin categoría</option>
+                        {categorias.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
+                      <select
+                        className="input"
+                        value={form.marcaId}
+                        onChange={e => setForm(f => ({ ...f, marcaId: e.target.value }))}
+                      >
+                        <option value="">Sin marca</option>
+                        {marcas.map(m => (
+                          <option key={m.id} value={m.id}>{m.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
+              {/* ── Imágenes ─────────────────────────────────────────────── */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <textarea
-                  className="input min-h-[80px] resize-none"
-                  value={form.descripcion}
-                  onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="input"
-                    value={form.precio}
-                    onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
-                    required
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Imágenes del producto
+                  {editando && (
+                    <span className="ml-2 text-xs font-normal text-gray-400 normal-case">
+                      (deja vacío para conservar las actuales)
+                    </span>
+                  )}
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <MediaSlot
+                    label="Imagen principal"
+                    required={!editando}
+                    type="image"
+                    currentUrl={editando?.imagen ?? null}
+                    file={imagen1}
+                    onChange={setImagen1}
+                  />
+                  <MediaSlot
+                    label="Imagen secundaria"
+                    required={!editando}
+                    type="image"
+                    currentUrl={editando?.imagen2 ?? null}
+                    file={imagen2}
+                    onChange={setImagen2}
+                  />
+                  <MediaSlot
+                    label="Imagen adicional"
+                    required={!editando}
+                    type="image"
+                    currentUrl={editando?.imagen3 ?? null}
+                    file={imagen3}
+                    onChange={setImagen3}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="input"
-                    value={form.stock}
-                    onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
-                    required
-                  />
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <select className="input" value={form.categoriaId} onChange={e => setForm(f => ({ ...f, categoriaId: e.target.value }))}>
-                    <option value="">Sin categoría</option>
-                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
-                  <select className="input" value={form.marcaId} onChange={e => setForm(f => ({ ...f, marcaId: e.target.value }))}>
-                    <option value="">Sin marca</option>
-                    {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-                  </select>
-                </div>
-              </div>
-
+              {/* ── Video ────────────────────────────────────────────────── */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Imágenes {editando ? '(dejar vacío para conservar las actuales)' : ''}
-                </label>
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="input py-1.5 text-sm"
-                  onChange={e => setImagenes(Array.from(e.target.files ?? []).slice(0, 3))}
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Video del producto
+                  {editando && editando.video && (
+                    <span className="ml-2 text-xs font-normal text-gray-400 normal-case">
+                      (sube uno nuevo para reemplazar el actual)
+                    </span>
+                  )}
+                </h3>
+                <MediaSlot
+                  label="Video (MP4)"
+                  required={!editando}
+                  type="video"
+                  currentUrl={editando?.video ?? null}
+                  file={videoFile}
+                  onChange={setVideoFile}
                 />
-                {imagenes.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">{imagenes.length} imagen(s) seleccionada(s)</p>
-                )}
               </div>
 
-              <div className="flex gap-3 pt-2">
+              {/* ── Botones ───────────────────────────────────────────────── */}
+              <div className="flex gap-3 pt-1 border-t">
                 <button type="submit" disabled={guardando} className="btn-primary flex-1">
                   {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear producto'}
                 </button>
-                <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="btn-secondary flex-1"
+                >
                   Cancelar
                 </button>
               </div>

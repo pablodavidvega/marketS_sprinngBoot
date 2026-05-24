@@ -112,8 +112,24 @@ public class AdminApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Se requiere rolId"));
         }
 
-        if (!rolRepository.existsById(rolId)) {
+        User usuario = userService.buscarPorId(id).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Rol rolNuevo = rolRepository.findById(rolId).orElse(null);
+        if (rolNuevo == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Rol no encontrado"));
+        }
+
+        // ── Regla de negocio: un vendedor NO puede degradarse a cliente ──────
+        // Sus productos publicados quedarían sin administrador.
+        String rolActual = usuario.getRol() != null ? usuario.getRol().getRolname() : "";
+        if ("ROLE_VENDEDOR".equals(rolActual) && "ROLE_CLIENTE".equals(rolNuevo.getRolname())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "No se puede cambiar un vendedor a cliente. " +
+                         "El vendedor tiene productos publicados que quedarían sin administrador."
+            ));
         }
 
         userService.cambiarRol(id, rolId);
