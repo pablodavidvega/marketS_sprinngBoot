@@ -132,7 +132,7 @@ public class PedidoApiController {
     public ResponseEntity<Void> mpExito(@RequestParam Map<String, String> params,
                                          @RequestParam(required = false) Long pedidoId) {
         Long id = resolverPedidoId(params, pedidoId);
-        if (id != null) {
+        if (id != null && verificarPagoAprobado(params, id)) {
             actualizarEstado(id, params, "approved");
         }
         return redirigirFrontend(id, "approved");
@@ -142,7 +142,7 @@ public class PedidoApiController {
     public ResponseEntity<Void> mpPendiente(@RequestParam Map<String, String> params,
                                              @RequestParam(required = false) Long pedidoId) {
         Long id = resolverPedidoId(params, pedidoId);
-        if (id != null) {
+        if (id != null && verificarPagoConMP(params, id, "pending")) {
             pedidoRepository.findById(id).ifPresent(p -> {
                 p.setEstado("PENDIENTE_PAGO");
                 pedidoRepository.save(p);
@@ -155,7 +155,7 @@ public class PedidoApiController {
     public ResponseEntity<Void> mpFallo(@RequestParam Map<String, String> params,
                                          @RequestParam(required = false) Long pedidoId) {
         Long id = resolverPedidoId(params, pedidoId);
-        if (id != null) {
+        if (id != null && verificarPagoConMP(params, id, "rejected")) {
             pedidoRepository.findById(id).ifPresent(p -> {
                 p.setEstado("RECHAZADO");
                 pedidoRepository.save(p);
@@ -167,6 +167,47 @@ public class PedidoApiController {
     // -------------------------------------------------------------------------
     // Helpers privados
     // -------------------------------------------------------------------------
+
+    // Verifica con la API de MP que el payment_id es real, está aprobado
+    // y su external_reference coincide con el pedidoId local.
+    private boolean verificarPagoAprobado(Map<String, String> params, Long pedidoId) {
+        String paymentId = params.getOrDefault("payment_id",
+                params.getOrDefault("collection_id", null));
+
+        if (paymentId == null || paymentId.isBlank()) {
+            return false;
+        }
+
+        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId);
+
+        if (!Boolean.TRUE.equals(pago.get("valido"))) {
+            return false;
+        }
+
+        boolean statusAprobado = "approved".equals(pago.get("status"));
+        boolean referenciaCoincide = pedidoId.toString().equals(pago.get("externalReference"));
+
+        return statusAprobado && referenciaCoincide;
+    }
+
+    // Para pendiente y fallo: verifica que el payment_id pertenece al pedido,
+    // sin exigir status aprobado.
+    private boolean verificarPagoConMP(Map<String, String> params, Long pedidoId, String statusEsperado) {
+        String paymentId = params.getOrDefault("payment_id",
+                params.getOrDefault("collection_id", null));
+
+        if (paymentId == null || paymentId.isBlank()) {
+            return false;
+        }
+
+        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId);
+
+        if (!Boolean.TRUE.equals(pago.get("valido"))) {
+            return false;
+        }
+
+        return pedidoId.toString().equals(pago.get("externalReference"));
+    }
 
     private void actualizarEstado(Long pedidoId, Map<String, String> params, String mpStatus) {
         pedidoRepository.findByIdWithDetalles(pedidoId).ifPresent(pedido -> {

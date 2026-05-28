@@ -138,6 +138,45 @@ public class MercadoPagoService {
         }
     }
 
+    /**
+     * Consulta la API de MP para verificar que un pago existe, está aprobado
+     * y pertenece al pedido indicado. Nunca confiar solo en los query params del callback.
+     */
+    public Map<String, Object> verificarPago(String paymentId) {
+        try {
+            String token = config.getAccessToken();
+            if (token == null || token.isEmpty()) {
+                return Map.of("valido", false, "motivo", "Token MP no configurado");
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + token);
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.mercadopago.com/v1/payments/" + paymentId,
+                    HttpMethod.GET,
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                Map<String, Object> resultado = new HashMap<>();
+                resultado.put("valido", true);
+                resultado.put("status", root.path("status").asText());
+                resultado.put("externalReference", root.path("external_reference").asText());
+                resultado.put("monto", root.path("transaction_amount").asDouble());
+                return resultado;
+            }
+
+            return Map.of("valido", false, "motivo", "Respuesta inesperada de MP: " + response.getStatusCode());
+
+        } catch (Exception e) {
+            return Map.of("valido", false, "motivo", "Error consultando MP: " + e.getMessage());
+        }
+    }
+
     public String pruebaConexion() {
         try {
             String token = config.getAccessToken();
