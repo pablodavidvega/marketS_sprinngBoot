@@ -62,7 +62,7 @@ public class ProductoController {
         return "registerProducto";
     }
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Integer id){
+    public String delete(@PathVariable Long id){
         Producto p = productoRepository.findById(id).orElse(null);
         if(p != null){
             productoRepository.delete(p);

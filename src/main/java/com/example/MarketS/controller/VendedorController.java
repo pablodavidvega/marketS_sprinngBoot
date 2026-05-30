@@ -149,7 +149,7 @@ public class VendedorController {
         }
 
         Producto producto = productoRepository.findById(
-                productoDto.getId().intValue()
+                productoDto.getId()
         ).orElse(null);
         if (producto == null || !producto.getVendedor().equals(usuario)) {
             return "redirect:/vendedor/productos";
@@ -329,7 +329,7 @@ public class VendedorController {
         String email = authentication.getName();
         User usuario = userService.buscarPorEmail(email).orElse(null);
 
-        Producto producto = productoRepository.findById(Integer.valueOf(id.intValue())).orElse(null);
+        Producto producto = productoRepository.findById(id).orElse(null);
 
         if (producto != null && producto.getVendedor().equals(usuario)) {
             producto.setActivo(false);
@@ -379,7 +379,7 @@ public class VendedorController {
                 String email = authentication.getName();
                 User usuario = userService.buscarPorEmail(email).orElse(null);
 
-                Producto producto = productoRepository.findById(id.intValue()).orElse(null);
+                Producto producto = productoRepository.findById(id).orElse(null);
                 if (producto == null || !producto.getVendedor().equals(usuario)) {
                     return "redirect:/vendedor/productos";
                 }
@@ -433,7 +433,7 @@ public class VendedorController {
         String email = authentication.getName();
         User usuario = userService.buscarPorEmail(email).orElse(null);
 
-        Producto producto = productoRepository.findById(Integer.valueOf(id.intValue())).orElse(null); // usa intValue() si tu repo usa Integer
+        Producto producto = productoRepository.findById(id).orElse(null);
 
         if (producto != null && producto.getVendedor().equals(usuario)) {
             producto.setActivo(true);

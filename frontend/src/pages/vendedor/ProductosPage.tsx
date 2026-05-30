@@ -9,6 +9,7 @@ import {
 import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
 import { buildImageUrl } from '../../utils/image'
+import { useDebounce } from '../../hooks/useDebounce'
 
 // ─── Slot reutilizable para imagen o video ─────────────────────────────────
 function MediaSlot({
@@ -112,7 +113,8 @@ export default function VendedorProductosPage() {
   const [marcas, setMarcas]     = useState<{ id: number; nombre: string }[]>([])
   const [loading, setLoading]   = useState(true)
   const [pagina, setPagina]     = useState(0)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda]     = useState('')
+  const busquedaDebounced           = useDebounce(busqueda, 350)
   const [modalOpen, setModalOpen] = useState(false)
   const [editando, setEditando] = useState<Producto | null>(null)
   const [form, setForm]         = useState(emptyForm)
@@ -123,14 +125,15 @@ export default function VendedorProductosPage() {
   const [imagen3, setImagen3]   = useState<File | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
 
-  const [guardando, setGuardando] = useState(false)
-  const [error, setError]       = useState('')
-  const [accionId, setAccionId] = useState<number | null>(null)
+  const [guardando, setGuardando]   = useState(false)
+  const [uploadPct, setUploadPct]   = useState(0)   // 0–100, progreso de subida
+  const [error, setError]           = useState('')
+  const [accionId, setAccionId]     = useState<number | null>(null)
 
   // ── Carga de lista ────────────────────────────────────────────────────────
   function cargar() {
     setLoading(true)
-    getVendedorProductos({ keyword: busqueda || undefined, page: pagina, size: 10 })
+    getVendedorProductos({ keyword: busquedaDebounced || undefined, page: pagina, size: 10 })
       .then(r => setData(r.data))
       .finally(() => setLoading(false))
   }
@@ -142,7 +145,8 @@ export default function VendedorProductosPage() {
     })
   }, [])
 
-  useEffect(() => { cargar() }, [pagina, busqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Sólo busca cuando el valor debounced cambia (no en cada tecla)
+  useEffect(() => { cargar() }, [pagina, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Helpers de media ───────────────────────────────────────────────────────
   function resetMedia() {
@@ -214,6 +218,7 @@ export default function VendedorProductosPage() {
     }
 
     setGuardando(true)
+    setUploadPct(0)
     try {
       const fd = new FormData()
       Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
@@ -222,8 +227,10 @@ export default function VendedorProductosPage() {
       if (imagen3)   fd.append('imagen3', imagen3)
       if (videoFile) fd.append('video',   videoFile)
 
-      if (editando) await actualizarProducto(editando.id, fd)
-      else          await crearProducto(fd)
+      const onProgress = (pct: number) => setUploadPct(pct)
+
+      if (editando) await actualizarProducto(editando.id, fd, onProgress)
+      else          await crearProducto(fd, onProgress)
 
       setModalOpen(false)
       cargar()
@@ -261,7 +268,7 @@ export default function VendedorProductosPage() {
           className="input flex-1 max-w-sm"
           placeholder="Buscar por nombre..."
           value={busqueda}
-          onChange={e => { setBusqueda(e.target.value); setPagina(0) }}
+          onChange={e => { setBusqueda(e.target.value); if (pagina !== 0) setPagina(0) }}
         />
       </div>
 
@@ -545,10 +552,28 @@ export default function VendedorProductosPage() {
                 />
               </div>
 
+              {/* ── Barra de progreso de subida ───────────────────────────── */}
+              {guardando && (
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>{uploadPct < 100 ? 'Subiendo archivos...' : 'Procesando...'}</span>
+                    <span>{uploadPct}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary-600 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* ── Botones ───────────────────────────────────────────────── */}
               <div className="flex gap-3 pt-1 border-t">
                 <button type="submit" disabled={guardando} className="btn-primary flex-1">
-                  {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear producto'}
+                  {guardando
+                    ? uploadPct < 100 ? `Subiendo ${uploadPct}%...` : 'Guardando...'
+                    : editando ? 'Guardar cambios' : 'Crear producto'}
                 </button>
                 <button
                   type="button"

@@ -11,7 +11,8 @@ interface Props {
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [videoActivo, setVideoActivo] = useState(false)
+  const [videoActivo,    setVideoActivo]    = useState(false)
+  const [videoCargando,  setVideoCargando]  = useState(false)
 
   const imagenUrl = buildImageUrl(producto.imagen)
   const videoUrl  = buildImageUrl(producto.video)
@@ -20,6 +21,7 @@ export default function ProductoCard({ producto }: Props) {
   function handleMouseEnter() {
     if (!videoUrl || !videoRef.current) return
     setVideoActivo(true)
+    setVideoCargando(true)
     videoRef.current.play().catch(() => {})
   }
 
@@ -28,6 +30,7 @@ export default function ProductoCard({ producto }: Props) {
     videoRef.current.pause()
     videoRef.current.currentTime = 0
     setVideoActivo(false)
+    setVideoCargando(false)
   }
 
   function handleAgregar(e: React.MouseEvent) {
@@ -74,10 +77,20 @@ export default function ProductoCard({ producto }: Props) {
               loop
               playsInline
               preload="none"
+              onWaiting={() => setVideoCargando(true)}
+              onCanPlay={() => setVideoCargando(false)}
+              onPlaying={() => setVideoCargando(false)}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
                 videoActivo ? 'opacity-100' : 'opacity-0'
               }`}
             />
+          )}
+
+          {/* Spinner mientras el video bufferea */}
+          {videoActivo && videoCargando && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-8 h-8 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+            </div>
           )}
 
           {/* Badge "▶ Video" — visible sólo cuando no está reproduciendo */}

@@ -36,7 +36,7 @@ public class ProductoService {
      */
     @Transactional
     public void reducirStock(Long productoId, Integer cantidad) {
-        Producto producto = productoRepository.findById(productoId.intValue())
+        Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
 
         // Verificar que haya suficiente stock
@@ -83,7 +83,7 @@ public class ProductoService {
         tallaStockRepository.save(tallaStock);
 
         // Actualizar stock general del producto
-        Producto producto = productoRepository.findById(productoId.intValue())
+        Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
         // Calcular nuevo stock general sumando todas las tallas
@@ -106,7 +106,7 @@ public class ProductoService {
      * Verificar si un producto tiene suficiente stock
      */
     public boolean verificarStockSuficiente(Long productoId, Integer cantidad) {
-        Producto producto = productoRepository.findById(productoId.intValue())
+        Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
         return producto.getStock() != null && producto.getStock() >= cantidad;
@@ -125,7 +125,7 @@ public class ProductoService {
      * Obtener producto por ID
      */
     public Producto obtenerProductoPorId(Long id) {
-        return productoRepository.findById(id.intValue())
+        return productoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     }
 

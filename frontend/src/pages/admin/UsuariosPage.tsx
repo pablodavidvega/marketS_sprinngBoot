@@ -141,6 +141,7 @@ export default function UsuariosPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Rol actual</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Cambiar rol</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Ciudad</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Registro</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
               </tr>
             </thead>
@@ -209,6 +210,15 @@ export default function UsuariosPage() {
                     {/* Ciudad */}
                     <td className="px-4 py-3 text-gray-500">{u.city || '—'}</td>
 
+                    {/* Fecha de registro */}
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {u.createdAt
+                        ? new Date(u.createdAt).toLocaleDateString('es-CO', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+
                     {/* Eliminar */}
                     <td className="px-4 py-3 text-right">
                       <button
@@ -225,7 +235,7 @@ export default function UsuariosPage() {
 
               {usuarios.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                     No se encontraron usuarios
                   </td>
                 </tr>

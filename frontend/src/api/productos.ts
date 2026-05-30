@@ -29,8 +29,23 @@ export const activarProducto = (id: number) =>
 export const desactivarProducto = (id: number) =>
   api.patch<Producto>(`/api/vendedor/productos/${id}/desactivar`)
 
-export const crearProducto = (formData: FormData) =>
-  api.post<Producto>('/api/vendedor/productos', formData)
+export const crearProducto = (
+  formData: FormData,
+  onUploadProgress?: (pct: number) => void,
+) =>
+  api.post<Producto>('/api/vendedor/productos', formData, {
+    onUploadProgress: onUploadProgress
+      ? e => onUploadProgress(Math.round((e.loaded * 100) / (e.total ?? 1)))
+      : undefined,
+  })
 
-export const actualizarProducto = (id: number, formData: FormData) =>
-  api.put<Producto>(`/api/vendedor/productos/${id}`, formData)
+export const actualizarProducto = (
+  id: number,
+  formData: FormData,
+  onUploadProgress?: (pct: number) => void,
+) =>
+  api.put<Producto>(`/api/vendedor/productos/${id}`, formData, {
+    onUploadProgress: onUploadProgress
+      ? e => onUploadProgress(Math.round((e.loaded * 100) / (e.total ?? 1)))
+      : undefined,
+  })

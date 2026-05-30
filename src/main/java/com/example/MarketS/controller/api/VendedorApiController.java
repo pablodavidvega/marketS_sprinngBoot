@@ -10,13 +10,13 @@ import com.example.MarketS.service.CloudStorageService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping("/api/vendedor")
 @PreAuthorize("hasAnyAuthority('ROLE_VENDEDOR', 'ROLE_ADMIN')")
@@ -84,7 +85,7 @@ public class VendedorApiController {
     @GetMapping("/productos/{id}")
     public ResponseEntity<ProductoResponseDTO> detalle(@PathVariable Long id, Authentication auth) {
         User usuario = resolverUsuario(auth);
-        return productoRepository.findById(id.intValue())
+        return productoRepository.findById(id)
                 .filter(p -> p.getVendedor().getId().equals(usuario.getId()))
                 .map(ProductoResponseDTO::from)
                 .map(ResponseEntity::ok)
@@ -153,7 +154,7 @@ public class VendedorApiController {
             @RequestParam(required = false) List<Integer> tallaStocks) throws IOException {
 
         User usuario = resolverUsuario(auth);
-        Producto producto = productoRepository.findById(id.intValue()).orElse(null);
+        Producto producto = productoRepository.findById(id).orElse(null);
 
         if (producto == null || !producto.getVendedor().getId().equals(usuario.getId())) {
             return ResponseEntity.notFound().build();
@@ -216,7 +217,7 @@ public class VendedorApiController {
 
     private ResponseEntity<ProductoResponseDTO> cambiarEstadoActivo(Long id, Authentication auth, boolean activo) {
         User usuario = resolverUsuario(auth);
-        Producto producto = productoRepository.findById(id.intValue()).orElse(null);
+        Producto producto = productoRepository.findById(id).orElse(null);
         if (producto == null || !producto.getVendedor().getId().equals(usuario.getId())) {
             return ResponseEntity.notFound().build();
         }
