@@ -23,7 +23,7 @@ export default function CarritoPage() {
         items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad }))
       )
       limpiar()
-      window.location.href = data.paymentUrl!
+      window.open(data.paymentUrl!, '_blank', 'noopener,noreferrer')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
       setError(msg || 'Error al procesar el pedido. Intenta de nuevo.')

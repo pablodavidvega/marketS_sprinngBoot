@@ -61,7 +61,7 @@ public class CarouselController {
     }
     @GetMapping("/productos/ver/{id}")
     public String verProducto(@PathVariable Long id, Model model) {
-        Optional<Producto> producto = productoRepository.findById(Math.toIntExact(id));
+        Optional<Producto> producto = productoRepository.findById(id);
         if (producto.isPresent()) {
             model.addAttribute("producto", producto.get());
             return "detalle"; // La vista HTML que muestra los detalles

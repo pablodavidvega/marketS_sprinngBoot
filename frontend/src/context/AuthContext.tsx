@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { logout as logoutApi } from '../api/auth'
 
 interface AuthUser {
   email: string
@@ -7,8 +8,7 @@ interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null
-  token: string | null
-  login: (token: string, email: string, role: string) => void
+  login: (email: string, role: string) => void
   logout: () => void
   isAuthenticated: boolean
   hasRole: (...roles: string[]) => boolean
@@ -17,35 +17,36 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('user')
     return stored ? JSON.parse(stored) : null
   })
 
-  const login = (newToken: string, email: string, role: string) => {
-    localStorage.setItem('token', newToken)
+  const login = (email: string, role: string) => {
+    // El JWT viaja en la cookie httpOnly que el backend ya configuró.
+    // Aquí solo guardamos la info no sensible para mostrar en la UI.
     localStorage.setItem('user', JSON.stringify({ email, role }))
     localStorage.setItem('lastActive', Date.now().toString())
-    setToken(newToken)
     setUser({ email, role })
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
+  const logout = async () => {
+    try {
+      await logoutApi() // pide al backend que limpie la cookie httpOnly
+    } catch {
+      // Si el backend no responde, igual limpiamos el estado local
+    }
     localStorage.removeItem('user')
     localStorage.removeItem('lastActive')
-    setToken(null)
     setUser(null)
   }
 
   // Controlar inactividad global (15 minutos)
   useEffect(() => {
-    if (!token) return
+    if (!user) return
 
-    const TIMEOUT_DURATION = 15 * 60 * 1000 // 15 minutos en milisegundos
+    const TIMEOUT_DURATION = 15 * 60 * 1000
 
-    // 1. Verificar inactividad al montar el componente
     const now = Date.now()
     const storedLastActive = localStorage.getItem('lastActive')
     if (storedLastActive) {
@@ -57,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('lastActive', now.toString())
     }
 
-    // 2. Escuchar la actividad del usuario para actualizar el timestamp (con throttle de 5s para rendimiento)
     let lastUpdated = Date.now()
     const updateActivity = () => {
       const currentTime = Date.now()
@@ -70,30 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
     events.forEach((event) => window.addEventListener(event, updateActivity))
 
-    // 3. Revisar periódicamente si el tiempo ha expirado (cada 10 segundos)
     const checkInactivity = () => {
       const stored = localStorage.getItem('lastActive')
-      if (stored) {
-        const elapsed = Date.now() - Number(stored)
-        if (elapsed > TIMEOUT_DURATION) {
-          logout()
-        }
+      if (stored && Date.now() - Number(stored) > TIMEOUT_DURATION) {
+        logout()
       }
     }
     const intervalId = setInterval(checkInactivity, 10000)
 
-    // Limpieza al desmontar o desautenticarse
     return () => {
       clearInterval(intervalId)
       events.forEach((event) => window.removeEventListener(event, updateActivity))
     }
-  }, [token])
+  }, [user])
 
   const hasRole = (...roles: string[]) =>
     user ? roles.includes(user.role) : false
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, hasRole }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, hasRole }}>
       {children}
     </AuthContext.Provider>
   )
@@ -104,4 +99,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider')
   return ctx
 }
-

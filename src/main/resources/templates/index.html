@@ -37,8 +37,12 @@
                     </button>
                 </form>
                 <div class="panel-usuario">
-                    <span class="panel-text">Panel</span>
-                    <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+                    <!-- ADMIN → panel de administración | VENDEDOR → su panel | CLIENTE → editar perfil -->
+                    <span class="panel-text"
+                          th:text="${rolUsuario == 'ROLE_ADMIN'} ? 'Admin' :
+                                    (${rolUsuario == 'ROLE_VENDEDOR'} ? 'Panel' : 'Perfil')">Panel</span>
+                    <a th:href="${rolUsuario == 'ROLE_ADMIN'} ? @{/admin/dashboard} :
+                                (${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/editar-perfil})"
                        class="btn-icon"
                        th:if="${nombreUsuario != null}">
                         <i class="fa-solid fa-user"></i>

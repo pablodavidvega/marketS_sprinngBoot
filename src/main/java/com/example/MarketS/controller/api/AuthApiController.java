@@ -1,6 +1,5 @@
 package com.example.MarketS.controller.api;
 
-import com.example.MarketS.dto.AuthResponseDTO;
 import com.example.MarketS.dto.LoginDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroVendedorDTO;
@@ -10,8 +9,12 @@ import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.security.JwtTokenProvider;
 import com.example.MarketS.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,11 +23,21 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApiController {
+
+    private static final String COOKIE_NAME = "auth_token";
+    private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
+
+    @Value("${cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.samesite:Lax}")
+    private String cookieSameSite;
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
@@ -41,9 +54,19 @@ public class AuthApiController {
         this.rolRepository = rolRepository;
     }
 
-    // POST /api/auth/login
+    private ResponseCookie buildCookie(String value, Duration maxAge) {
+        return ResponseCookie.from(COOKIE_NAME, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(maxAge)
+                .build();
+    }
+
+    // POST /api/auth/login — devuelve JWT como cookie httpOnly (no en el body)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
@@ -54,10 +77,19 @@ public class AuthApiController {
                     .findFirst()
                     .orElse("")
                     .replace("ROLE_", "");
-            return ResponseEntity.ok(new AuthResponseDTO(token, loginDTO.getEmail(), role));
+
+            response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(token, COOKIE_MAX_AGE).toString());
+            return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }
+    }
+
+    // POST /api/auth/logout — limpia la cookie
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("", Duration.ZERO).toString());
+        return ResponseEntity.ok(Map.of("mensaje", "Sesión cerrada"));
     }
 
     // POST /api/auth/registro

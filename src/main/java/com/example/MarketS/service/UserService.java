@@ -24,6 +24,10 @@ public interface UserService {
 
     List<User> listarTodos();
 
+    long contarTodos();
+
+    long contarPorRol(String rolnombre);
+
     boolean verificarPassword(String raw, String encoded);
 
     String codificarPassword(String password);

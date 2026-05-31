@@ -60,7 +60,7 @@ public class PedidoService {
             for (Map.Entry<Integer, Integer> item : carrito.entrySet()) {
                 System.out.println("Procesando producto ID: " + item.getKey());
 
-                Producto producto = productoRepository.findById(item.getKey())
+                Producto producto = productoRepository.findById(item.getKey().longValue())
                         .orElseThrow(() -> {
                             System.out.println("❌ Producto no encontrado ID: " + item.getKey());
                             return new RuntimeException("Producto no encontrado");

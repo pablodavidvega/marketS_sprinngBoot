@@ -2,16 +2,35 @@ import { useState, useEffect } from 'react'
 import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles } from '../../api/usuario'
 import type { PerfilUsuario } from '../../types'
 
+// ─── Helpers de presentación ───────────────────────────────────────────────
+function formatRol(nombre: string): string {
+  const map: Record<string, string> = {
+    ROLE_ADMIN:    'Administrador',
+    ROLE_VENDEDOR: 'Vendedor',
+    ROLE_CLIENTE:  'Cliente',
+  }
+  return map[nombre] ?? nombre
+}
+
+function rolBadge(nombre: string): string {
+  if (nombre === 'ROLE_ADMIN')    return 'bg-purple-100 text-purple-700 border-purple-200'
+  if (nombre === 'ROLE_VENDEDOR') return 'bg-blue-100 text-blue-700 border-blue-200'
+  return 'bg-gray-100 text-gray-600 border-gray-200'
+}
+
+// ─── Página ────────────────────────────────────────────────────────────────
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<PerfilUsuario[]>([])
-  const [roles, setRoles] = useState<{ id: number; nombre: string }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [busqueda, setBusqueda] = useState('')
-  const [tipo, setTipo] = useState('')
-  const [accionId, setAccionId] = useState<number | null>(null)
+  const [usuarios,  setUsuarios]  = useState<PerfilUsuario[]>([])
+  const [roles,     setRoles]     = useState<{ id: number; nombre: string }[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [busqueda,  setBusqueda]  = useState('')
+  const [tipo,      setTipo]      = useState('')
+  const [accionId,  setAccionId]  = useState<number | null>(null)
+  const [error,     setError]     = useState('')
 
   function cargar() {
     setLoading(true)
+    setError('')
     Promise.all([
       getUsuarios(tipo || undefined, busqueda || undefined),
       getRoles(),
@@ -20,37 +39,71 @@ export default function UsuariosPage() {
         setUsuarios(u.data)
         setRoles(r.data)
       })
+      .catch(() => setError('Error al cargar usuarios'))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { cargar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleCambiarRol(userId: number, rolId: number) {
-    setAccionId(userId)
+  // ── Cambiar rol ────────────────────────────────────────────────────────────
+  async function handleCambiarRol(usuario: PerfilUsuario, rolId: number) {
+    // Bloqueo en el cliente: vendedor → cliente no está permitido
+    const rolObjetivo = roles.find(r => r.id === rolId)
+    if (usuario.rol === 'ROLE_VENDEDOR' && rolObjetivo?.nombre === 'ROLE_CLIENTE') {
+      setError(
+        `No se puede cambiar a "${usuario.username}" de Vendedor a Cliente. ` +
+        'Sus productos publicados quedarían sin administrador.'
+      )
+      return
+    }
+
+    setAccionId(usuario.id)
+    setError('')
     try {
-      await cambiarRolUsuario(userId, rolId)
+      await cambiarRolUsuario(usuario.id, rolId)
       cargar()
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string; message?: string } } })
+          ?.response?.data?.error ??
+        (err as { response?: { data?: { error?: string; message?: string } } })
+          ?.response?.data?.message ??
+        'Error al cambiar el rol'
+      setError(msg)
     } finally {
       setAccionId(null)
     }
   }
 
-  async function handleEliminar(userId: number) {
-    if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return
+  // ── Eliminar usuario ───────────────────────────────────────────────────────
+  async function handleEliminar(userId: number, username: string) {
+    if (!confirm(`¿Eliminar a "${username}"? Esta acción no se puede deshacer.`)) return
     setAccionId(userId)
+    setError('')
     try {
       await eliminarUsuario(userId)
       setUsuarios(prev => prev.filter(u => u.id !== userId))
+    } catch {
+      setError('Error al eliminar el usuario')
     } finally {
       setAccionId(null)
     }
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Gestión de usuarios</h1>
 
-      {/* Filters */}
+      {/* Error global */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-5 flex items-start justify-between gap-3">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 text-lg leading-none flex-shrink-0">&times;</button>
+        </div>
+      )}
+
+      {/* Filtros */}
       <div className="card mb-6 flex flex-wrap gap-3 items-end">
         <div className="flex-1 min-w-[180px]">
           <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
@@ -59,6 +112,7 @@ export default function UsuariosPage() {
             placeholder="Email o username..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && cargar()}
           />
         </div>
         <div>
@@ -72,7 +126,7 @@ export default function UsuariosPage() {
         <button onClick={cargar} className="btn-primary">Buscar</button>
       </div>
 
-      {/* Table */}
+      {/* Tabla */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
@@ -84,43 +138,104 @@ export default function UsuariosPage() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Usuario</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Rol</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Rol actual</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Cambiar rol</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Ciudad</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Registro</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {usuarios.map(u => (
-                <tr key={u.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{u.username}</td>
-                  <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={roles.find(r => r.nombre === u.rol)?.id ?? ''}
-                      onChange={e => handleCambiarRol(u.id, Number(e.target.value))}
-                      disabled={accionId === u.id}
-                      className="input py-1 text-xs"
-                    >
-                      {roles.map(r => (
-                        <option key={r.id} value={r.id}>{r.nombre}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{u.city || '—'}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleEliminar(u.id)}
-                      disabled={accionId === u.id}
-                      className="btn-danger text-xs py-1 px-3 disabled:opacity-50"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {usuarios.map(u => {
+                const esVendedor     = u.rol === 'ROLE_VENDEDOR'
+                const rolActualId    = roles.find(r => r.nombre === u.rol)?.id ?? ''
+                const cargando       = accionId === u.id
+
+                return (
+                  <tr key={u.id} className="hover:bg-gray-50">
+                    {/* Nombre */}
+                    <td className="px-4 py-3 font-medium text-gray-800">{u.username}</td>
+
+                    {/* Email */}
+                    <td className="px-4 py-3 text-gray-500">{u.email}</td>
+
+                    {/* Rol actual — badge */}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${rolBadge(u.rol)}`}>
+                        {formatRol(u.rol)}
+                      </span>
+                    </td>
+
+                    {/* Selector de nuevo rol */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={rolActualId}
+                          onChange={e => handleCambiarRol(u, Number(e.target.value))}
+                          disabled={cargando}
+                          className="input py-1 text-xs max-w-[160px] disabled:opacity-60"
+                        >
+                          {roles.map(r => {
+                            // Bloquear opción CLIENTE para usuarios VENDEDOR
+                            const bloqueada = esVendedor && r.nombre === 'ROLE_CLIENTE'
+                            return (
+                              <option
+                                key={r.id}
+                                value={r.id}
+                                disabled={bloqueada}
+                                title={bloqueada ? 'No permitido: tiene productos publicados' : undefined}
+                              >
+                                {formatRol(r.nombre)}{bloqueada ? ' 🔒' : ''}
+                              </option>
+                            )
+                          })}
+                        </select>
+
+                        {/* Indicador de restricción para vendedores */}
+                        {esVendedor && (
+                          <span
+                            title="Los vendedores no pueden ser degradados a Cliente. Solo pueden ascender a Administrador."
+                            className="cursor-help text-amber-500 text-base leading-none"
+                          >
+                            ⚠️
+                          </span>
+                        )}
+
+                        {cargando && (
+                          <div className="w-3.5 h-3.5 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Ciudad */}
+                    <td className="px-4 py-3 text-gray-500">{u.city || '—'}</td>
+
+                    {/* Fecha de registro */}
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {u.createdAt
+                        ? new Date(u.createdAt).toLocaleDateString('es-CO', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+
+                    {/* Eliminar */}
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleEliminar(u.id, u.username)}
+                        disabled={cargando}
+                        className="btn-danger text-xs py-1 px-3 disabled:opacity-50"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+
               {usuarios.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                     No se encontraron usuarios
                   </td>
                 </tr>
