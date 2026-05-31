@@ -16,7 +16,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await loginApi(form.email, form.password)
-      login(data.token, data.email, data.role)
+      login(data.email, data.role)
       if (data.role === 'ADMIN') navigate('/admin/dashboard')
       else if (data.role === 'VENDEDOR') navigate('/vendedor')
       else navigate('/')  // CLIENTE → home (tienda), no panel de cuenta
