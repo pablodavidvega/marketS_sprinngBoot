@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/marcas/**").permitAll()
@@ -118,7 +119,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/redireccionar-por-rol", false)
+                        .defaultSuccessUrl("/redireccionar-por-rol", true)
                         .permitAll()
                 )
 
@@ -145,7 +146,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(origins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);

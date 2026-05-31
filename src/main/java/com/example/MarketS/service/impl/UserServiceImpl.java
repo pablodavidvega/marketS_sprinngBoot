@@ -83,6 +83,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public long contarTodos() {
+        return userRepository.count();
+    }
+
+    @Override
+    public long contarPorRol(String rolnombre) {
+        return userRepository.countByRolRolname(rolnombre);
+    }
+
+    @Override
     public boolean verificarPassword(String raw, String encoded) {
         return passwordEncoder.matches(raw, encoded);
     }

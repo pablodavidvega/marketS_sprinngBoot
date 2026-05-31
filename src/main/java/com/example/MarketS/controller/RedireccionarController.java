@@ -15,12 +15,14 @@ public class RedireccionarController {
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                // Administradores van a su panel de administración
                 return "redirect:/admin/dashboard";
             } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_VENDEDOR"))) {
-                return "redirect:/productos/index";
+                // Vendedores van a su panel de gestión
+                return "redirect:/vendedor/dashboard";
             }
         }
-        // Por defecto redirige al dashboard de cliente
+        // Clientes y cualquier otro rol permanecen en la experiencia de compra
         return "redirect:/productos/index";
     }
 }

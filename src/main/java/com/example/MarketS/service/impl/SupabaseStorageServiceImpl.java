@@ -1,0 +1,80 @@
+package com.example.MarketS.service.impl;
+
+import com.example.MarketS.service.CloudStorageService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.io.IOException;
+
+@Service
+public class SupabaseStorageServiceImpl implements CloudStorageService {
+
+    @Value("${supabase.url:https://wsnfaxuxgbtzefhexhyi.supabase.co}")
+    private String supabaseUrl;
+
+    @Value("${supabase.key:}")
+    private String supabaseKey;
+
+    @Value("${supabase.bucket:productos}")
+    private String bucketName;
+
+    private final WebClient webClient;
+
+    public SupabaseStorageServiceImpl(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.build();
+    }
+
+    @Override
+    public String subirArchivo(MultipartFile archivo, String carpeta) throws IOException {
+        if (archivo == null || archivo.isEmpty()) {
+            return null;
+        }
+
+        // Si no hay API key configurada, podemos avisar o retornar null para evitar colisiones
+        if (supabaseKey == null || supabaseKey.isBlank()) {
+            throw new IllegalStateException("La propiedad 'supabase.key' no está configurada. Por favor añádela en tu application.properties");
+        }
+
+        String originalFilename = archivo.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf('.'))
+                : "";
+
+        // Generar un nombre de archivo limpio y único
+        String nombreLimpio = archivo.getName().replaceAll("\\s+", "_").toLowerCase();
+        String nombreArchivo = System.currentTimeMillis() + "_" + nombreLimpio + extension;
+
+        // Construir la ruta final (ej: carpeta/nombre_archivo.jpg)
+        String rutaArchivo = nombreArchivo;
+        if (carpeta != null && !carpeta.isBlank()) {
+            rutaArchivo = carpeta.replaceAll("^/|/$", "") + "/" + nombreArchivo;
+        }
+
+        String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, bucketName, rutaArchivo);
+
+        try {
+            // Subir archivo a Supabase usando WebClient
+            webClient.post()
+                    .uri(uploadUrl)
+                    .header("Authorization", "Bearer " + supabaseKey)
+                    .header("apikey", supabaseKey)
+                    .contentType(MediaType.parseMediaType(archivo.getContentType() != null ? archivo.getContentType() : "application/octet-stream"))
+                    .bodyValue(archivo.getBytes())
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block(); // Síncrono para el hilo del controlador de Spring Boot
+
+            // Retornar la URL pública del archivo
+            return String.format("%s/storage/v1/object/public/%s/%s", supabaseUrl, bucketName, rutaArchivo);
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            System.err.println("❌ ERROR DETALLADO DESDE SUPABASE STORAGE: " + e.getResponseBodyAsString());
+            throw new IOException("Error al subir archivo a Supabase Storage: " + e.getResponseBodyAsString(), e);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR GENERICO EN SUBIDA: " + e.getMessage());
+            throw new IOException("Error al subir archivo a Supabase Storage: " + e.getMessage(), e);
+        }
+    }
+}

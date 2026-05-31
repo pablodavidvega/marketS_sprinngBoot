@@ -82,7 +82,7 @@ public class ProductoApiController {
     // GET /api/productos/{id} — detalle de producto
     @GetMapping("/productos/{id}")
     public ResponseEntity<ProductoResponseDTO> detalle(@PathVariable Long id) {
-        return productoRepository.findById(id.intValue())
+        return productoRepository.findById(id)
                 .filter(Producto::getActivo)
                 .map(ProductoResponseDTO::from)
                 .map(ResponseEntity::ok)

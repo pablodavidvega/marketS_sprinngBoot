@@ -2,6 +2,7 @@ package com.example.MarketS.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,6 +44,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractToken(HttpServletRequest request) {
+        // Preferencia: cookie httpOnly (protegida contra XSS)
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("auth_token".equals(cookie.getName()) && StringUtils.hasText(cookie.getValue())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        // Fallback: Authorization header (para Postman / clientes móviles)
         String bearer = request.getHeader("Authorization");
         if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);

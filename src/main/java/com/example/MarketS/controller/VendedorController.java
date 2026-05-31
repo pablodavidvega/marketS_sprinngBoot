@@ -7,6 +7,7 @@ import com.example.MarketS.repository.*;
 import com.example.MarketS.service.PdfThymeleafService;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.UserService;
+import com.example.MarketS.service.CloudStorageService;
 
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -50,6 +51,8 @@ public class VendedorController {
     private MarcaRepository marcaRepository;
     @Autowired
     private CategoriaRepository categoriaRepository;
+    @Autowired
+    private CloudStorageService cloudStorageService;
 
 
     @GetMapping("/dashboard")
@@ -146,7 +149,7 @@ public class VendedorController {
         }
 
         Producto producto = productoRepository.findById(
-                productoDto.getId().intValue()
+                productoDto.getId()
         ).orElse(null);
         if (producto == null || !producto.getVendedor().equals(usuario)) {
             return "redirect:/vendedor/productos";
@@ -206,25 +209,7 @@ public class VendedorController {
 
         // ACTUALIZAR VIDEO
         if (productoDto.getVideo() != null && !productoDto.getVideo().isEmpty()) {
-            MultipartFile video = productoDto.getVideo();
-
-            String originalFilename = video.getOriginalFilename();
-            String extension = "";
-
-            int i = originalFilename.lastIndexOf('.');
-            if (i >= 0) {
-                extension = originalFilename.substring(i);
-            }
-
-            String nombreVideo = productoDto.getNombre()
-                    .replaceAll("\\s+", "_")
-                    .toLowerCase() + "_video" + extension;
-
-            Path ruta = Paths.get("C:/uploads/hana");
-            if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-            Files.copy(video.getInputStream(), ruta.resolve(nombreVideo), StandardCopyOption.REPLACE_EXISTING);
-
+            String nombreVideo = cloudStorageService.subirArchivo(productoDto.getVideo(), "");
             producto.setVideo(nombreVideo);
         }
 
@@ -306,26 +291,7 @@ public class VendedorController {
         }
         // 🎥 GUARDAR VIDEO
         if (productoDto.getVideo() != null && !productoDto.getVideo().isEmpty()) {
-            MultipartFile video = productoDto.getVideo();
-
-            String originalFilename = video.getOriginalFilename();
-            String extension = "";
-
-            int i = originalFilename.lastIndexOf('.');
-            if (i >= 0) {
-                extension = originalFilename.substring(i);
-            }
-
-            // nombre del archivo (igual lógica que imagen)
-            String nombreVideo = productoDto.getNombre()
-                    .replaceAll("\\s+", "_")
-                    .toLowerCase() + "_video" + extension;
-
-            Path ruta = Paths.get("C:/uploads/hana");
-            if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-            Files.copy(video.getInputStream(), ruta.resolve(nombreVideo), StandardCopyOption.REPLACE_EXISTING);
-
+            String nombreVideo = cloudStorageService.subirArchivo(productoDto.getVideo(), "");
             producto.setVideo(nombreVideo);
         }
         if (productoDto.getTallas() != null && !productoDto.getTallas().isEmpty()) {
@@ -355,24 +321,7 @@ public class VendedorController {
         return "redirect:/vendedor/productos";
     }
     public String guardarImagen(MultipartFile archivo, String nombreProducto) throws IOException {
-        String originalFilename = archivo.getOriginalFilename();
-        String extension = "";
-
-        int i = originalFilename.lastIndexOf('.');
-        if (i >= 0) {
-            extension = originalFilename.substring(i);
-        }
-
-        String nombreArchivo = nombreProducto
-                .replaceAll("\\s+", "_")
-                .toLowerCase() + "_" + System.currentTimeMillis() + extension;
-
-        Path ruta = Paths.get("C:/uploads/hana");
-        if (!Files.exists(ruta)) Files.createDirectories(ruta);
-
-        Files.copy(archivo.getInputStream(), ruta.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
-
-        return nombreArchivo;
+        return cloudStorageService.subirArchivo(archivo, "");
     }
 
     @GetMapping("/productos/desactivar/{id}")
@@ -380,7 +329,7 @@ public class VendedorController {
         String email = authentication.getName();
         User usuario = userService.buscarPorEmail(email).orElse(null);
 
-        Producto producto = productoRepository.findById(Integer.valueOf(id.intValue())).orElse(null);
+        Producto producto = productoRepository.findById(id).orElse(null);
 
         if (producto != null && producto.getVendedor().equals(usuario)) {
             producto.setActivo(false);
@@ -430,7 +379,7 @@ public class VendedorController {
                 String email = authentication.getName();
                 User usuario = userService.buscarPorEmail(email).orElse(null);
 
-                Producto producto = productoRepository.findById(id.intValue()).orElse(null);
+                Producto producto = productoRepository.findById(id).orElse(null);
                 if (producto == null || !producto.getVendedor().equals(usuario)) {
                     return "redirect:/vendedor/productos";
                 }
@@ -484,7 +433,7 @@ public class VendedorController {
         String email = authentication.getName();
         User usuario = userService.buscarPorEmail(email).orElse(null);
 
-        Producto producto = productoRepository.findById(Integer.valueOf(id.intValue())).orElse(null); // usa intValue() si tu repo usa Integer
+        Producto producto = productoRepository.findById(id).orElse(null);
 
         if (producto != null && producto.getVendedor().equals(usuario)) {
             producto.setActivo(true);

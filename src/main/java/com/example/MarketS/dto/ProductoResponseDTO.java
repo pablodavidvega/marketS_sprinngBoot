@@ -57,6 +57,10 @@ public class ProductoResponseDTO {
 
     private static String normalizeUrl(String imagen) {
         if (imagen == null || imagen.isBlank()) return null;
-        return imagen.startsWith("/uploads/") ? imagen : "/uploads/" + imagen;
+        // Si ya es una URL absoluta (Supabase, CDN, etc.) la devolvemos tal cual
+        if (imagen.startsWith("http://") || imagen.startsWith("https://")) return imagen;
+        // Si ya tiene el prefijo local, no duplicar
+        if (imagen.startsWith("/uploads/")) return imagen;
+        return "/uploads/" + imagen;
     }
 }

@@ -497,7 +497,7 @@
 <!--            <h2 class="name-project"> MarketS</h2>-->
 <!--        </div>-->
         <nav class="nav-menu">
-            <a th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+            <a th:href="${rolUsuario == 'ROLE_ADMIN'} ? @{/admin/dashboard} : (${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/editar-perfil})"
                class="btn-icon"
                th:if="${nombreUsuario != null}">
                 <i class="fa-solid fa-user"></i>

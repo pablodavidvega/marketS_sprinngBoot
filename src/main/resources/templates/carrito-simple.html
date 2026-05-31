@@ -847,7 +847,7 @@
 
             <!-- Botón usuario -->
             <a th:if="${nombreUsuario != null}"
-               th:href="${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/dashboard}"
+               th:href="${rolUsuario == 'ROLE_ADMIN'} ? @{/admin/dashboard} : (${rolUsuario == 'ROLE_VENDEDOR'} ? @{/vendedor/dashboard} : @{/cliente/editar-perfil})"
                class="btn-icon btn-user">
                 <i class="fa-solid fa-user"></i>
                 <span th:text="${nombreUsuario}"></span>
