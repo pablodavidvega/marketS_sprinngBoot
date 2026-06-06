@@ -71,6 +71,19 @@ export default function DetallePage() {
     setTimeout(() => setAgregado(false), 2000)
   }
 
+  function handlePagar() {
+    if (!producto) return
+    const primeraImagen = mediaItems.find(m => m.type === 'image')?.url ?? null
+    agregar({
+      productoId: producto.id,
+      nombre:     producto.nombre,
+      precio:     producto.precio,
+      imagen:     primeraImagen,
+      cantidad,
+    })
+    navigate('/carrito')
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
@@ -201,6 +214,13 @@ export default function DetallePage() {
             className={`btn-primary mt-2 ${agregado ? 'bg-green-600 hover:bg-green-700' : ''}`}
           >
             {producto.stock === 0 ? 'Sin stock' : agregado ? '¡Agregado!' : 'Agregar al carrito'}
+          </button>
+          <button
+            onClick={handlePagar}
+            disabled={producto.stock === 0}
+            className="btn-success mt-2"
+          >
+            {producto.stock === 0 ? 'Sin stock' : 'Comprar ahora'}
           </button>
 
           {producto.marcaNombre && (
