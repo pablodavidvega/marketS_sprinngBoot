@@ -16,4 +16,7 @@ public interface DetallePedidoRepository extends JpaRepository<DetallePedido, Lo
 
     @Query("SELECT COUNT(d) FROM DetallePedido d WHERE d.producto.vendedor = :vendedor AND d.pedido.estado = 'PAGADO'")
     Long countVentasByVendedor(@Param("vendedor") User vendedor);
+
+    @Query("SELECT COUNT(d) > 0 FROM DetallePedido d WHERE d.producto.id = :productoId AND d.pedido.usuario.id = :usuarioId AND d.pedido.estado = 'PAGADO'")
+    boolean haCompradoProducto(@Param("productoId") Long productoId, @Param("usuarioId") Long usuarioId);
 }

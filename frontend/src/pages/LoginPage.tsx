@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { login as loginApi } from '../api/auth'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const mensajeExito = (location.state as { mensaje?: string } | null)?.mensaje
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,6 +35,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="card w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Iniciar sesión</h1>
+
+        {mensajeExito && (
+          <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 mb-4 text-sm">
+            {mensajeExito}
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
@@ -74,6 +82,11 @@ export default function LoginPage() {
           ¿No tienes cuenta?{' '}
           <Link to="/registro" className="text-primary-600 hover:underline font-medium">
             Regístrate
+          </Link>
+        </p>
+        <p className="text-center text-sm text-gray-500 mt-2">
+          <Link to="/forgot-password" className="text-primary-600 hover:underline">
+            ¿Olvidaste tu contraseña?
           </Link>
         </p>
       </div>

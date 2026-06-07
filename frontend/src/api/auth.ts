@@ -17,3 +17,9 @@ export const registro = (data: {
   tipoUsuario: string
   city?: string
 }) => api.post<PerfilUsuario>('/api/auth/registro', data)
+
+export const forgotPassword = (email: string) =>
+  api.post<{ mensaje: string }>('/api/auth/forgot-password', { email })
+
+export const resetPassword = (token: string, password: string) =>
+  api.post<{ mensaje: string }>('/api/auth/reset-password', { token, password })

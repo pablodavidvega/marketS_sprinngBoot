@@ -7,6 +7,7 @@ import com.example.MarketS.repository.*;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.UserService;
 import com.example.MarketS.service.CloudStorageService;
+import com.example.MarketS.repository.DetallePedidoRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -41,19 +42,35 @@ public class VendedorApiController {
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
     private final CloudStorageService cloudStorageService;
+    private final DetallePedidoRepository detallePedidoRepository;
 
     public VendedorApiController(ProductoService productoService,
                                   ProductoRepository productoRepository,
                                   UserService userService,
                                   CategoriaRepository categoriaRepository,
                                   MarcaRepository marcaRepository,
-                                  CloudStorageService cloudStorageService) {
+                                  CloudStorageService cloudStorageService,
+                                  DetallePedidoRepository detallePedidoRepository) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
         this.userService = userService;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
         this.cloudStorageService = cloudStorageService;
+        this.detallePedidoRepository = detallePedidoRepository;
+    }
+
+    // GET /api/vendedor/dashboard
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> dashboard(Authentication auth) {
+        User usuario = resolverUsuario(auth);
+        long totalProductos = productoRepository.countByVendedorId(usuario.getId());
+        return ResponseEntity.ok(Map.of(
+                "gananciaTotal",  detallePedidoRepository.sumGananciaByVendedor(usuario),
+                "comisionTotal",  detallePedidoRepository.sumComisionByVendedor(usuario),
+                "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario),
+                "totalProductos", totalProductos
+        ));
     }
 
     // GET /api/vendedor/productos?page=0&size=20&keyword=x
