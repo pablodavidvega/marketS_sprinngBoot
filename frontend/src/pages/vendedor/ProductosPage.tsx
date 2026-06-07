@@ -552,6 +552,14 @@ export default function VendedorProductosPage() {
                 />
               </div>
 
+              {/* ── Aviso de comisión ────────────────────────────────────── */}
+              <div className="flex items-start gap-2 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+                <span className="mt-0.5">ℹ️</span>
+                <p>
+                  <strong>Comisión MarketS:</strong> Por cada venta realizada, MarketS cobra una comisión del <strong>5%</strong> sobre el precio del producto. Recibirás el <strong>95%</strong> restante. Este valor no es visible para el comprador.
+                </p>
+              </div>
+
               {/* ── Barra de progreso de subida ───────────────────────────── */}
               {guardando && (
                 <div>

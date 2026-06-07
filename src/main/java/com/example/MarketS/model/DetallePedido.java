@@ -25,6 +25,12 @@ public class DetallePedido {
     @Column(name = "precio_unitario", nullable = false)
     private Double precioUnitario;
 
+    @Column(name = "comision_app")
+    private Double comisionApp;
+
+    @Column(name = "ganancia_vendedor")
+    private Double gananciaVendedor;
+
     public DetallePedido() {}
 
     public DetallePedido(Pedido pedido, Producto producto, Integer cantidad, Double precioUnitario) {
@@ -73,5 +79,21 @@ public class DetallePedido {
 
     public void setPrecioUnitario(Double precioUnitario) {
         this.precioUnitario = precioUnitario;
+    }
+
+    public Double getComisionApp() {
+        return comisionApp;
+    }
+
+    public void setComisionApp(Double comisionApp) {
+        this.comisionApp = comisionApp;
+    }
+
+    public Double getGananciaVendedor() {
+        return gananciaVendedor;
+    }
+
+    public void setGananciaVendedor(Double gananciaVendedor) {
+        this.gananciaVendedor = gananciaVendedor;
     }
 }

@@ -20,6 +20,8 @@ import com.example.MarketS.repository.ProductoRepository;
 @Transactional
 public class PedidoService {
 
+    private static final double COMISION_APP = 0.05;
+
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
     private final EmailService emailService;
@@ -71,14 +73,20 @@ public class PedidoService {
 
                 System.out.println("   - " + producto.getNombre() + ": " + cantidad + " x $" + precio);
 
+                double subtotal = cantidad * precio;
+                double comision = Math.round(subtotal * COMISION_APP * 100.0) / 100.0;
+                double ganancia = Math.round((subtotal - comision) * 100.0) / 100.0;
+
                 DetallePedido detalle = new DetallePedido();
                 detalle.setPedido(pedido);
                 detalle.setProducto(producto);
                 detalle.setCantidad(cantidad);
                 detalle.setPrecioUnitario(precio);
+                detalle.setComisionApp(comision);
+                detalle.setGananciaVendedor(ganancia);
 
                 detalles.add(detalle);
-                total += cantidad * precio;
+                total += subtotal;
             }
 
             // Asegurar que la lista de detalles no sea null
