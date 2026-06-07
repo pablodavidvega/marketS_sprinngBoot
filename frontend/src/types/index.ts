@@ -86,6 +86,29 @@ export interface DashboardAdmin {
   totalAdmins: number
 }
 
+export interface DashboardVendedor {
+  gananciaTotal: number
+  comisionTotal: number
+  totalVentas: number
+  totalProductos: number
+}
+
+export interface Resena {
+  id: number
+  calificacion: number
+  comentario: string | null
+  compradorUsername: string
+  fecha: string
+}
+
+export interface ResenasResponse {
+  promedio: number
+  total: number
+  puedeResenar: boolean
+  yaReseno: boolean
+  resenas: Resena[]
+}
+
 export interface SugerenciaProducto {
   id: number
   nombre: string

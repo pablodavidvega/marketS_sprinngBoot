@@ -8,6 +8,7 @@ import com.example.MarketS.model.User;
 import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.security.JwtTokenProvider;
+import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,6 +23,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import java.time.Duration;
 import java.util.Map;
@@ -39,19 +43,25 @@ public class AuthApiController {
     @Value("${cookie.samesite:Lax}")
     private String cookieSameSite;
 
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final UserService userService;
     private final RolRepository rolRepository;
+    private final EmailService emailService;
 
     public AuthApiController(AuthenticationManager authenticationManager,
                               JwtTokenProvider tokenProvider,
                               UserService userService,
-                              RolRepository rolRepository) {
+                              RolRepository rolRepository,
+                              EmailService emailService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userService = userService;
         this.rolRepository = rolRepository;
+        this.emailService = emailService;
     }
 
     private ResponseCookie buildCookie(String value, Duration maxAge) {
@@ -137,5 +147,64 @@ public class AuthApiController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Error al registrar usuario"));
         }
+    }
+
+    // POST /api/auth/forgot-password — genera token y envía email con link al frontend React
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El correo es requerido"));
+        }
+
+        var userOpt = userService.buscarPorEmail(email.trim());
+        // Respuesta genérica para no revelar si el correo existe o no
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.ok(Map.of("mensaje", "Si el correo está registrado, recibirás un enlace en breve"));
+        }
+
+        User user = userOpt.get();
+        String token = UUID.randomUUID().toString();
+        user.setResetToken(token);
+        user.setResetTokenExpira(LocalDateTime.now().plusMinutes(30));
+        userService.guardar(user);
+
+        String link = frontendUrl + "/reset-password?token=" + token;
+        emailService.enviarCorreo(
+                email,
+                "Restablecer contraseña - MarketS",
+                "Haz clic en el siguiente enlace para restablecer tu contraseña (válido por 30 minutos):\n\n" + link
+        );
+
+        return ResponseEntity.ok(Map.of("mensaje", "Si el correo está registrado, recibirás un enlace en breve"));
+    }
+
+    // POST /api/auth/reset-password — valida token y actualiza contraseña
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        String password = body.get("password");
+
+        if (token == null || token.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token y contraseña son requeridos"));
+        }
+
+        var userOpt = userService.buscarPorToken(token);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token inválido o expirado"));
+        }
+
+        User user = userOpt.get();
+
+        if (user.getResetTokenExpira() != null && user.getResetTokenExpira().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El enlace ha expirado. Solicita uno nuevo"));
+        }
+
+        user.setPassword(userService.codificarPassword(password));
+        user.setResetToken(null);
+        user.setResetTokenExpira(null);
+        userService.guardar(user);
+
+        return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
     }
 }

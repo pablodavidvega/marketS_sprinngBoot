@@ -1,5 +1,5 @@
 import api from './axios'
-import type { Producto, Categoria, SugerenciaProducto, VendedorProductosResponse } from '../types'
+import type { Producto, Categoria, SugerenciaProducto, VendedorProductosResponse, ResenasResponse, Resena } from '../types'
 
 export const getProductos = (q?: string, limit = 30) =>
   api.get<Producto[]>('/api/productos', { params: { q, limit } })
@@ -49,3 +49,10 @@ export const actualizarProducto = (
       ? e => onUploadProgress(Math.round((e.loaded * 100) / (e.total ?? 1)))
       : undefined,
   })
+
+// Reseñas
+export const getResenas = (productoId: number) =>
+  api.get<ResenasResponse>(`/api/productos/${productoId}/resenas`)
+
+export const crearResena = (productoId: number, data: { calificacion: number; comentario?: string }) =>
+  api.post<Resena>(`/api/productos/${productoId}/resenas`, data)

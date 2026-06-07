@@ -1,54 +1,122 @@
-import { useSearchParams, Link } from 'react-router-dom'
-
-const config = {
-  exito: {
-    icon: '✓',
-    iconClass: 'bg-green-100 text-green-600',
-    title: '¡Pago exitoso!',
-    message: 'Tu pedido fue confirmado y está siendo procesado.',
-    linkClass: 'btn-primary',
-  },
-  pendiente: {
-    icon: '⏳',
-    iconClass: 'bg-yellow-100 text-yellow-600',
-    title: 'Pago pendiente',
-    message: 'Tu pago está siendo verificado. Te notificaremos cuando se confirme.',
-    linkClass: 'btn-secondary',
-  },
-  fallo: {
-    icon: '✗',
-    iconClass: 'bg-red-100 text-red-600',
-    title: 'Pago fallido',
-    message: 'No se pudo procesar tu pago. Puedes intentarlo de nuevo.',
-    linkClass: 'btn-danger',
-  },
-}
+import { useEffect, useState } from 'react'
+import { useSearchParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { simularPago } from '../../api/pedidos'
+import { useCarrito } from '../../context/CarritoContext'
 
 export default function ConfirmacionPage() {
   const [params] = useSearchParams()
-  const status = (params.get('status') ?? 'pendiente') as keyof typeof config
-  const pedidoId = params.get('pedido_id')
-  const cfg = config[status] ?? config.pendiente
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { limpiar } = useCarrito()
 
+  const status = params.get('status') ?? 'pendiente'
+  const pedidoId = params.get('pedido_id')
+  const paymentUrl = (location.state as { paymentUrl?: string } | null)?.paymentUrl
+
+  const [simulando, setSimulando] = useState(false)
+  const [error, setError] = useState('')
+
+  // Limpiar el carrito cuando el pago se confirma exitosamente
+  useEffect(() => {
+    if (status === 'exito') {
+      limpiar()
+    }
+  }, [status])
+
+  async function handleSimularPago() {
+    if (!pedidoId) return
+    setSimulando(true)
+    setError('')
+    try {
+      await simularPago(Number(pedidoId))
+      navigate(`/pedidos/confirmacion?status=exito&pedido_id=${pedidoId}`, { replace: true })
+    } catch {
+      setError('No se pudo simular el pago. Intenta de nuevo.')
+    } finally {
+      setSimulando(false)
+    }
+  }
+
+  if (status === 'exito') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="card max-w-md w-full text-center">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mx-auto mb-4">
+            ✓
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">¡Pago exitoso!</h1>
+          <p className="text-gray-600 mb-2">Tu pedido fue confirmado y está siendo procesado.</p>
+          {pedidoId && <p className="text-sm text-gray-400 mb-6">Pedido #{pedidoId}</p>}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/cliente/dashboard" className="btn-primary">Ver mis pedidos</Link>
+            <Link to="/" className="btn-secondary">Seguir comprando</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (status === 'fallo') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="card max-w-md w-full text-center">
+          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-4xl mx-auto mb-4">
+            ✗
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Pago fallido</h1>
+          <p className="text-gray-600 mb-6">No se pudo procesar tu pago. Puedes intentarlo de nuevo.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/carrito" className="btn-primary">Volver al carrito</Link>
+            <Link to="/" className="btn-secondary">Seguir comprando</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Estado pendiente — muestra opciones de pago
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="card max-w-md w-full text-center">
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 ${cfg.iconClass}`}>
-          {cfg.icon}
+        <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center text-4xl mx-auto mb-4">
+          ⏳
         </div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">{cfg.title}</h1>
-        <p className="text-gray-600 mb-2">{cfg.message}</p>
-        {pedidoId && (
-          <p className="text-sm text-gray-400 mb-6">Pedido #{pedidoId}</p>
-        )}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/cliente/dashboard" className={cfg.linkClass}>
-            Ver mis pedidos
-          </Link>
-          <Link to="/" className="btn-secondary">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Pedido creado</h1>
+        <p className="text-gray-600 mb-2">Tu pedido está listo. Completa el pago para confirmarlo.</p>
+        {pedidoId && <p className="text-sm text-gray-400 mb-6">Pedido #{pedidoId}</p>}
+
+        {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+
+        <div className="flex flex-col gap-3">
+          {paymentUrl && (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary w-full text-center"
+            >
+              Pagar con MercadoPago
+            </a>
+          )}
+
+          <Link to="/" className="btn-secondary w-full text-center">
             Seguir comprando
           </Link>
         </div>
+
+        {/* Simulación para desarrollo/sandbox */}
+        {pedidoId && (
+          <div className="mt-6 pt-5 border-t border-dashed border-gray-200">
+            <p className="text-xs text-gray-400 mb-3">Modo desarrollo · MercadoPago Sandbox</p>
+            <button
+              onClick={handleSimularPago}
+              disabled={simulando}
+              className="w-full bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {simulando ? 'Procesando...' : '🧪 Simular pago exitoso'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

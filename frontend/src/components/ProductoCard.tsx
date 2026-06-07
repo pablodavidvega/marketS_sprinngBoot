@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { buildImageUrl } from '../utils/image'
@@ -10,6 +10,7 @@ interface Props {
 
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
+  const navigate    = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoActivo,    setVideoActivo]    = useState(false)
   const [videoCargando,  setVideoCargando]  = useState(false)
@@ -42,6 +43,18 @@ export default function ProductoCard({ producto }: Props) {
       imagen: imagenUrl,
       cantidad: 1,
     })
+  }
+
+  function handlePagar(e: React.MouseEvent) {
+    e.preventDefault()
+    agregar({
+      productoId: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      imagen: imagenUrl,
+      cantidad: 1,
+    })
+    navigate('/carrito')
   }
 
   return (
@@ -121,6 +134,13 @@ export default function ProductoCard({ producto }: Props) {
         className="btn-primary w-full mt-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+      </button>
+      <button
+        onClick={handlePagar}
+        disabled={producto.stock === 0}
+        className="btn-success w-full mt-2 text-sm"
+      >
+        {producto.stock === 0 ? 'Sin stock' : 'Comprar ahora'}
       </button>
     </div>
   )

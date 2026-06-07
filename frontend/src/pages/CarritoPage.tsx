@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { crearPedido } from '../api/pedidos'
 
 export default function CarritoPage() {
-  const { items, total, quitar, actualizar, limpiar } = useCarrito()
+  const { items, total, quitar, actualizar } = useCarrito()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
@@ -22,11 +22,17 @@ export default function CarritoPage() {
       const { data } = await crearPedido(
         items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad }))
       )
-      limpiar()
-      window.open(data.paymentUrl!, '_blank', 'noopener,noreferrer')
+      navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {
+        state: { paymentUrl: data.paymentUrl },
+      })
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
-      setError(msg || 'Error al procesar el pedido. Intenta de nuevo.')
+      const errData = (err as { response?: { data?: { mensaje?: string; pedidoId?: number } } })?.response?.data
+      // El pedido se creó pero MercadoPago falló — navegar igual para poder simular pago
+      if (errData?.pedidoId) {
+        navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${errData.pedidoId}`)
+        return
+      }
+      setError(errData?.mensaje || 'Error al procesar el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

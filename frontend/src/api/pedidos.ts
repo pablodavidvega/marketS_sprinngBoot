@@ -14,3 +14,6 @@ export const getPedido = (id: number) =>
 
 export const getMisPedidos = () =>
   api.get<PedidoResponse[]>('/api/pedidos/mis-pedidos')
+
+export const simularPago = (id: number) =>
+  api.post<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/simular-pago`)
