@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PedidoResponse } from '../types'
+import type { PedidoResponse, PedidoVendedorResponse } from '../types'
 
 export interface CrearPedidoItem {
   productoId: number
@@ -17,3 +17,9 @@ export const getMisPedidos = () =>
 
 export const simularPago = (id: number) =>
   api.post<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/simular-pago`)
+
+export const getPedidosVendedor = () =>
+  api.get<PedidoVendedorResponse[]>('/api/vendedor/pedidos')
+
+export const confirmarRecepcion = (id: number) =>
+  api.patch<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/confirmar-recepcion`)

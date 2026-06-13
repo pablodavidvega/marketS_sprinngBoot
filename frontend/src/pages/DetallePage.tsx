@@ -245,6 +245,12 @@ export default function DetallePage() {
             ${producto.precio.toLocaleString('es-CO')}
           </p>
 
+          {producto.totalVendido != null && producto.totalVendido > 0 && (
+            <p className="text-sm text-gray-500">
+              {producto.totalVendido.toLocaleString('es-CO')} {producto.totalVendido === 1 ? 'unidad vendida' : 'unidades vendidas'}
+            </p>
+          )}
+
           {producto.descripcion && (
             <p className="text-gray-600 leading-relaxed">{producto.descripcion}</p>
           )}

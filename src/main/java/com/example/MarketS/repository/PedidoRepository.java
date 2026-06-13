@@ -27,4 +27,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Buscar pedido por ID con detalles cargados (para evitar LazyInitializationException)
     @Query("SELECT p FROM Pedido p LEFT JOIN FETCH p.detalles WHERE p.id = :id")
     Optional<Pedido> findByIdWithDetalles(@Param("id") Long id);
+
+    // Pedidos que contienen productos del vendedor dado, con detalles y comprador cargados
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr JOIN FETCH pr.vendedor JOIN FETCH p.usuario WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")
+    List<Pedido> findByVendedorWithDetails(@Param("vendedor") User vendedor);
 }

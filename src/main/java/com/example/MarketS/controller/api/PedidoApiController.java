@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,9 +119,27 @@ public class PedidoApiController {
         User usuario = resolverUsuario(auth);
         List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuario(usuario)
                 .stream()
+                .sorted(Comparator.comparing(Pedido::getFecha).reversed())
                 .map(PedidoResponseDTO::from)
                 .toList();
         return ResponseEntity.ok(pedidos);
+    }
+
+    // PATCH /api/pedidos/{id}/confirmar-recepcion — el cliente confirma que recibió el producto
+    @PatchMapping("/{id}/confirmar-recepcion")
+    public ResponseEntity<?> confirmarRecepcion(@PathVariable Long id, Authentication auth) {
+        User usuario = resolverUsuario(auth);
+        Pedido pedido = pedidoRepository.findById(id).orElse(null);
+
+        if (pedido == null) return ResponseEntity.notFound().build();
+        if (!pedido.getUsuario().getId().equals(usuario.getId()))
+            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+        if (!"PAGADO".equals(pedido.getEstado()))
+            return ResponseEntity.badRequest().body(Map.of("error", "Solo se puede confirmar recepción de pedidos pagados"));
+
+        pedido.setEstado("RECIBIDO");
+        pedidoRepository.save(pedido);
+        return ResponseEntity.ok(Map.of("mensaje", "Recepción confirmada", "estado", "RECIBIDO"));
     }
 
     // -------------------------------------------------------------------------

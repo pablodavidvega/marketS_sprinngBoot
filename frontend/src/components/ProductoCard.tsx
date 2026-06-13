@@ -123,6 +123,15 @@ export default function ProductoCard({ producto }: Props) {
         <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">
           {producto.nombre}
         </h3>
+        {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-yellow-400 text-sm leading-none">
+              {'★'.repeat(Math.round(producto.promedioCalificacion))}
+              {'☆'.repeat(5 - Math.round(producto.promedioCalificacion))}
+            </span>
+            <span className="text-xs text-gray-400">({producto.totalResenas})</span>
+          </div>
+        )}
         <p className="text-primary-600 font-bold text-lg">
           ${producto.precio.toLocaleString('es-CO')}
         </p>

@@ -2,15 +2,17 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.dto.SugerenciaResponseDTO;
-import com.example.MarketS.model.Categorias;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.repository.CategoriaRepository;
+import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.MarcaRepository;
 import com.example.MarketS.repository.ProductoRepository;
+import com.example.MarketS.repository.ResenaRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,13 +23,19 @@ public class ProductoApiController {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
+    private final ResenaRepository resenaRepository;
+    private final DetallePedidoRepository detallePedidoRepository;
 
     public ProductoApiController(ProductoRepository productoRepository,
                                   CategoriaRepository categoriaRepository,
-                                  MarcaRepository marcaRepository) {
+                                  MarcaRepository marcaRepository,
+                                  ResenaRepository resenaRepository,
+                                  DetallePedidoRepository detallePedidoRepository) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
+        this.resenaRepository = resenaRepository;
+        this.detallePedidoRepository = detallePedidoRepository;
     }
 
     // GET /api/productos — catálogo principal (aleatoriamente limitado a 30)
@@ -49,11 +57,7 @@ public class ProductoApiController {
             }
         }
 
-        List<ProductoResponseDTO> respuesta = productos.stream()
-                .map(ProductoResponseDTO::from)
-                .toList();
-
-        return ResponseEntity.ok(respuesta);
+        return ResponseEntity.ok(buildDTOs(productos));
     }
 
     // GET /api/productos/sugerencias?q=... — autocompletado (máx 8 resultados livianos)
@@ -79,12 +83,16 @@ public class ProductoApiController {
         return ResponseEntity.ok(resultado);
     }
 
-    // GET /api/productos/{id} — detalle de producto
+    // GET /api/productos/{id} — detalle de producto (1 producto = consultas individuales, no hay N+1)
     @GetMapping("/productos/{id}")
     public ResponseEntity<ProductoResponseDTO> detalle(@PathVariable Long id) {
         return productoRepository.findById(id)
                 .filter(Producto::getActivo)
-                .map(ProductoResponseDTO::from)
+                .map(p -> ProductoResponseDTO.from(
+                        p,
+                        resenaRepository.avgCalificacionByProductoId(p.getId()),
+                        resenaRepository.countByProductoId(p.getId()),
+                        detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId())))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -92,12 +100,8 @@ public class ProductoApiController {
     // GET /api/productos/categoria/{categoriaId} — filtro por categoría
     @GetMapping("/productos/categoria/{categoriaId}")
     public ResponseEntity<List<ProductoResponseDTO>> porCategoria(@PathVariable Long categoriaId) {
-        List<ProductoResponseDTO> resultado = productoRepository
-                .findByCategoriasIdAndActivoTrue(categoriaId)
-                .stream()
-                .map(ProductoResponseDTO::from)
-                .toList();
-        return ResponseEntity.ok(resultado);
+        List<Producto> productos = productoRepository.findByCategoriasIdAndActivoTrue(categoriaId);
+        return ResponseEntity.ok(buildDTOs(productos));
     }
 
     // GET /api/categorias — listado completo de categorías
@@ -118,5 +122,45 @@ public class ProductoApiController {
                 .map(m -> Map.<String, Object>of("id", m.getId(), "nombre", m.getNombreMarca()))
                 .toList();
         return ResponseEntity.ok(marcas);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Convierte una lista de productos a DTOs enriquecidos con estadísticas
+     * usando solo 2 queries batch (independientemente de cuántos productos haya).
+     */
+    private List<ProductoResponseDTO> buildDTOs(List<Producto> productos) {
+        if (productos.isEmpty()) return List.of();
+
+        List<Long> ids = productos.stream().map(Producto::getId).toList();
+
+        // 1 query para promedios y conteo de reseñas
+        Map<Long, double[]> statsResenas = new HashMap<>();
+        resenaRepository.findEstadisticasByProductoIds(ids).forEach(row -> {
+            Long pid     = ((Number) row[0]).longValue();
+            double avg   = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+            long   count = ((Number) row[2]).longValue();
+            statsResenas.put(pid, new double[]{ avg, count });
+        });
+
+        // 1 query para total vendido
+        Map<Long, Long> statsVentas = new HashMap<>();
+        detallePedidoRepository.findTotalVendidoByProductoIds(ids).forEach(row -> {
+            Long pid   = ((Number) row[0]).longValue();
+            long total = ((Number) row[1]).longValue();
+            statsVentas.put(pid, total);
+        });
+
+        return productos.stream().map(p -> {
+            double[] resena = statsResenas.getOrDefault(p.getId(), new double[]{ 0.0, 0 });
+            long vendido    = statsVentas.getOrDefault(p.getId(), 0L);
+            return ProductoResponseDTO.from(
+                    p,
+                    resena[0] > 0 ? resena[0] : null,
+                    (long) resena[1],
+                    vendido
+            );
+        }).toList();
     }
 }

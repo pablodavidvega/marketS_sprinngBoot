@@ -10,6 +10,8 @@ import ConfirmacionPage from './pages/pedidos/ConfirmacionPage'
 import ClienteDashboardPage from './pages/cliente/DashboardPage'
 import VendedorDashboardPage from './pages/vendedor/DashboardPage'
 import VendedorProductosPage from './pages/vendedor/ProductosPage'
+import VendedorPedidosPage from './pages/vendedor/PedidosPage'
+import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
@@ -38,6 +40,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/cliente/mis-pedidos"
+            element={
+              <ProtectedRoute roles={['CLIENTE']}>
+                <MisPedidosPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/vendedor"
@@ -52,6 +62,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['VENDEDOR', 'ADMIN']}>
                 <VendedorProductosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendedor/pedidos"
+            element={
+              <ProtectedRoute roles={['VENDEDOR', 'ADMIN']}>
+                <VendedorPedidosPage />
               </ProtectedRoute>
             }
           />

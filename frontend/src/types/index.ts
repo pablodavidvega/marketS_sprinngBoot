@@ -37,6 +37,9 @@ export interface Producto {
   marcaId: number | null
   marcaNombre: string | null
   tallas: TallaStock[]
+  promedioCalificacion?: number | null
+  totalResenas?: number | null
+  totalVendido?: number | null
 }
 
 export interface Categoria {
@@ -122,4 +125,24 @@ export interface VendedorProductosResponse {
   paginaActual: number
   totalPaginas: number
   totalElementos: number
+}
+
+export interface ItemPedidoVendedor {
+  productoId: number
+  productoNombre: string
+  productoImagen: string | null
+  cantidad: number
+  precioUnitario: number
+  gananciaVendedor: number
+}
+
+export interface PedidoVendedorResponse {
+  pedidoId: number
+  fecha: string
+  estado: string
+  compradorUsername: string
+  compradorEmail: string
+  compradorPhone: string
+  compradorAddress: string
+  items: ItemPedidoVendedor[]
 }

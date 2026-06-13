@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.dto.PedidoVendedorDTO;
 import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.dto.TallasStockDTO;
 import com.example.MarketS.model.*;
@@ -38,6 +39,7 @@ public class VendedorApiController {
 
     private final ProductoService productoService;
     private final ProductoRepository productoRepository;
+    private final PedidoRepository pedidoRepository;
     private final UserService userService;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
@@ -46,6 +48,7 @@ public class VendedorApiController {
 
     public VendedorApiController(ProductoService productoService,
                                   ProductoRepository productoRepository,
+                                  PedidoRepository pedidoRepository,
                                   UserService userService,
                                   CategoriaRepository categoriaRepository,
                                   MarcaRepository marcaRepository,
@@ -53,6 +56,7 @@ public class VendedorApiController {
                                   DetallePedidoRepository detallePedidoRepository) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
+        this.pedidoRepository = pedidoRepository;
         this.userService = userService;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
@@ -71,6 +75,17 @@ public class VendedorApiController {
                 "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario),
                 "totalProductos", totalProductos
         ));
+    }
+
+    // GET /api/vendedor/pedidos
+    @GetMapping("/pedidos")
+    public ResponseEntity<List<PedidoVendedorDTO>> pedidosRecibidos(Authentication auth) {
+        User vendedor = resolverUsuario(auth);
+        List<Pedido> pedidos = pedidoRepository.findByVendedorWithDetails(vendedor);
+        List<PedidoVendedorDTO> result = pedidos.stream()
+                .map(p -> PedidoVendedorDTO.from(p, vendedor))
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     // GET /api/vendedor/productos?page=0&size=20&keyword=x

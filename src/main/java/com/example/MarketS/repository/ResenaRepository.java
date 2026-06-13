@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
@@ -17,4 +18,8 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
     @Query("SELECT COALESCE(AVG(r.calificacion), 0.0) FROM Resena r WHERE r.producto.id = :productoId")
     Double avgCalificacionByProductoId(@Param("productoId") Long productoId);
+
+    // Devuelve [productoId, promedio, totalResenas] para una lista de IDs — 1 sola query
+    @Query("SELECT r.producto.id, AVG(r.calificacion), COUNT(r) FROM Resena r WHERE r.producto.id IN :ids GROUP BY r.producto.id")
+    List<Object[]> findEstadisticasByProductoIds(@Param("ids") List<Long> ids);
 }

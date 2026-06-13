@@ -98,6 +98,17 @@ export default function VendedorDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/vendedor/pedidos" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl group-hover:bg-green-200 transition-colors">
+              🛍️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Pedidos recibidos</h2>
+              <p className="text-sm text-gray-500">Ver compras de tus productos y datos del comprador</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )
