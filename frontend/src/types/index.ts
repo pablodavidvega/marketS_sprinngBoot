@@ -136,6 +136,28 @@ export interface ItemPedidoVendedor {
   gananciaVendedor: number
 }
 
+export interface ContactoResponse {
+  id: number
+  nombre: string
+  email: string
+  tipoSolicitud: string
+  asunto: string
+  mensaje: string
+  estado: 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO'
+  respuesta: string | null
+  fechaCreacion: string
+  fechaRespuesta: string | null
+  usuarioUsername: string | null
+}
+
+export interface AdminContactoData {
+  solicitudes: ContactoResponse[]
+  total: number
+  pendientes: number
+  enProceso: number
+  resueltos: number
+}
+
 export interface PedidoVendedorResponse {
   pedidoId: number
   fecha: string

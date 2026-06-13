@@ -14,6 +14,8 @@ import VendedorPedidosPage from './pages/vendedor/PedidosPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
+import SoporteAdminPage from './pages/admin/SoportePage'
+import ServicioClientePage from './pages/ServicioClientePage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
@@ -31,6 +33,7 @@ export default function App() {
           <Route path="/productos/:id" element={<DetallePage />} />
           <Route path="/carrito" element={<CarritoPage />} />
           <Route path="/pedidos/confirmacion" element={<ConfirmacionPage />} />
+          <Route path="/soporte" element={<ServicioClientePage />} />
 
           <Route
             path="/cliente/dashboard"
@@ -87,6 +90,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <UsuariosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/soporte"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <SoporteAdminPage />
               </ProtectedRoute>
             }
           />
