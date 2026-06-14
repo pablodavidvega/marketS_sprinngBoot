@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,56 @@ public class VendedorApiController {
                 "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario),
                 "totalProductos", totalProductos
         ));
+    }
+
+    // GET /api/vendedor/reportes?periodo=30d
+    @GetMapping("/reportes")
+    public ResponseEntity<Map<String, Object>> reportes(
+            @RequestParam(defaultValue = "30d") String periodo,
+            Authentication auth) {
+
+        User vendedor = resolverUsuario(auth);
+        LocalDateTime desde = calcularDesde(periodo);
+
+        List<Object[]> rawProductos = detallePedidoRepository.findVentasPorProducto(vendedor, desde);
+        List<Map<String, Object>> ventasPorProducto = rawProductos.stream().map(row -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("nombre",   row[0] != null ? (String) row[0] : "");
+            m.put("unidades", row[1] != null ? ((Number) row[1]).longValue()   : 0L);
+            m.put("ganancia", row[2] != null ? ((Number) row[2]).doubleValue() : 0.0);
+            m.put("ingresos", row[3] != null ? ((Number) row[3]).doubleValue() : 0.0);
+            return m;
+        }).toList();
+
+        List<Object[]> rawMes = detallePedidoRepository.findVentasPorMes(vendedor, desde);
+        List<Map<String, Object>> ventasPorMes = rawMes.stream().map(row -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("periodo",  String.format("%d-%02d",
+                    row[0] != null ? ((Number) row[0]).intValue() : 0,
+                    row[1] != null ? ((Number) row[1]).intValue() : 0));
+            m.put("ganancia", row[2] != null ? ((Number) row[2]).doubleValue() : 0.0);
+            m.put("unidades", row[3] != null ? ((Number) row[3]).longValue()   : 0L);
+            return m;
+        }).toList();
+
+        double gananciaTotal  = ventasPorProducto.stream().mapToDouble(p -> (Double) p.get("ganancia")).sum();
+        long   totalUnidades  = ventasPorProducto.stream().mapToLong(p -> (Long) p.get("unidades")).sum();
+        double ingresosTotal  = ventasPorProducto.stream().mapToDouble(p -> (Double) p.get("ingresos")).sum();
+        String productoTop    = ventasPorProducto.isEmpty() ? "—" : (String) ventasPorProducto.get(0).get("nombre");
+        double ticketPromedio = totalUnidades > 0 ? ingresosTotal / totalUnidades : 0;
+
+        Map<String, Object> resumen = new java.util.HashMap<>();
+        resumen.put("gananciaTotal",  gananciaTotal);
+        resumen.put("totalUnidades",  totalUnidades);
+        resumen.put("productoTop",    productoTop != null ? productoTop : "—");
+        resumen.put("ticketPromedio", ticketPromedio);
+
+        Map<String, Object> respuesta = new java.util.HashMap<>();
+        respuesta.put("resumen",           resumen);
+        respuesta.put("ventasPorProducto", ventasPorProducto);
+        respuesta.put("ventasPorMes",      ventasPorMes);
+
+        return ResponseEntity.ok(respuesta);
     }
 
     // GET /api/vendedor/pedidos
@@ -256,6 +307,18 @@ public class VendedorApiController {
         producto.setActivo(activo);
         productoRepository.save(producto);
         return ResponseEntity.ok(ProductoResponseDTO.from(producto));
+    }
+
+    private LocalDateTime calcularDesde(String periodo) {
+        LocalDateTime ahora = LocalDateTime.now();
+        return switch (periodo) {
+            case "7d"  -> ahora.minusDays(7);
+            case "30d" -> ahora.minusDays(30);
+            case "3m"  -> ahora.minusMonths(3);
+            case "6m"  -> ahora.minusMonths(6);
+            case "1y"  -> ahora.minusYears(1);
+            default    -> LocalDateTime.of(2000, 1, 1, 0, 0);
+        };
     }
 
     private User resolverUsuario(Authentication auth) {

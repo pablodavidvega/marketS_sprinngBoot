@@ -11,6 +11,7 @@ import ClienteDashboardPage from './pages/cliente/DashboardPage'
 import VendedorDashboardPage from './pages/vendedor/DashboardPage'
 import VendedorProductosPage from './pages/vendedor/ProductosPage'
 import VendedorPedidosPage from './pages/vendedor/PedidosPage'
+import VendedorReportesPage from './pages/vendedor/ReportesPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
@@ -73,6 +74,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['VENDEDOR', 'ADMIN']}>
                 <VendedorPedidosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendedor/reportes"
+            element={
+              <ProtectedRoute roles={['VENDEDOR', 'ADMIN']}>
+                <VendedorReportesPage />
               </ProtectedRoute>
             }
           />

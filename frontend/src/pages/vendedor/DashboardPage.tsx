@@ -109,6 +109,17 @@ export default function VendedorDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/vendedor/reportes" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl group-hover:bg-blue-200 transition-colors">
+              📈
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Mis reportes</h2>
+              <p className="text-sm text-gray-500">Análisis de ventas con gráficas y descarga CSV</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )
