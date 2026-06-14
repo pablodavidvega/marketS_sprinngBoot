@@ -3,6 +3,7 @@ package com.example.MarketS.dto;
 import com.example.MarketS.model.Producto;
 import lombok.Builder;
 import lombok.Getter;
+import org.hibernate.Hibernate;
 
 import java.util.Date;
 import java.util.List;
@@ -54,7 +55,7 @@ public class ProductoResponseDTO {
                 .categoriaNombre(p.getCategorias() != null ? p.getCategorias().getNombreCategoria() : null)
                 .marcaId(p.getMarca() != null ? p.getMarca().getId() : null)
                 .marcaNombre(p.getMarca() != null ? p.getMarca().getNombreMarca() : null)
-                .tallas(p.getTallas() != null
+                .tallas(Hibernate.isInitialized(p.getTallas())
                         ? p.getTallas().stream()
                             .map(t -> new TallasStockDTO(t.getTalla(), t.getStock()))
                             .toList()

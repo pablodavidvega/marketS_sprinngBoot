@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor } from '../types'
+import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas } from '../types'
 
 export const getMiPerfil = () =>
   api.get<PerfilUsuario>('/api/me')
@@ -37,3 +37,6 @@ export const eliminarUsuario = (id: number) =>
 
 export const getRoles = () =>
   api.get<{ id: number; nombre: string }[]>('/api/admin/roles')
+
+export const getReporteVendedores = () =>
+  api.get<VendedorEstadisticas[]>('/api/admin/reportes/vendedores')

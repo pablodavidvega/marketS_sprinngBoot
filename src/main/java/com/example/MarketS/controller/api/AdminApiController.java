@@ -2,9 +2,11 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroUsuarioDTO;
+import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.RolRepository;
+import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +24,12 @@ public class AdminApiController {
 
     private final UserService userService;
     private final RolRepository rolRepository;
+    private final UserRepository userRepository;
 
-    public AdminApiController(UserService userService, RolRepository rolRepository) {
+    public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository) {
         this.userService = userService;
         this.rolRepository = rolRepository;
+        this.userRepository = userRepository;
     }
 
     // GET /api/admin/dashboard
@@ -157,5 +161,15 @@ public class AdminApiController {
                 .map(r -> Map.<String, Object>of("id", r.getId(), "nombre", r.getRolname()))
                 .toList();
         return ResponseEntity.ok(roles);
+    }
+
+    // GET /api/admin/reportes/vendedores — estadísticas agregadas por vendedor
+    @GetMapping("/reportes/vendedores")
+    public ResponseEntity<List<VendedorEstadisticasDTO>> reporteVendedores() {
+        List<VendedorEstadisticasDTO> stats = userRepository.findEstadisticasTodosVendedores()
+                .stream()
+                .map(VendedorEstadisticasDTO::from)
+                .toList();
+        return ResponseEntity.ok(stats);
     }
 }

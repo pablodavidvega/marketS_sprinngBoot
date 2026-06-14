@@ -30,7 +30,7 @@ public class Producto {
     private String video;
     private Integer stock;
 
-    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TallaStock> tallas = new ArrayList<>();
 
 

@@ -67,6 +67,17 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/admin/reportes/vendedores" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl group-hover:bg-green-200 transition-colors">
+              📊
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Reportes de vendedores</h2>
+              <p className="text-sm text-gray-500">Estadísticas, CSV y PDF con gráficas</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )

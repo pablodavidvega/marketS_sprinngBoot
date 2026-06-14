@@ -5,12 +5,15 @@ const api = axios.create({
   withCredentials: true, // envía la cookie auth_token automáticamente en cada request
 })
 
-// Si el backend devuelve 401, limpia la sesión local y redirige al login
+// Si el backend devuelve 401 (o 403 sin estar autenticado), limpia la sesión y redirige al login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const isAuthEndpoint = error.config?.url?.includes('/api/auth/')
+    if ((status === 401 || status === 403) && !isAuthEndpoint) {
       localStorage.removeItem('user')
+      localStorage.removeItem('lastActive')
       window.location.href = '/login'
     }
     return Promise.reject(error)

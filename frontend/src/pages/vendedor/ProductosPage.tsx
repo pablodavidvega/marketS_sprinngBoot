@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getVendedorProductos,
   activarProducto,
@@ -249,6 +250,11 @@ export default function VendedorProductosPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/vendedor" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel vendedor
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Mis productos</h1>
         <button onClick={abrirNuevo} className="btn-primary">+ Nuevo producto</button>

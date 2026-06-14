@@ -3,6 +3,17 @@ export interface AuthResponse {
   role: string
 }
 
+export interface VendedorEstadisticas {
+  id: number
+  username: string
+  email: string
+  totalProductos: number
+  totalUnidades: number
+  gananciaTotal: number
+  comisionTotal: number
+  ingresosTotal: number
+}
+
 export interface PerfilUsuario {
   id: number
   username: string

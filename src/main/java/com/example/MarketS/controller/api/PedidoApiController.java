@@ -16,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,9 +116,8 @@ public class PedidoApiController {
     @GetMapping("/mis-pedidos")
     public ResponseEntity<List<PedidoResponseDTO>> misPedidos(Authentication auth) {
         User usuario = resolverUsuario(auth);
-        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuario(usuario)
+        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuarioWithDetails(usuario)
                 .stream()
-                .sorted(Comparator.comparing(Pedido::getFecha).reversed())
                 .map(PedidoResponseDTO::from)
                 .toList();
         return ResponseEntity.ok(pedidos);

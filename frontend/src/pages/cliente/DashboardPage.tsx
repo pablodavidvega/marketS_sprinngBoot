@@ -56,7 +56,12 @@ export default function ClienteDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile */}
         <div className="card">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Mi perfil</h2>
+            <Link to="/cliente/editar-perfil" className="text-sm text-primary-600 hover:underline">
+              Editar →
+            </Link>
+          </div>
           <div className="flex flex-col gap-2 text-sm">
             <div>
               <span className="text-gray-500">Usuario:</span>
