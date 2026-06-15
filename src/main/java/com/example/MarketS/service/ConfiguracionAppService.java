@@ -30,6 +30,10 @@ public class ConfiguracionAppService {
         repo.save(new ConfiguracionApp(clave, valor));
     }
 
+    public void delete(String clave) {
+        repo.deleteById(clave);
+    }
+
     public String getModoRegistro() {
         return get(MODO_REGISTRO, MODO_ABIERTO);
     }

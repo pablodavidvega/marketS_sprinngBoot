@@ -23,6 +23,7 @@ import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
 import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
+import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
 import ServicioClientePage from './pages/ServicioClientePage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -156,6 +157,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <InvitacionesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/configuracion"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <ConfiguracionAppPage />
               </ProtectedRoute>
             }
           />

@@ -1,21 +1,29 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import api from '../api/axios'
 
-interface AppConfig {
+export interface AppConfigData {
   nombreApp: string
   colorPrimario: string
   logoUrl: string
   descripcion: string
 }
 
-const defaults: AppConfig = {
+interface AppConfigContextValue extends AppConfigData {
+  refresh: () => Promise<void>
+}
+
+const defaults: AppConfigData = {
   nombreApp: 'MarketS',
   colorPrimario: '#2563eb',
   logoUrl: '',
   descripcion: 'Marketplace interno de tu empresa',
 }
 
-const AppConfigContext = createContext<AppConfig>(defaults)
+const AppConfigContext = createContext<AppConfigContextValue>({
+  ...defaults,
+  refresh: async () => {},
+})
+
 export const useAppConfig = () => useContext(AppConfigContext)
 
 // ── Color utilities ──────────────────────────────────────────────────────────
@@ -58,7 +66,7 @@ function hslToHex(h: number, s: number, l: number): string {
   return '#' + toHex(hue2rgb(p, q, h + 1 / 3)) + toHex(hue2rgb(p, q, h)) + toHex(hue2rgb(p, q, h - 1 / 3))
 }
 
-function generarTonos(hex: string): Record<string, string> {
+export function generarTonos(hex: string): Record<string, string> {
   const [r, g, b] = hexToRgb(hex)
   const [h, s, l] = rgbToHsl(r, g, b)
   return {
@@ -70,7 +78,7 @@ function generarTonos(hex: string): Record<string, string> {
   }
 }
 
-function aplicarColor(hex: string) {
+export function aplicarColor(hex: string) {
   const tonos = generarTonos(hex)
   Object.entries(tonos).forEach(([prop, val]) =>
     document.documentElement.style.setProperty(prop, val)
@@ -80,23 +88,24 @@ function aplicarColor(hex: string) {
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 export function AppConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<AppConfig>(defaults)
+  const [config, setConfig] = useState<AppConfigData>(defaults)
 
-  useEffect(() => {
-    api.get<AppConfig>('/api/config/app')
-      .then(res => {
-        const cfg = { ...defaults, ...res.data }
-        setConfig(cfg)
-        if (cfg.colorPrimario) aplicarColor(cfg.colorPrimario)
-        if (cfg.nombreApp)     document.title = cfg.nombreApp
-      })
-      .catch(() => {
-        // Mantiene defaults — las CSS variables ya están en index.css
-      })
+  const cargar = useCallback(async () => {
+    try {
+      const res = await api.get<AppConfigData>('/api/config/app')
+      const cfg = { ...defaults, ...res.data }
+      setConfig(cfg)
+      if (cfg.colorPrimario) aplicarColor(cfg.colorPrimario)
+      if (cfg.nombreApp)     document.title = cfg.nombreApp
+    } catch {
+      // Mantiene defaults — las CSS variables ya están en index.css
+    }
   }, [])
 
+  useEffect(() => { cargar() }, [cargar])
+
   return (
-    <AppConfigContext.Provider value={config}>
+    <AppConfigContext.Provider value={{ ...config, refresh: cargar }}>
       {children}
     </AppConfigContext.Provider>
   )
