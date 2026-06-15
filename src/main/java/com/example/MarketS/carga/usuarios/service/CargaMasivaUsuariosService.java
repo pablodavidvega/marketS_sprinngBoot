@@ -56,13 +56,14 @@ public class CargaMasivaUsuariosService {
                 if (fila == 0) { fila++; continue; } // saltar cabecera
                 if (linea.isBlank()) { fila++; continue; }
                 total++;
+                final int filaActual = fila;
                 try {
                     String[] datos = linea.split("\\s*[;,]\\s*", -1);
-                    User u = construirUsuario(datos, fila);
-                    guardarUsuario(u, fila, errores);
-                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + fila))) correctos++;
+                    User u = construirUsuario(datos, filaActual);
+                    guardarUsuario(u, filaActual, errores);
+                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + filaActual))) correctos++;
                 } catch (Exception e) {
-                    errores.add("Fila " + fila + ": " + e.getMessage());
+                    errores.add("Fila " + filaActual + ": " + e.getMessage());
                 }
                 fila++;
             }
@@ -87,14 +88,15 @@ public class CargaMasivaUsuariosService {
                 if (fila == 0) { fila++; continue; } // saltar cabecera
                 if (isFilaVacia(row)) { fila++; continue; }
                 total++;
+                final int filaActual = fila;
                 try {
                     String[] datos = new String[6];
                     for (int i = 0; i < 6; i++) datos[i] = getCeldaValor(row, i);
-                    User u = construirUsuario(datos, fila);
-                    guardarUsuario(u, fila, errores);
-                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + fila))) correctos++;
+                    User u = construirUsuario(datos, filaActual);
+                    guardarUsuario(u, filaActual, errores);
+                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + filaActual))) correctos++;
                 } catch (Exception e) {
-                    errores.add("Fila " + fila + ": " + e.getMessage());
+                    errores.add("Fila " + filaActual + ": " + e.getMessage());
                 }
                 fila++;
             }

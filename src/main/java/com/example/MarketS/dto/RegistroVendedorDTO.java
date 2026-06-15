@@ -7,4 +7,5 @@ import lombok.Setter;
 @Setter
 public class RegistroVendedorDTO extends RegistroUsuarioDTO {
     private String city;
+    private String invitacion; // token de invitación (opcional según configuración)
 }

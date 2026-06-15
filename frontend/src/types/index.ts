@@ -186,3 +186,32 @@ export interface ResultadoCarga {
   fallidos: number
   errores: string[]
 }
+
+export interface Invitacion {
+  id: number
+  token: string
+  descripcion: string
+  activo: boolean
+  vigente: boolean
+  usosActuales: number
+  maxUsos: number | ''
+  fechaExpiracion: string
+  fechaCreacion: string
+}
+
+export interface ConfigRegistro {
+  modo: 'ABIERTO' | 'DOMINIO' | 'INVITACION' | 'DOMINIO_O_INVITACION'
+  dominio: string
+}
+
+export interface EstadoRegistro {
+  modo: string
+  dominioPermitido: string
+  registroAbierto: boolean
+}
+
+export interface ValidacionInvitacion {
+  valido: boolean
+  descripcion?: string
+  mensaje: string
+}
