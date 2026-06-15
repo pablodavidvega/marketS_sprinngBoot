@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
+import { useAppConfig } from '../context/AppConfigContext'
 
 export default function Navbar() {
   const { isAuthenticated, hasRole, logout, user } = useAuth()
   const { cantidadTotal } = useCarrito()
+  const { nombreApp, logoUrl } = useAppConfig()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
@@ -19,8 +21,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            MarketS
+          <Link to="/" className="flex items-center gap-2">
+            {logoUrl
+              ? <img src={logoUrl} alt={nombreApp} className="h-8 object-contain" />
+              : <span className="text-2xl font-bold text-primary-600">{nombreApp}</span>
+            }
           </Link>
 
           {/* Desktop links */}
