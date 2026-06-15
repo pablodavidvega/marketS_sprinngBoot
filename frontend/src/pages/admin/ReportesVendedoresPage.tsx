@@ -310,7 +310,7 @@ export default function ReportesVendedoresPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" interval={0} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => '$' + (v / 1000).toFixed(0) + 'k'} />
-                <Tooltip formatter={(v: number) => fmt(v)} />
+                <Tooltip formatter={(v) => fmt(Number(v))} />
                 <Legend />
                 <Bar dataKey="ingresos" name="Ingresos" fill="#3b82f6" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="ganancia" name="Ganancia (95%)" fill="#10b981" radius={[3, 3, 0, 0]} />
@@ -329,7 +329,7 @@ export default function ReportesVendedoresPage() {
                 } labelLine={false} fontSize={10}>
                   {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(v: number) => fmt(v)} />
+                <Tooltip formatter={(v) => fmt(Number(v))} />
               </PieChart>
             </ResponsiveContainer>
           </div>
