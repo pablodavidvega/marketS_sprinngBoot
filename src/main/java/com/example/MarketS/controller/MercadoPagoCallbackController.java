@@ -3,8 +3,9 @@ package com.example.MarketS.controller;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.repository.PedidoRepository;
-import com.example.MarketS.service.ProductoService; // Añadido
+import com.example.MarketS.service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +20,11 @@ public class MercadoPagoCallbackController {
     @Autowired
     private PedidoRepository pedidoRepository;
 
-    @Autowired // Nuevo: Inyectar ProductoService
+    @Autowired
     private ProductoService productoService;
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     /**
      * Callback de éxito desde MercadoPago
@@ -333,15 +337,12 @@ public class MercadoPagoCallbackController {
                 }
             }
 
-            model.addAttribute("mensaje", "Tu pago está pendiente de confirmación.");
-            model.addAttribute("pedidoId", idPedido);
-
-            return "pago/pendiente";
+            String redirect = frontendUrl + "/pagos/pendiente" + (idPedido != null ? "?pedido_id=" + idPedido : "");
+            return "redirect:" + redirect;
 
         } catch (Exception e) {
             System.err.println("Error en callback pendiente: " + e.getMessage());
-            model.addAttribute("error", e.getMessage());
-            return "pago/error";
+            return "redirect:" + frontendUrl + "/pagos/pendiente";
         }
     }
 
@@ -367,15 +368,12 @@ public class MercadoPagoCallbackController {
                 }
             }
 
-            model.addAttribute("mensaje", "El pago no se pudo completar. Por favor, intenta nuevamente.");
-            model.addAttribute("pedidoId", idPedido);
-
-            return "pago/fallo";
+            String redirect = frontendUrl + "/pagos/fallo" + (idPedido != null ? "?pedido_id=" + idPedido : "");
+            return "redirect:" + redirect;
 
         } catch (Exception e) {
             System.err.println("Error en callback fallo: " + e.getMessage());
-            model.addAttribute("error", e.getMessage());
-            return "pago/error";
+            return "redirect:" + frontendUrl + "/pagos/fallo";
         }
     }
 

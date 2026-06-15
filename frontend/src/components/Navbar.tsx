@@ -29,6 +29,10 @@ export default function Navbar() {
               Inicio
             </NavLink>
 
+            <NavLink to="/soporte" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+              Soporte
+            </NavLink>
+
             {isAuthenticated && hasRole('CLIENTE') && (
               <NavLink to="/cliente/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
                 Mi cuenta
@@ -100,6 +104,7 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden border-t border-gray-100 py-3 flex flex-col gap-3">
             <Link to="/" onClick={() => setOpen(false)} className="text-gray-700 py-1">Inicio</Link>
+            <Link to="/soporte" onClick={() => setOpen(false)} className="text-gray-700 py-1">Soporte</Link>
             {isAuthenticated && hasRole('CLIENTE') && (
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
             )}

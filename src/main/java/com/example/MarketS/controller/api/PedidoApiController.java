@@ -116,11 +116,62 @@ public class PedidoApiController {
     @GetMapping("/mis-pedidos")
     public ResponseEntity<List<PedidoResponseDTO>> misPedidos(Authentication auth) {
         User usuario = resolverUsuario(auth);
-        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuario(usuario)
+        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuarioWithDetails(usuario)
                 .stream()
                 .map(PedidoResponseDTO::from)
                 .toList();
         return ResponseEntity.ok(pedidos);
+    }
+
+    // PATCH /api/pedidos/{id}/confirmar-recepcion — el cliente confirma que recibió el producto
+    @PatchMapping("/{id}/confirmar-recepcion")
+    public ResponseEntity<?> confirmarRecepcion(@PathVariable Long id, Authentication auth) {
+        User usuario = resolverUsuario(auth);
+        Pedido pedido = pedidoRepository.findById(id).orElse(null);
+
+        if (pedido == null) return ResponseEntity.notFound().build();
+        if (!pedido.getUsuario().getId().equals(usuario.getId()))
+            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+        if (!"PAGADO".equals(pedido.getEstado()))
+            return ResponseEntity.badRequest().body(Map.of("error", "Solo se puede confirmar recepción de pedidos pagados"));
+
+        pedido.setEstado("RECIBIDO");
+        pedidoRepository.save(pedido);
+        return ResponseEntity.ok(Map.of("mensaje", "Recepción confirmada", "estado", "RECIBIDO"));
+    }
+
+    // -------------------------------------------------------------------------
+    // Simulación de pago exitoso — solo para desarrollo/sandbox
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/{id}/simular-pago")
+    public ResponseEntity<?> simularPago(@PathVariable Long id, Authentication auth) {
+        User usuario = userService.buscarPorEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
+        if (pedido == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!pedido.getUsuario().getId().equals(usuario.getId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+        }
+        if ("PAGADO".equals(pedido.getEstado())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El pedido ya está pagado"));
+        }
+
+        pedido.setEstado("PAGADO");
+        pedidoRepository.save(pedido);
+
+        pedido.getDetalles().forEach(d -> {
+            try {
+                productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
+            } catch (Exception e) {
+                System.err.println("Error reduciendo stock: " + e.getMessage());
+            }
+        });
+
+        return ResponseEntity.ok(Map.of("mensaje", "Pago simulado correctamente", "estado", "PAGADO"));
     }
 
     // -------------------------------------------------------------------------

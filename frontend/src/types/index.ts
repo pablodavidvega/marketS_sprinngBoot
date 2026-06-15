@@ -3,6 +3,17 @@ export interface AuthResponse {
   role: string
 }
 
+export interface VendedorEstadisticas {
+  id: number
+  username: string
+  email: string
+  totalProductos: number
+  totalUnidades: number
+  gananciaTotal: number
+  comisionTotal: number
+  ingresosTotal: number
+}
+
 export interface PerfilUsuario {
   id: number
   username: string
@@ -37,6 +48,9 @@ export interface Producto {
   marcaId: number | null
   marcaNombre: string | null
   tallas: TallaStock[]
+  promedioCalificacion?: number | null
+  totalResenas?: number | null
+  totalVendido?: number | null
 }
 
 export interface Categoria {
@@ -86,6 +100,29 @@ export interface DashboardAdmin {
   totalAdmins: number
 }
 
+export interface DashboardVendedor {
+  gananciaTotal: number
+  comisionTotal: number
+  totalVentas: number
+  totalProductos: number
+}
+
+export interface Resena {
+  id: number
+  calificacion: number
+  comentario: string | null
+  compradorUsername: string
+  fecha: string
+}
+
+export interface ResenasResponse {
+  promedio: number
+  total: number
+  puedeResenar: boolean
+  yaReseno: boolean
+  resenas: Resena[]
+}
+
 export interface SugerenciaProducto {
   id: number
   nombre: string
@@ -99,4 +136,46 @@ export interface VendedorProductosResponse {
   paginaActual: number
   totalPaginas: number
   totalElementos: number
+}
+
+export interface ItemPedidoVendedor {
+  productoId: number
+  productoNombre: string
+  productoImagen: string | null
+  cantidad: number
+  precioUnitario: number
+  gananciaVendedor: number
+}
+
+export interface ContactoResponse {
+  id: number
+  nombre: string
+  email: string
+  tipoSolicitud: string
+  asunto: string
+  mensaje: string
+  estado: 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO'
+  respuesta: string | null
+  fechaCreacion: string
+  fechaRespuesta: string | null
+  usuarioUsername: string | null
+}
+
+export interface AdminContactoData {
+  solicitudes: ContactoResponse[]
+  total: number
+  pendientes: number
+  enProceso: number
+  resueltos: number
+}
+
+export interface PedidoVendedorResponse {
+  pedidoId: number
+  fecha: string
+  estado: string
+  compradorUsername: string
+  compradorEmail: string
+  compradorPhone: string
+  compradorAddress: string
+  items: ItemPedidoVendedor[]
 }

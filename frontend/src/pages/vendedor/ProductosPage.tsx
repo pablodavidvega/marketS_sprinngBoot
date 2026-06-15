@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getVendedorProductos,
   activarProducto,
@@ -249,6 +250,11 @@ export default function VendedorProductosPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/vendedor" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel vendedor
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Mis productos</h1>
         <button onClick={abrirNuevo} className="btn-primary">+ Nuevo producto</button>
@@ -550,6 +556,14 @@ export default function VendedorProductosPage() {
                   file={videoFile}
                   onChange={setVideoFile}
                 />
+              </div>
+
+              {/* ── Aviso de comisión ────────────────────────────────────── */}
+              <div className="flex items-start gap-2 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+                <span className="mt-0.5">ℹ️</span>
+                <p>
+                  <strong>Comisión MarketS:</strong> Por cada venta realizada, MarketS cobra una comisión del <strong>5%</strong> sobre el precio del producto. Recibirás el <strong>95%</strong> restante. Este valor no es visible para el comprador.
+                </p>
               </div>
 
               {/* ── Barra de progreso de subida ───────────────────────────── */}

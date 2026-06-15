@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getDashboardCliente } from '../../api/usuario'
 import type { DashboardCliente } from '../../types'
 
@@ -24,9 +25,12 @@ export default function ClienteDashboardPage() {
 
   const estadoColor: Record<string, string> = {
     PAGADO: 'bg-green-100 text-green-700',
+    RECIBIDO: 'bg-emerald-100 text-emerald-700',
     PENDIENTE: 'bg-yellow-100 text-yellow-700',
+    PENDIENTE_PAGO: 'bg-yellow-100 text-yellow-700',
     CANCELADO: 'bg-red-100 text-red-700',
-    EN_PROCESO: 'bg-blue-100 text-blue-700',
+    RECHAZADO: 'bg-red-100 text-red-700',
+    PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
   }
 
   return (
@@ -52,7 +56,12 @@ export default function ClienteDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile */}
         <div className="card">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Mi perfil</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Mi perfil</h2>
+            <Link to="/cliente/editar-perfil" className="text-sm text-primary-600 hover:underline">
+              Editar →
+            </Link>
+          </div>
           <div className="flex flex-col gap-2 text-sm">
             <div>
               <span className="text-gray-500">Usuario:</span>
@@ -81,7 +90,12 @@ export default function ClienteDashboardPage() {
 
         {/* Recent orders */}
         <div className="card lg:col-span-2">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Pedidos recientes</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Pedidos recientes</h2>
+            <Link to="/cliente/mis-pedidos" className="text-sm text-primary-600 hover:underline">
+              Ver todos →
+            </Link>
+          </div>
           {data.pedidosRecientes.length === 0 ? (
             <p className="text-gray-400 text-sm">No tienes pedidos aún</p>
           ) : (

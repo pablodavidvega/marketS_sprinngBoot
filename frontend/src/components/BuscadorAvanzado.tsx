@@ -117,7 +117,7 @@ export default function BuscadorAvanzado({ onSearch, initialValue = '' }: Props)
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => query.length >= 2 && sugerencias.length > 0 && setAbierto(true)}
-            placeholder="Buscar productos..."
+            placeholder="Buscar productos"
             autoComplete="off"
             className="input w-full pr-8"
           />

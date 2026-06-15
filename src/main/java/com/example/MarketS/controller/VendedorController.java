@@ -4,6 +4,7 @@ import com.example.MarketS.dto.ProductoDto;
 import com.example.MarketS.dto.TallasStockDTO;
 import com.example.MarketS.model.*;
 import com.example.MarketS.repository.*;
+import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.service.PdfThymeleafService;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.UserService;
@@ -53,14 +54,19 @@ public class VendedorController {
     private CategoriaRepository categoriaRepository;
     @Autowired
     private CloudStorageService cloudStorageService;
+    @Autowired
+    private DetallePedidoRepository detallePedidoRepository;
 
 
     @GetMapping("/dashboard")
     public String mostrarDashboard(Authentication authentication, Model model) {
         String email = authentication.getName();
-
         User usuario = userService.buscarPorEmail(email).orElse(null);
+
         model.addAttribute("usuario", usuario);
+        model.addAttribute("gananciaTotal", detallePedidoRepository.sumGananciaByVendedor(usuario));
+        model.addAttribute("comisionTotal", detallePedidoRepository.sumComisionByVendedor(usuario));
+        model.addAttribute("totalVentas", detallePedidoRepository.countVentasByVendedor(usuario));
         return "vendedor/dashboard";
     }
 

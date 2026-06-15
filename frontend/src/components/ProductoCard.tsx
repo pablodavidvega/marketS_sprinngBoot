@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { buildImageUrl } from '../utils/image'
@@ -10,6 +10,7 @@ interface Props {
 
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
+  const navigate    = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoActivo,    setVideoActivo]    = useState(false)
   const [videoCargando,  setVideoCargando]  = useState(false)
@@ -42,6 +43,18 @@ export default function ProductoCard({ producto }: Props) {
       imagen: imagenUrl,
       cantidad: 1,
     })
+  }
+
+  function handlePagar(e: React.MouseEvent) {
+    e.preventDefault()
+    agregar({
+      productoId: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      imagen: imagenUrl,
+      cantidad: 1,
+    })
+    navigate('/carrito')
   }
 
   return (
@@ -110,6 +123,15 @@ export default function ProductoCard({ producto }: Props) {
         <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">
           {producto.nombre}
         </h3>
+        {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-yellow-400 text-sm leading-none">
+              {'★'.repeat(Math.round(producto.promedioCalificacion))}
+              {'☆'.repeat(5 - Math.round(producto.promedioCalificacion))}
+            </span>
+            <span className="text-xs text-gray-400">({producto.totalResenas})</span>
+          </div>
+        )}
         <p className="text-primary-600 font-bold text-lg">
           ${producto.precio.toLocaleString('es-CO')}
         </p>
@@ -121,6 +143,13 @@ export default function ProductoCard({ producto }: Props) {
         className="btn-primary w-full mt-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+      </button>
+      <button
+        onClick={handlePagar}
+        disabled={producto.stock === 0}
+        className="btn-success w-full mt-2 text-sm"
+      >
+        {producto.stock === 0 ? 'Sin stock' : 'Comprar ahora'}
       </button>
     </div>
   )

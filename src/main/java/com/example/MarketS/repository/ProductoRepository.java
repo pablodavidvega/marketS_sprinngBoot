@@ -61,4 +61,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
 //    Método para contar productos por categoría
     int countByCategoriasId(Long categoriaId);
+
+    long countByVendedorId(Long vendedorId);
 }
