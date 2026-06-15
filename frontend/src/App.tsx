@@ -14,12 +14,14 @@ import VendedorDashboardPage from './pages/vendedor/DashboardPage'
 import VendedorProductosPage from './pages/vendedor/ProductosPage'
 import VendedorPedidosPage from './pages/vendedor/PedidosPage'
 import VendedorReportesPage from './pages/vendedor/ReportesPage'
+import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import EditarPerfilPage from './pages/cliente/EditarPerfilPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
 import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
+import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import ServicioClientePage from './pages/ServicioClientePage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -99,6 +101,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/vendedor/carga-masiva"
+            element={
+              <ProtectedRoute roles={['VENDEDOR']}>
+                <CargaMasivaPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/dashboard"
@@ -129,6 +139,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <ReportesVendedoresPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/carga-usuarios"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <CargaMasivaUsuariosPage />
               </ProtectedRoute>
             }
           />

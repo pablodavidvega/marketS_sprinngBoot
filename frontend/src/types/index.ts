@@ -179,3 +179,10 @@ export interface PedidoVendedorResponse {
   compradorAddress: string
   items: ItemPedidoVendedor[]
 }
+
+export interface ResultadoCarga {
+  total: number
+  correctos: number
+  fallidos: number
+  errores: string[]
+}

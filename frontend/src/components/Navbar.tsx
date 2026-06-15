@@ -40,9 +40,14 @@ export default function Navbar() {
             )}
 
             {isAuthenticated && hasRole('VENDEDOR') && (
-              <NavLink to="/vendedor/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                Mis productos
-              </NavLink>
+              <>
+                <NavLink to="/vendedor/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Mis productos
+                </NavLink>
+                <NavLink to="/vendedor/carga-masiva" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Carga masiva
+                </NavLink>
+              </>
             )}
 
             {isAuthenticated && hasRole('ADMIN') && (
@@ -52,6 +57,9 @@ export default function Navbar() {
                 </NavLink>
                 <NavLink to="/admin/usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
                   Usuarios
+                </NavLink>
+                <NavLink to="/admin/carga-usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Carga masiva
                 </NavLink>
               </>
             )}
@@ -109,12 +117,16 @@ export default function Navbar() {
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
             )}
             {isAuthenticated && hasRole('VENDEDOR') && (
-              <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
+              <>
+                <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
+                <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
+              </>
             )}
             {isAuthenticated && hasRole('ADMIN') && (
               <>
                 <Link to="/admin/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Panel admin</Link>
                 <Link to="/admin/usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Usuarios</Link>
+                <Link to="/admin/carga-usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
               </>
             )}
             {isAuthenticated ? (

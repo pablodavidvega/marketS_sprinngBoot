@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas } from '../types'
+import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga } from '../types'
 
 export const getMiPerfil = () =>
   api.get<PerfilUsuario>('/api/me')
@@ -40,3 +40,16 @@ export const getRoles = () =>
 
 export const getReporteVendedores = () =>
   api.get<VendedorEstadisticas[]>('/api/admin/reportes/vendedores')
+
+export const cargarUsuariosMasivo = (
+  archivo: File,
+  onUploadProgress?: (pct: number) => void,
+) => {
+  const formData = new FormData()
+  formData.append('archivo', archivo)
+  return api.post<ResultadoCarga>('/api/admin/carga-usuarios', formData, {
+    onUploadProgress: onUploadProgress
+      ? e => onUploadProgress(Math.round((e.loaded * 100) / (e.total ?? 1)))
+      : undefined,
+  })
+}

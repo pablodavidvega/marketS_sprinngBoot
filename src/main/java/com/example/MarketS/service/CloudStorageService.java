@@ -5,4 +5,5 @@ import java.io.IOException;
 
 public interface CloudStorageService {
     String subirArchivo(MultipartFile archivo, String carpeta) throws IOException;
+    String subirBytes(byte[] bytes, String nombreOriginal, String contentType) throws IOException;
 }
