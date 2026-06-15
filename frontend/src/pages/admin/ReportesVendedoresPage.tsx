@@ -324,8 +324,8 @@ export default function ReportesVendedoresPage() {
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribución de comisiones</h2>
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) =>
-                  `${name.substring(0, 6)} ${(percent * 100).toFixed(0)}%`
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }: { name?: string; percent?: number }) =>
+                  `${(name ?? '').substring(0, 6)} ${((percent ?? 0) * 100).toFixed(0)}%`
                 } labelLine={false} fontSize={10}>
                   {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
