@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
 import { useAppConfig } from '../context/AppConfigContext'
+import NotificacionesBell from './NotificacionesBell'
 
 export default function Navbar() {
   const { isAuthenticated, hasRole, logout, user } = useAuth()
@@ -78,6 +79,11 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
+            {/* Campanita — solo vendedor y admin */}
+            {isAuthenticated && (hasRole('VENDEDOR') || hasRole('ADMIN')) && (
+              <NotificacionesBell />
+            )}
+
             {/* Cart */}
             <Link to="/carrito" className="relative p-2 text-gray-600 hover:text-primary-600">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

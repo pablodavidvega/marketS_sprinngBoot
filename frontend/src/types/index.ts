@@ -225,3 +225,17 @@ export interface ValidacionInvitacion {
   descripcion?: string
   mensaje: string
 }
+
+export interface Notificacion {
+  id: number
+  mensaje: string
+  tipo: string
+  leida: boolean
+  fechaCreacion: string
+  pedidoId: number | ''
+}
+
+export interface NotificacionesResponse {
+  items: Notificacion[]
+  noLeidas: number
+}
