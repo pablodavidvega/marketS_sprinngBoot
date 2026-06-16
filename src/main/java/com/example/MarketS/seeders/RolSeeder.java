@@ -18,6 +18,7 @@ public class RolSeeder implements CommandLineRunner {
         crearRolSiNoExiste("ROLE_ADMIN");
         crearRolSiNoExiste("ROLE_CLIENTE");
         crearRolSiNoExiste("ROLE_VENDEDOR");
+        crearRolSiNoExiste("ROLE_MODERADOR");
     }
 
     public void crearRolSiNoExiste(String nombreRol) {

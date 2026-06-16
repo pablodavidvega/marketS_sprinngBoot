@@ -56,6 +56,23 @@ export default function Navbar() {
               </>
             )}
 
+            {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
+              <>
+                <NavLink to="/moderador/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Panel mod
+                </NavLink>
+                <NavLink to="/moderador/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Productos
+                </NavLink>
+                <NavLink to="/moderador/pedidos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Pedidos
+                </NavLink>
+                <NavLink to="/moderador/reportes" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Reportes
+                </NavLink>
+              </>
+            )}
+
             {isAuthenticated && hasRole('ADMIN') && (
               <>
                 <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
@@ -137,6 +154,14 @@ export default function Navbar() {
               <>
                 <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
                 <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
+              </>
+            )}
+            {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
+              <>
+                <Link to="/moderador/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Panel mod</Link>
+                <Link to="/moderador/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Productos</Link>
+                <Link to="/moderador/pedidos"   onClick={() => setOpen(false)} className="text-gray-700 py-1">Pedidos</Link>
+                <Link to="/moderador/reportes"  onClick={() => setOpen(false)} className="text-gray-700 py-1">Reportes</Link>
               </>
             )}
             {isAuthenticated && hasRole('ADMIN') && (

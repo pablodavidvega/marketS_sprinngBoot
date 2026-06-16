@@ -24,6 +24,9 @@ import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
 import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
 import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
+import ModeradorDashboardPage from './pages/moderador/DashboardPage'
+import ModeradorProductosPage from './pages/moderador/ProductosPage'
+import ModeradorPedidosPage from './pages/moderador/PedidosPage'
 import ServicioClientePage from './pages/ServicioClientePage'
 import VendedorPerfilPage from './pages/VendedorPerfilPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
@@ -167,6 +170,39 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <ConfiguracionAppPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/moderador/dashboard"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/productos"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorProductosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/pedidos"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorPedidosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/reportes"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ReportesVendedoresPage />
               </ProtectedRoute>
             }
           />
