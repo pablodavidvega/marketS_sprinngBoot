@@ -47,10 +47,20 @@ export interface Producto {
   categoriaNombre: string | null
   marcaId: number | null
   marcaNombre: string | null
+  vendedorId?: number | null
+  vendedorUsername?: string | null
   tallas: TallaStock[]
   promedioCalificacion?: number | null
   totalResenas?: number | null
   totalVendido?: number | null
+}
+
+export interface PerfilVendedor {
+  id: number
+  username: string
+  miembroDesde: string
+  totalProductos: number
+  city?: string | null
 }
 
 export interface Categoria {

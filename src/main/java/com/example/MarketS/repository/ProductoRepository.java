@@ -57,6 +57,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     List<Producto> findByVendedor(User vendedor);
 
+    List<Producto> findByVendedorIdAndActivoTrue(Long vendedorId);
+
     Page<Producto> findByVendedorId(Long vendedorId, Pageable pageable);
 
 //    Método para contar productos por categoría

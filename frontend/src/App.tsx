@@ -25,6 +25,7 @@ import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
 import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
 import ServicioClientePage from './pages/ServicioClientePage'
+import VendedorPerfilPage from './pages/VendedorPerfilPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/pagos/pendiente" element={<PagoPendientePage />} />
           <Route path="/pagos/fallo" element={<PagoFallidoPage />} />
           <Route path="/soporte" element={<ServicioClientePage />} />
+          <Route path="/vendedores/:id" element={<VendedorPerfilPage />} />
 
           <Route
             path="/cliente/dashboard"
