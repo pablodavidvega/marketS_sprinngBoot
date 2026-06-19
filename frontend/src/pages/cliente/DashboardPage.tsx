@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardCliente } from '../../api/usuario'
+import { confirmarRecepcion } from '../../api/pedidos'
 import type { DashboardCliente } from '../../types'
 
 export default function ClienteDashboardPage() {
   const [data, setData] = useState<DashboardCliente | null>(null)
   const [loading, setLoading] = useState(true)
+  const [confirmando, setConfirmando] = useState<number | null>(null)
 
   useEffect(() => {
     getDashboardCliente()
       .then(r => setData(r.data))
       .finally(() => setLoading(false))
   }, [])
+
+  async function handleConfirmarRecepcion(pedidoId: number) {
+    setConfirmando(pedidoId)
+    try {
+      await confirmarRecepcion(pedidoId)
+      setData(prev => prev ? {
+        ...prev,
+        pedidosRecientes: prev.pedidosRecientes.map(p =>
+          p.pedidoId === pedidoId ? { ...p, estado: 'RECIBIDO' } : p
+        ),
+      } : prev)
+    } finally {
+      setConfirmando(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -101,21 +118,32 @@ export default function ClienteDashboardPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {data.pedidosRecientes.map(pedido => (
-                <div key={pedido.pedidoId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-800">Pedido #{pedido.pedidoId}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(pedido.fecha).toLocaleDateString('es-CO')} · {pedido.detalles.length} ítem(s)
-                    </p>
+                <div key={pedido.pedidoId} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-800">Pedido #{pedido.pedidoId}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(pedido.fecha).toLocaleDateString('es-CO')} · {pedido.detalles.length} ítem(s)
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`badge ${estadoColor[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {pedido.estado}
+                      </span>
+                      <span className="font-semibold text-gray-800">
+                        ${pedido.total.toLocaleString('es-CO')}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`badge ${estadoColor[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {pedido.estado}
-                    </span>
-                    <span className="font-semibold text-gray-800">
-                      ${pedido.total.toLocaleString('es-CO')}
-                    </span>
-                  </div>
+                  {pedido.estado === 'PAGADO' && (
+                    <button
+                      onClick={() => handleConfirmarRecepcion(pedido.pedidoId)}
+                      disabled={confirmando === pedido.pedidoId}
+                      className="btn-primary text-sm self-start"
+                    >
+                      {confirmando === pedido.pedidoId ? 'Confirmando...' : 'Confirmar recepción'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
