@@ -50,13 +50,13 @@ export default function VendedorDashboardPage() {
 
       {/* Stats */}
       {cargando ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="card animate-pulse h-20 bg-gray-100" />
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
             icon="🛒"
             label="Unidades vendidas"
@@ -69,17 +69,10 @@ export default function VendedorDashboardPage() {
           />
           <StatCard
             icon="💰"
-            label="Ganancias netas (95%)"
+            label="Ganancias totales"
             value={fmt(stats.gananciaTotal)}
             color="text-green-600"
             borderColor="border-green-500"
-          />
-          <StatCard
-            icon="📊"
-            label="Comisión MarketS (5%)"
-            value={fmt(stats.comisionTotal)}
-            color="text-red-500"
-            borderColor="border-red-400"
           />
         </div>
       )}

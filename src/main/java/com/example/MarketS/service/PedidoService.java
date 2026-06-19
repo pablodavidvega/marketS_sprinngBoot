@@ -21,7 +21,7 @@ import com.example.MarketS.repository.ProductoRepository;
 @Transactional
 public class PedidoService {
 
-    private static final double COMISION_APP = 0.05;
+    private static final double COMISION_APP = 0.0;
 
     private final PedidoRepository     pedidoRepository;
     private final ProductoRepository    productoRepository;

@@ -78,12 +78,7 @@
       <div class="card" style="cursor:default; border-left: 4px solid #28a745;">
         <i class="fas fa-dollar-sign" style="color:#28a745;"></i>
         <h3 th:text="'$' + ${#numbers.formatDecimal(gananciaTotal, 0, 'COMMA', 0, 'POINT')}">$0</h3>
-        <p>Tus ganancias netas (95%)</p>
-      </div>
-      <div class="card" style="cursor:default; border-left: 4px solid #dc3545;">
-        <i class="fas fa-percent" style="color:#dc3545;"></i>
-        <h3 th:text="'$' + ${#numbers.formatDecimal(comisionTotal, 0, 'COMMA', 0, 'POINT')}">$0</h3>
-        <p>Comisión MarketS (5%)</p>
+        <p>Tus ganancias totales</p>
       </div>
     </div>
   </main>
