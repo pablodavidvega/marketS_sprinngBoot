@@ -90,6 +90,9 @@ export default function Navbar() {
                 <NavLink to="/admin/configuracion" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
                   Configuración
                 </NavLink>
+                <NavLink to="/admin/banners-slider" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Banners slider
+                </NavLink>
               </>
             )}
           </div>
@@ -171,6 +174,7 @@ export default function Navbar() {
                 <Link to="/admin/carga-usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
                 <Link to="/admin/invitaciones" onClick={() => setOpen(false)} className="text-gray-700 py-1">Invitaciones</Link>
                 <Link to="/admin/configuracion" onClick={() => setOpen(false)} className="text-gray-700 py-1">Configuración</Link>
+                <Link to="/admin/banners-slider" onClick={() => setOpen(false)} className="text-gray-700 py-1">Banners slider</Link>
               </>
             )}
             {isAuthenticated ? (

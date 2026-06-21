@@ -3,6 +3,7 @@ import { getProductos, getProductosPorCategoria, getCategorias } from '../api/pr
 import type { Producto, Categoria } from '../types'
 import ProductoCard from '../components/ProductoCard'
 import BuscadorAvanzado from '../components/BuscadorAvanzado'
+import ProductosRecientesSlider from '../components/ProductosRecientesSlider'
 
 export default function HomePage() {
   const [productos, setProductos] = useState<Producto[]>([])
@@ -44,6 +45,9 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Slider de últimos productos agregados */}
+      <ProductosRecientesSlider />
+
       {/* Buscador avanzado */}
       <div className="mb-6">
         <BuscadorAvanzado onSearch={handleSearch} initialValue={filtro} />

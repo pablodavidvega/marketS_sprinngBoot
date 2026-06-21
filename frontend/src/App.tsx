@@ -24,6 +24,8 @@ import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
 import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
 import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
+import BannerSliderPage from './pages/admin/BannerSliderPage'
+import UltimosProductosPage from './pages/UltimosProductosPage'
 import ModeradorDashboardPage from './pages/moderador/DashboardPage'
 import ModeradorProductosPage from './pages/moderador/ProductosPage'
 import ModeradorPedidosPage from './pages/moderador/PedidosPage'
@@ -43,6 +45,7 @@ export default function App() {
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/productos/recientes" element={<UltimosProductosPage />} />
           <Route path="/productos/:id" element={<DetallePage />} />
           <Route path="/carrito" element={<CarritoPage />} />
           <Route path="/pedidos/confirmacion" element={<ConfirmacionPage />} />
@@ -170,6 +173,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <ConfiguracionAppPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/banners-slider"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <BannerSliderPage />
               </ProtectedRoute>
             }
           />

@@ -68,6 +68,16 @@ export interface Categoria {
   nombre: string
 }
 
+export interface BannerSlide {
+  id: number
+  imagen: string
+  texto: string
+  enlace: string
+  orden: number
+  activo: boolean
+  fechaCreacion: string
+}
+
 export interface CarritoItem {
   productoId: number
   nombre: string

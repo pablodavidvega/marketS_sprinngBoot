@@ -4,6 +4,9 @@ import type { Producto, Categoria, SugerenciaProducto, VendedorProductosResponse
 export const getProductos = (q?: string, limit = 30) =>
   api.get<Producto[]>('/api/productos', { params: { q, limit } })
 
+export const getProductosRecientes = (limit = 10) =>
+  api.get<Producto[]>('/api/productos/recientes', { params: { limit } })
+
 export const getSugerencias = (q: string) =>
   api.get<SugerenciaProducto[]>('/api/productos/sugerencias', { params: { q } })
 
