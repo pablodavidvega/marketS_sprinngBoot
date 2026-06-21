@@ -36,4 +36,7 @@ public class Notificacion {
 
     @Column(name = "pedido_id")
     private Long pedidoId;
+
+    @Column(name = "producto_id")
+    private Long productoId;
 }

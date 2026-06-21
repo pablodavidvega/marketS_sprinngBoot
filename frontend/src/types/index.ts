@@ -83,6 +83,8 @@ export interface DetallePedido {
   precioUnitario: number
   cantidad: number
   subtotal: number
+  vendedorId: number | null
+  vendedorUsername: string | null
 }
 
 export interface PedidoResponse {
@@ -181,6 +183,7 @@ export interface AdminContactoData {
 
 export interface PedidoVendedorResponse {
   pedidoId: number
+  vendedorId: number
   fecha: string
   estado: string
   compradorUsername: string
@@ -233,9 +236,34 @@ export interface Notificacion {
   leida: boolean
   fechaCreacion: string
   pedidoId: number | ''
+  productoId: number | ''
 }
 
 export interface NotificacionesResponse {
   items: Notificacion[]
   noLeidas: number
+}
+
+export interface ChatMensaje {
+  id: number
+  autorId: number
+  autorUsername: string
+  esVendedor: boolean
+  contenido: string
+  fechaEnvio: string
+}
+
+export interface Pregunta {
+  id: number
+  contenido: string
+  usuarioUsername: string
+  fechaPregunta: string
+  respuesta: string | null
+  fechaRespuesta: string | null
+}
+
+export interface PreguntasResponse {
+  total: number
+  puedeResponder: boolean
+  preguntas: Pregunta[]
 }

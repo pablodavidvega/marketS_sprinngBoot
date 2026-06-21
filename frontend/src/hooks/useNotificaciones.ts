@@ -7,7 +7,7 @@ const INTERVALO_MS = 30_000
 
 export function useNotificaciones() {
   const { isAuthenticated, hasRole } = useAuth()
-  const activo = isAuthenticated && (hasRole('VENDEDOR') || hasRole('ADMIN'))
+  const activo = isAuthenticated && (hasRole('VENDEDOR') || hasRole('ADMIN') || hasRole('CLIENTE'))
 
   const [items,     setItems]     = useState<Notificacion[]>([])
   const [noLeidas,  setNoLeidas]  = useState(0)

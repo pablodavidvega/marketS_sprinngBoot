@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotificaciones } from '../hooks/useNotificaciones'
+import { useAuth } from '../context/AuthContext'
+import type { Notificacion } from '../types'
 
 function formatTiempo(fechaStr: string) {
   const diff = Date.now() - new Date(fechaStr).getTime()
@@ -13,8 +15,24 @@ function formatTiempo(fechaStr: string) {
   return `hace ${d} d`
 }
 
+function destinoDe(n: Notificacion, esVendedor: boolean): string {
+  switch (n.tipo) {
+    case 'NUEVO_PEDIDO':
+      return '/vendedor/pedidos'
+    case 'NUEVO_MENSAJE_CHAT':
+      return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+    case 'NUEVA_PREGUNTA':
+    case 'PREGUNTA_RESPONDIDA':
+      return n.productoId !== '' ? `/productos/${n.productoId}` : '/'
+    default:
+      return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+  }
+}
+
 export default function NotificacionesBell() {
   const { items, noLeidas, marcarLeida, marcarTodasLeidas } = useNotificaciones()
+  const { hasRole } = useAuth()
+  const esVendedor = hasRole('VENDEDOR') || hasRole('ADMIN')
   const [abierto, setAbierto] = useState(false)
   const ref     = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -30,10 +48,10 @@ export default function NotificacionesBell() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  async function handleClick(id: number, pedidoId: number | '') {
-    await marcarLeida(id)
+  async function handleClick(n: Notificacion) {
+    await marcarLeida(n.id)
     setAbierto(false)
-    navigate('/vendedor/pedidos')
+    navigate(destinoDe(n, esVendedor))
   }
 
   return (
@@ -86,7 +104,7 @@ export default function NotificacionesBell() {
               items.map(n => (
                 <button
                   key={n.id}
-                  onClick={() => handleClick(n.id, n.pedidoId)}
+                  onClick={() => handleClick(n)}
                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex gap-3 items-start
                     ${n.leida ? 'opacity-60' : ''}`}
                 >
@@ -112,7 +130,7 @@ export default function NotificacionesBell() {
           {items.length > 0 && (
             <div className="border-t border-gray-100 px-4 py-2.5 text-center">
               <button
-                onClick={() => { setAbierto(false); navigate('/vendedor/pedidos') }}
+                onClick={() => { setAbierto(false); navigate(esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos') }}
                 className="text-xs text-primary-600 hover:text-primary-700 font-medium"
               >
                 Ver todos los pedidos →

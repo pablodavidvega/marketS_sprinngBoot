@@ -18,11 +18,16 @@ public class NotificacionService {
     private final NotificacionRepository repo;
 
     public void crear(User usuario, String mensaje, String tipo, Long pedidoId) {
+        crear(usuario, mensaje, tipo, pedidoId, null);
+    }
+
+    public void crear(User usuario, String mensaje, String tipo, Long pedidoId, Long productoId) {
         Notificacion n = new Notificacion();
         n.setUsuario(usuario);
         n.setMensaje(mensaje);
         n.setTipo(tipo);
         n.setPedidoId(pedidoId);
+        n.setProductoId(productoId);
         n.setFechaCreacion(LocalDateTime.now());
         repo.save(n);
     }

@@ -22,7 +22,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByUsuario(User usuario);
 
     // Pedidos del usuario con detalles y productos cargados en una sola query
-    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias LEFT JOIN FETCH pr.vendedor WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
     List<Pedido> findByUsuarioWithDetails(@Param("usuario") User usuario);
 
     // Buscar pedidos por estado

@@ -58,7 +58,8 @@ public class NotificacionApiController {
             "tipo",          n.getTipo(),
             "leida",         n.isLeida(),
             "fechaCreacion", n.getFechaCreacion().toString(),
-            "pedidoId",      n.getPedidoId() != null ? n.getPedidoId() : ""
+            "pedidoId",      n.getPedidoId() != null ? n.getPedidoId() : "",
+            "productoId",    n.getProductoId() != null ? n.getProductoId() : ""
         );
     }
 }

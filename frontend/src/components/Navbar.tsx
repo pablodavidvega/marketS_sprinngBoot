@@ -96,8 +96,8 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            {/* Campanita — solo vendedor y admin */}
-            {isAuthenticated && (hasRole('VENDEDOR') || hasRole('ADMIN')) && (
+            {/* Campanita */}
+            {isAuthenticated && (
               <NotificacionesBell />
             )}
 
