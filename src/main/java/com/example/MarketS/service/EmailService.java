@@ -3,6 +3,7 @@ package com.example.MarketS.service;
 import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.model.Pedido;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -14,13 +15,16 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Value("${spring.mail.username}")
+    private String mailFrom;
+
     @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
 
         try {
 
             SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom("MarketS@gmail.com"); // mismo correo configurado en Render
+            mail.setFrom(mailFrom);
             mail.setTo(para);
             mail.setSubject(asunto);
             mail.setText(mensaje);
@@ -64,7 +68,7 @@ public class EmailService {
             sb.append("Gracias por tu compra en MarketS 🛒\n");
 
             SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom("pablo.david.vega1@gmail.com");
+            mail.setFrom(mailFrom);
             mail.setTo(para);
             mail.setSubject(asunto);
             mail.setText(sb.toString());

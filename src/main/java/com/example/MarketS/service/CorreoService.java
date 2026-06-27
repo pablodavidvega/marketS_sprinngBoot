@@ -1,6 +1,7 @@
 package com.example.MarketS.service;
 
 import com.example.MarketS.model.Correo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -14,6 +15,9 @@ public class CorreoService {
     private static final Logger logger = LoggerFactory.getLogger(CorreoService.class);
     private final JavaMailSender mailSender;
 
+    @Value("${spring.mail.username}")
+    private String mailFrom;
+
     public CorreoService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -23,7 +27,7 @@ public class CorreoService {
         try {
             for (String destinatario : correo.getDestinatarios()) {
                 SimpleMailMessage mensaje = new SimpleMailMessage();
-                mensaje.setFrom("tu_correo@gmail.com"); // define remitente
+                mensaje.setFrom(mailFrom);
                 mensaje.setTo(destinatario);
                 mensaje.setSubject(correo.getAsunto());
                 mensaje.setText(correo.getMensaje());

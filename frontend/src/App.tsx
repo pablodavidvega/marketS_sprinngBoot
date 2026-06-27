@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -22,6 +23,7 @@ import UsuariosPage from './pages/admin/UsuariosPage'
 import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
 import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
+import EnviarCorreosPage from './pages/admin/EnviarCorreosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
 import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
 import BannerSliderPage from './pages/admin/BannerSliderPage'
@@ -36,6 +38,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 
 export default function App() {
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main>
@@ -161,6 +164,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/correos"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <EnviarCorreosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/invitaciones"
             element={
               <ProtectedRoute roles={['ADMIN']}>
@@ -222,5 +233,6 @@ export default function App() {
         </Routes>
       </main>
     </div>
+    </ToastProvider>
   )
 }
