@@ -1,13 +1,14 @@
 package com.example.MarketS.service;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.NotificacionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.DetallePedido;
@@ -20,18 +21,21 @@ import com.example.MarketS.repository.ProductoRepository;
 @Transactional
 public class PedidoService {
 
-    private static final double COMISION_APP = 0.05;
+    private static final double COMISION_APP = 0.0;
 
-    private final PedidoRepository pedidoRepository;
-    private final ProductoRepository productoRepository;
-    private final EmailService emailService;
+    private final PedidoRepository     pedidoRepository;
+    private final ProductoRepository    productoRepository;
+    private final EmailService          emailService;
+    private final NotificacionService   notificacionService;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ProductoRepository productoRepository,
-                         EmailService emailService) {
-        this.pedidoRepository = pedidoRepository;
-        this.productoRepository = productoRepository;
-        this.emailService = emailService;
+                         EmailService emailService,
+                         NotificacionService notificacionService) {
+        this.pedidoRepository     = pedidoRepository;
+        this.productoRepository   = productoRepository;
+        this.emailService         = emailService;
+        this.notificacionService  = notificacionService;
     }
 
     public Pedido crearPedido(User usuario, Map<Integer, Integer> carrito) {
@@ -106,6 +110,23 @@ public class PedidoService {
             if (emailUsuario != null && !emailUsuario.isBlank()) {
                 emailService.enviarConfirmacionPedido(emailUsuario, saved);
             }
+
+            // Notificar a cada vendedor afectado
+            String comprador = saved.getUsuario().getUsername();
+            detalles.stream()
+                .filter(d -> d.getProducto().getVendedor() != null)
+                .collect(Collectors.groupingBy(d -> d.getProducto().getVendedor()))
+                .forEach((vendedor, items) -> {
+                    String productos = items.stream()
+                        .map(d -> d.getProducto().getNombre() + " (" + d.getCantidad() + " ud.)")
+                        .collect(Collectors.joining(", "));
+                    notificacionService.crear(
+                        vendedor,
+                        comprador + " ordenó: " + productos,
+                        "NUEVO_PEDIDO",
+                        saved.getId()
+                    );
+                });
 
             return saved;
 

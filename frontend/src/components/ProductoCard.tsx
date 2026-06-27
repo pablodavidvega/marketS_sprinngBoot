@@ -120,9 +120,18 @@ export default function ProductoCard({ producto }: Props) {
             {producto.categoriaNombre}
           </span>
         )}
-        <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">
+        <h3 className="font-semibold text-gray-800 line-clamp-2 mb-0.5">
           {producto.nombre}
         </h3>
+        {producto.vendedorId && producto.vendedorUsername && (
+          <Link
+            to={`/vendedores/${producto.vendedorId}`}
+            onClick={e => e.stopPropagation()}
+            className="text-xs text-gray-400 hover:text-primary-600 transition-colors mb-1 inline-block"
+          >
+            @{producto.vendedorUsername}
+          </Link>
+        )}
         {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
           <div className="flex items-center gap-1 mb-1">
             <span className="text-yellow-400 text-sm leading-none">

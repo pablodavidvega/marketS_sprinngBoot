@@ -8,7 +8,9 @@ import com.example.MarketS.model.User;
 import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.security.JwtTokenProvider;
+import com.example.MarketS.service.ConfiguracionAppService;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.InvitacionService;
 import com.example.MarketS.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -51,17 +53,23 @@ public class AuthApiController {
     private final UserService userService;
     private final RolRepository rolRepository;
     private final EmailService emailService;
+    private final ConfiguracionAppService configService;
+    private final InvitacionService invitacionService;
 
     public AuthApiController(AuthenticationManager authenticationManager,
                               JwtTokenProvider tokenProvider,
                               UserService userService,
                               RolRepository rolRepository,
-                              EmailService emailService) {
+                              EmailService emailService,
+                              ConfiguracionAppService configService,
+                              InvitacionService invitacionService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.emailService = emailService;
+        this.configService = configService;
+        this.invitacionService = invitacionService;
     }
 
     private ResponseCookie buildCookie(String value, Duration maxAge) {
@@ -109,6 +117,51 @@ public class AuthApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Las contraseñas no coinciden"));
         }
 
+        // ── Validación de acceso según modo de registro ──────────────────────
+        String modo    = configService.getModoRegistro();
+        String dominio = configService.getDominioPermitido();
+        String token   = dto.getInvitacion();
+
+        if (!ConfiguracionAppService.MODO_ABIERTO.equals(modo)) {
+            boolean dominioOk    = false;
+            boolean invitacionOk = false;
+
+            if ((ConfiguracionAppService.MODO_DOMINIO.equals(modo) ||
+                 ConfiguracionAppService.MODO_DOMINIO_O_INVITACION.equals(modo))
+                 && !dominio.isBlank()) {
+                String emailDomain = dto.getEmail().contains("@")
+                        ? dto.getEmail().substring(dto.getEmail().indexOf('@') + 1).toLowerCase()
+                        : "";
+                dominioOk = emailDomain.equalsIgnoreCase(dominio.trim());
+            }
+
+            if ((ConfiguracionAppService.MODO_INVITACION.equals(modo) ||
+                 ConfiguracionAppService.MODO_DOMINIO_O_INVITACION.equals(modo))
+                 && token != null && !token.isBlank()) {
+                invitacionOk = invitacionService.esVigente(token);
+            }
+
+            boolean acceso = switch (modo) {
+                case ConfiguracionAppService.MODO_DOMINIO             -> dominioOk;
+                case ConfiguracionAppService.MODO_INVITACION          -> invitacionOk;
+                case ConfiguracionAppService.MODO_DOMINIO_O_INVITACION -> dominioOk || invitacionOk;
+                default -> true;
+            };
+
+            if (!acceso) {
+                String mensaje = switch (modo) {
+                    case ConfiguracionAppService.MODO_DOMINIO ->
+                            "Solo pueden registrarse usuarios con correo @" + dominio;
+                    case ConfiguracionAppService.MODO_INVITACION ->
+                            "El registro requiere un link de invitación válido";
+                    default ->
+                            "Acceso restringido: se requiere correo @" + dominio + " o link de invitación";
+                };
+                return ResponseEntity.status(403).body(Map.of("error", mensaje));
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         String tipoRol = (dto.getTipoUsuario() == null || dto.getTipoUsuario().isBlank())
                 ? "CLIENTE"
                 : dto.getTipoUsuario().toUpperCase();
@@ -141,6 +194,10 @@ public class AuthApiController {
 
         try {
             User creado = userService.registrarUsuario(user);
+            // Consumir un uso del token si se usó para el registro
+            if (token != null && !token.isBlank()) {
+                invitacionService.usarToken(token);
+            }
             return ResponseEntity.ok(PerfilResponseDTO.from(creado));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo o nombre de usuario ya está en uso"));

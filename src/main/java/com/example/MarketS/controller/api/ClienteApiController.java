@@ -34,7 +34,7 @@ public class ClienteApiController {
         User usuario = userService.buscarPorEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuario(usuario)
+        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuarioWithDetails(usuario)
                 .stream()
                 .map(PedidoResponseDTO::from)
                 .toList();

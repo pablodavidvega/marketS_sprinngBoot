@@ -29,6 +29,8 @@ public class ProductoResponseDTO {
     private Long marcaId;
     private String marcaNombre;
     private List<TallasStockDTO> tallas;
+    private Long vendedorId;
+    private String vendedorUsername;
     private Double promedioCalificacion;
     private Long totalResenas;
     private Long totalVendido;
@@ -55,6 +57,8 @@ public class ProductoResponseDTO {
                 .categoriaNombre(p.getCategorias() != null ? p.getCategorias().getNombreCategoria() : null)
                 .marcaId(p.getMarca() != null ? p.getMarca().getId() : null)
                 .marcaNombre(p.getMarca() != null ? p.getMarca().getNombreMarca() : null)
+                .vendedorId(p.getVendedor() != null ? p.getVendedor().getId() : null)
+                .vendedorUsername(p.getVendedor() != null ? p.getVendedor().getUsername() : null)
                 .tallas(Hibernate.isInitialized(p.getTallas())
                         ? p.getTallas().stream()
                             .map(t -> new TallasStockDTO(t.getTalla(), t.getStock()))

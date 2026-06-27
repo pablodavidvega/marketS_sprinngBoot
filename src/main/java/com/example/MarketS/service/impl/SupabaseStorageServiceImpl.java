@@ -77,4 +77,44 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
             throw new IOException("Error al subir archivo a Supabase Storage: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public String subirBytes(byte[] bytes, String nombreOriginal, String contentType) throws IOException {
+        if (bytes == null || bytes.length == 0) return null;
+
+        if (supabaseKey == null || supabaseKey.isBlank()) {
+            throw new IllegalStateException("La propiedad 'supabase.key' no está configurada.");
+        }
+
+        String nombreBase = nombreOriginal != null ? nombreOriginal : "archivo";
+        String extension = "";
+        int lastDot = nombreBase.lastIndexOf('.');
+        if (lastDot > 0) {
+            extension = nombreBase.substring(lastDot);
+            nombreBase = nombreBase.substring(0, lastDot).replaceAll("[^a-zA-Z0-9_-]", "_");
+        } else {
+            nombreBase = nombreBase.replaceAll("[^a-zA-Z0-9_-]", "_");
+        }
+        String nombreFinal = System.currentTimeMillis() + "_" + nombreBase + extension;
+
+        String uploadUrl = String.format("%s/storage/v1/object/%s/%s", supabaseUrl, bucketName, nombreFinal);
+
+        try {
+            webClient.post()
+                    .uri(uploadUrl)
+                    .header("Authorization", "Bearer " + supabaseKey)
+                    .header("apikey", supabaseKey)
+                    .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                    .bodyValue(bytes)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+
+            return String.format("%s/storage/v1/object/public/%s/%s", supabaseUrl, bucketName, nombreFinal);
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            throw new IOException("Error al subir bytes a Supabase: " + e.getResponseBodyAsString(), e);
+        } catch (Exception e) {
+            throw new IOException("Error al subir bytes a Supabase: " + e.getMessage(), e);
+        }
+    }
 }

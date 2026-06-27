@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getMisPedidos, confirmarRecepcion } from '../../api/pedidos'
+import ChatPedido from '../../components/ChatPedido'
 import type { PedidoResponse } from '../../types'
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -18,6 +19,7 @@ export default function MisPedidosPage() {
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [confirmando, setConfirmando] = useState<number | null>(null)
+  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
 
   useEffect(() => {
     getMisPedidos()
@@ -121,6 +123,32 @@ export default function MisPedidosPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Chat con cada vendedor del pedido (un pedido puede tener varios) */}
+                  {Array.from(
+                    new Map(
+                      pedido.detalles
+                        .filter((d): d is typeof d & { vendedorId: number; vendedorUsername: string } => d.vendedorId != null)
+                        .map(d => [d.vendedorId, d.vendedorUsername])
+                    )
+                  ).map(([vendedorId, vendedorUsername]) => {
+                    const key = `${pedido.pedidoId}-${vendedorId}`
+                    return (
+                      <div key={key} className="mt-4 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={() => setChatAbierto(chatAbierto === key ? null : key)}
+                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                        >
+                          {chatAbierto === key ? '▲' : '💬'} Chat con {vendedorUsername}
+                        </button>
+                        {chatAbierto === key && (
+                          <div className="mt-3">
+                            <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
 
                   {pedido.paymentUrl && pedido.estado === 'PENDIENTE' && (
                     <div className="mt-4 pt-4 border-t border-gray-100">

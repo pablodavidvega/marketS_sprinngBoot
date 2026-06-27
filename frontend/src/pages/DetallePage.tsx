@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getProducto, getResenas, crearResena } from '../api/productos'
-import type { Producto, ResenasResponse } from '../types'
+import { getPreguntas, crearPregunta, responderPregunta } from '../api/preguntas'
+import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { buildImageUrl } from '../utils/image'
@@ -43,7 +44,7 @@ export default function DetallePage() {
   const { id }          = useParams<{ id: string }>()
   const navigate        = useNavigate()
   const { agregar }     = useCarrito()
-  const { user }        = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [producto, setProducto] = useState<Producto | null>(null)
   const [loading, setLoading]   = useState(true)
   const [activoIdx, setActivoIdx] = useState(0)
@@ -56,6 +57,15 @@ export default function DetallePage() {
   const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [errorResena, setErrorResena] = useState('')
+
+  // Preguntas y respuestas
+  const [preguntas, setPreguntas] = useState<PreguntasResponse | null>(null)
+  const [nuevaPregunta, setNuevaPregunta] = useState('')
+  const [enviandoPregunta, setEnviandoPregunta] = useState(false)
+  const [errorPregunta, setErrorPregunta] = useState('')
+  const [respuestas, setRespuestas] = useState<Record<number, string>>({})
+  const [respondiendoId, setRespondiendoId] = useState<number | null>(null)
+  const [errorRespuesta, setErrorRespuesta] = useState<Record<number, string>>({})
 
   useEffect(() => {
     if (!id) return
@@ -72,6 +82,14 @@ export default function DetallePage() {
     if (!id) return
     setResenas(null)
     getResenas(Number(id)).then(r => setResenas(r.data)).catch(() => setResenas({ promedio: 0, total: 0, puedeResenar: false, yaReseno: false, resenas: [] }))
+  }, [id, user?.email])
+
+  useEffect(() => {
+    if (!id) return
+    setPreguntas(null)
+    getPreguntas(Number(id))
+      .then(r => setPreguntas(r.data))
+      .catch(() => setPreguntas({ total: 0, puedeResponder: false, preguntas: [] }))
   }, [id, user?.email])
 
   if (loading) {
@@ -136,6 +154,44 @@ export default function DetallePage() {
       setErrorResena(msg || 'Error al enviar la reseña')
     } finally {
       setEnviando(false)
+    }
+  }
+
+  async function handleEnviarPregunta(e: React.FormEvent) {
+    e.preventDefault()
+    const contenido = nuevaPregunta.trim()
+    if (!contenido) return
+    setEnviandoPregunta(true)
+    setErrorPregunta('')
+    try {
+      const { data } = await crearPregunta(Number(id), contenido)
+      setPreguntas(prev => prev ? { ...prev, total: prev.total + 1, preguntas: [data, ...prev.preguntas] } : prev)
+      setNuevaPregunta('')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setErrorPregunta(msg || 'Error al enviar la pregunta')
+    } finally {
+      setEnviandoPregunta(false)
+    }
+  }
+
+  async function handleResponder(preguntaId: number) {
+    const respuesta = (respuestas[preguntaId] || '').trim()
+    if (!respuesta) return
+    setRespondiendoId(preguntaId)
+    setErrorRespuesta(prev => ({ ...prev, [preguntaId]: '' }))
+    try {
+      const { data } = await responderPregunta(Number(id), preguntaId, respuesta)
+      setPreguntas(prev => prev ? {
+        ...prev,
+        preguntas: prev.preguntas.map(p => p.id === preguntaId ? data : p),
+      } : prev)
+      setRespuestas(prev => ({ ...prev, [preguntaId]: '' }))
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setErrorRespuesta(prev => ({ ...prev, [preguntaId]: msg || 'Error al enviar la respuesta' }))
+    } finally {
+      setRespondiendoId(null)
     }
   }
 
@@ -368,6 +424,86 @@ export default function DetallePage() {
                     </span>
                   </div>
                   {r.comentario && <p className="text-sm text-gray-600">{r.comentario}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Sección de preguntas y respuestas ───────────────────────────────── */}
+      {preguntas && (
+        <div className="mt-12 border-t pt-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">
+            Preguntas y respuestas {preguntas.total > 0 && <span className="text-gray-400 font-normal text-base">({preguntas.total})</span>}
+          </h2>
+
+          {isAuthenticated ? (
+            <form onSubmit={handleEnviarPregunta} className="card mb-8">
+              <h3 className="font-semibold text-gray-700 mb-3">¿Tienes una duda sobre este producto?</h3>
+              <textarea
+                value={nuevaPregunta}
+                onChange={e => setNuevaPregunta(e.target.value)}
+                placeholder="Escribe tu pregunta..."
+                maxLength={500}
+                rows={2}
+                className="input w-full resize-none text-sm"
+              />
+              {errorPregunta && <p className="text-red-500 text-sm mt-2">{errorPregunta}</p>}
+              <button type="submit" disabled={enviandoPregunta || !nuevaPregunta.trim()} className="btn-primary mt-3">
+                {enviandoPregunta ? 'Enviando...' : 'Preguntar'}
+              </button>
+            </form>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 text-gray-500 rounded-lg p-3 text-sm mb-6">
+              <button onClick={() => navigate('/login')} className="text-primary-600 hover:underline font-medium">Inicia sesión</button> para preguntarle al vendedor.
+            </div>
+          )}
+
+          {preguntas.preguntas.length === 0 ? (
+            <p className="text-gray-400 text-sm">Aún no hay preguntas sobre este producto.</p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {preguntas.preguntas.map(p => (
+                <div key={p.id} className="border-b pb-4 last:border-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm text-gray-700">{p.usuarioUsername}</span>
+                    <span className="text-xs text-gray-400 ml-auto">
+                      {new Date(p.fechaPregunta).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">{p.contenido}</p>
+
+                  {p.respuesta ? (
+                    <div className="mt-2 ml-4 pl-3 border-l-2 border-primary-200">
+                      <p className="text-xs font-medium text-primary-600 mb-0.5">Respuesta del vendedor</p>
+                      <p className="text-sm text-gray-600">{p.respuesta}</p>
+                    </div>
+                  ) : preguntas.puedeResponder ? (
+                    <div className="mt-2 ml-4">
+                      <div className="flex gap-2">
+                        <input
+                          value={respuestas[p.id] || ''}
+                          onChange={e => setRespuestas(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          placeholder="Responder..."
+                          maxLength={500}
+                          className="input flex-1 text-sm"
+                        />
+                        <button
+                          onClick={() => handleResponder(p.id)}
+                          disabled={respondiendoId === p.id || !(respuestas[p.id] || '').trim()}
+                          className="btn-primary text-sm px-3"
+                        >
+                          {respondiendoId === p.id ? 'Enviando...' : 'Responder'}
+                        </button>
+                      </div>
+                      {errorRespuesta[p.id] && (
+                        <p className="text-red-500 text-xs mt-1">{errorRespuesta[p.id]}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">Aún sin respuesta</p>
+                  )}
                 </div>
               ))}
             </div>

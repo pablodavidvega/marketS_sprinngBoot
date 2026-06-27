@@ -163,8 +163,9 @@ public class AdminApiController {
         return ResponseEntity.ok(roles);
     }
 
-    // GET /api/admin/reportes/vendedores — estadísticas agregadas por vendedor
+    // GET /api/admin/reportes/vendedores — estadísticas agregadas por vendedor (también accesible por MODERADOR)
     @GetMapping("/reportes/vendedores")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_MODERADOR')")
     public ResponseEntity<List<VendedorEstadisticasDTO>> reporteVendedores() {
         List<VendedorEstadisticasDTO> stats = userRepository.findEstadisticasTodosVendedores()
                 .stream()

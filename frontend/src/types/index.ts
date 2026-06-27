@@ -47,15 +47,35 @@ export interface Producto {
   categoriaNombre: string | null
   marcaId: number | null
   marcaNombre: string | null
+  vendedorId?: number | null
+  vendedorUsername?: string | null
   tallas: TallaStock[]
   promedioCalificacion?: number | null
   totalResenas?: number | null
   totalVendido?: number | null
 }
 
+export interface PerfilVendedor {
+  id: number
+  username: string
+  miembroDesde: string
+  totalProductos: number
+  city?: string | null
+}
+
 export interface Categoria {
   id: number
   nombre: string
+}
+
+export interface BannerSlide {
+  id: number
+  imagen: string
+  texto: string
+  enlace: string
+  orden: number
+  activo: boolean
+  fechaCreacion: string
 }
 
 export interface CarritoItem {
@@ -73,6 +93,8 @@ export interface DetallePedido {
   precioUnitario: number
   cantidad: number
   subtotal: number
+  vendedorId: number | null
+  vendedorUsername: string | null
 }
 
 export interface PedidoResponse {
@@ -171,6 +193,7 @@ export interface AdminContactoData {
 
 export interface PedidoVendedorResponse {
   pedidoId: number
+  vendedorId: number
   fecha: string
   estado: string
   compradorUsername: string
@@ -178,4 +201,79 @@ export interface PedidoVendedorResponse {
   compradorPhone: string
   compradorAddress: string
   items: ItemPedidoVendedor[]
+}
+
+export interface ResultadoCarga {
+  total: number
+  correctos: number
+  fallidos: number
+  errores: string[]
+}
+
+export interface Invitacion {
+  id: number
+  token: string
+  descripcion: string
+  activo: boolean
+  vigente: boolean
+  usosActuales: number
+  maxUsos: number | ''
+  fechaExpiracion: string
+  fechaCreacion: string
+}
+
+export interface ConfigRegistro {
+  modo: 'ABIERTO' | 'DOMINIO' | 'INVITACION' | 'DOMINIO_O_INVITACION'
+  dominio: string
+}
+
+export interface EstadoRegistro {
+  modo: string
+  dominioPermitido: string
+  registroAbierto: boolean
+}
+
+export interface ValidacionInvitacion {
+  valido: boolean
+  descripcion?: string
+  mensaje: string
+}
+
+export interface Notificacion {
+  id: number
+  mensaje: string
+  tipo: string
+  leida: boolean
+  fechaCreacion: string
+  pedidoId: number | ''
+  productoId: number | ''
+}
+
+export interface NotificacionesResponse {
+  items: Notificacion[]
+  noLeidas: number
+}
+
+export interface ChatMensaje {
+  id: number
+  autorId: number
+  autorUsername: string
+  esVendedor: boolean
+  contenido: string
+  fechaEnvio: string
+}
+
+export interface Pregunta {
+  id: number
+  contenido: string
+  usuarioUsername: string
+  fechaPregunta: string
+  respuesta: string | null
+  fechaRespuesta: string | null
+}
+
+export interface PreguntasResponse {
+  total: number
+  puedeResponder: boolean
+  preguntas: Pregunta[]
 }

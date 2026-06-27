@@ -376,7 +376,7 @@ export default function ReportesPage() {
                             ))}
                           </Pie>
                           <Tooltip
-                            formatter={(v: number) => metrica === 'ganancia' ? fmt(v) : `${v} uds.`}
+                            formatter={(v) => { const n = Number(v); return metrica === 'ganancia' ? fmt(n) : `${n} uds.` }}
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}
                           />
                           <Legend

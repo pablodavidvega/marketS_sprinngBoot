@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getPedidosVendedor } from '../../api/pedidos'
+import ChatPedido from '../../components/ChatPedido'
 import type { PedidoVendedorResponse } from '../../types'
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -17,6 +18,7 @@ export default function PedidosVendedorPage() {
   const [pedidos, setPedidos] = useState<PedidoVendedorResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
+  const [chatAbierto, setChatAbierto] = useState<number | null>(null)
 
   useEffect(() => {
     getPedidosVendedor()
@@ -135,6 +137,21 @@ export default function PedidosVendedorPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Chat con el comprador sobre la entrega */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <button
+                      onClick={() => setChatAbierto(chatAbierto === pedido.pedidoId ? null : pedido.pedidoId)}
+                      className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      {chatAbierto === pedido.pedidoId ? '▲' : '💬'} Chat con {pedido.compradorUsername}
+                    </button>
+                    {chatAbierto === pedido.pedidoId && (
+                      <div className="mt-3">
+                        <ChatPedido pedidoId={pedido.pedidoId} vendedorId={pedido.vendedorId} />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

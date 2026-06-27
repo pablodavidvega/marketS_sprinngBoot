@@ -14,13 +14,23 @@ import VendedorDashboardPage from './pages/vendedor/DashboardPage'
 import VendedorProductosPage from './pages/vendedor/ProductosPage'
 import VendedorPedidosPage from './pages/vendedor/PedidosPage'
 import VendedorReportesPage from './pages/vendedor/ReportesPage'
+import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import EditarPerfilPage from './pages/cliente/EditarPerfilPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
 import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
+import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
+import InvitacionesPage from './pages/admin/InvitacionesPage'
+import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
+import BannerSliderPage from './pages/admin/BannerSliderPage'
+import UltimosProductosPage from './pages/UltimosProductosPage'
+import ModeradorDashboardPage from './pages/moderador/DashboardPage'
+import ModeradorProductosPage from './pages/moderador/ProductosPage'
+import ModeradorPedidosPage from './pages/moderador/PedidosPage'
 import ServicioClientePage from './pages/ServicioClientePage'
+import VendedorPerfilPage from './pages/VendedorPerfilPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 
@@ -35,12 +45,14 @@ export default function App() {
           <Route path="/registro" element={<RegistroPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/productos/recientes" element={<UltimosProductosPage />} />
           <Route path="/productos/:id" element={<DetallePage />} />
           <Route path="/carrito" element={<CarritoPage />} />
           <Route path="/pedidos/confirmacion" element={<ConfirmacionPage />} />
           <Route path="/pagos/pendiente" element={<PagoPendientePage />} />
           <Route path="/pagos/fallo" element={<PagoFallidoPage />} />
           <Route path="/soporte" element={<ServicioClientePage />} />
+          <Route path="/vendedores/:id" element={<VendedorPerfilPage />} />
 
           <Route
             path="/cliente/dashboard"
@@ -99,6 +111,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/vendedor/carga-masiva"
+            element={
+              <ProtectedRoute roles={['VENDEDOR']}>
+                <CargaMasivaPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/dashboard"
@@ -128,6 +148,71 @@ export default function App() {
             path="/admin/reportes/vendedores"
             element={
               <ProtectedRoute roles={['ADMIN']}>
+                <ReportesVendedoresPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/carga-usuarios"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <CargaMasivaUsuariosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/invitaciones"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <InvitacionesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/configuracion"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <ConfiguracionAppPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/banners-slider"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <BannerSliderPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/moderador/dashboard"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/productos"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorProductosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/pedidos"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
+                <ModeradorPedidosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderador/reportes"
+            element={
+              <ProtectedRoute roles={['MODERADOR', 'ADMIN']}>
                 <ReportesVendedoresPage />
               </ProtectedRoute>
             }

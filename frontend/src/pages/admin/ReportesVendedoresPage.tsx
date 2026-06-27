@@ -125,7 +125,7 @@ export default function ReportesVendedoresPage() {
 
   // ── CSV ──────────────────────────────────────────────────────────────────
   function descargarCSV() {
-    const header = ['Vendedor', 'Email', 'Productos', 'Unidades vendidas', 'Ganancia (95%)', 'Comisión plataforma (5%)', 'Ingresos brutos']
+    const header = ['Vendedor', 'Email', 'Productos', 'Unidades vendidas', 'Ganancia', 'Comisión plataforma', 'Ingresos brutos']
     const rows = data.map(v => [
       v.username, v.email,
       v.totalProductos, v.totalUnidades,
@@ -210,7 +210,7 @@ export default function ReportesVendedoresPage() {
 
     autoTable(doc, {
       startY: 22,
-      head: [['Vendedor', 'Email', 'Productos', 'Unidades', 'Ganancia (95%)', 'Comisión (5%)', 'Ingresos']],
+      head: [['Vendedor', 'Email', 'Productos', 'Unidades', 'Ganancia', 'Comisión', 'Ingresos']],
       body: data.map(v => [
         v.username,
         v.email,
@@ -239,7 +239,7 @@ export default function ReportesVendedoresPage() {
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 41, 59)
-      doc.text('Top vendedores por ganancia neta (95%)', 14, finalY)
+      doc.text('Top vendedores por ganancia neta', 14, finalY)
       const barImg2 = dibujarBarras(data, 'gananciaTotal')
       doc.addImage(barImg2, 'PNG', 14, finalY + 4, 120, 58)
     }
@@ -310,11 +310,11 @@ export default function ReportesVendedoresPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" interval={0} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => '$' + (v / 1000).toFixed(0) + 'k'} />
-                <Tooltip formatter={(v: number) => fmt(v)} />
+                <Tooltip formatter={(v) => fmt(Number(v))} />
                 <Legend />
                 <Bar dataKey="ingresos" name="Ingresos" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="ganancia" name="Ganancia (95%)" fill="#10b981" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="comision" name="Comisión (5%)" fill="#f59e0b" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="ganancia" name="Ganancia" fill="#10b981" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="comision" name="Comisión" fill="#f59e0b" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -324,12 +324,12 @@ export default function ReportesVendedoresPage() {
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribución de comisiones</h2>
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) =>
-                  `${name.substring(0, 6)} ${(percent * 100).toFixed(0)}%`
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }: { name?: string; percent?: number }) =>
+                  `${(name ?? '').substring(0, 6)} ${((percent ?? 0) * 100).toFixed(0)}%`
                 } labelLine={false} fontSize={10}>
                   {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(v: number) => fmt(v)} />
+                <Tooltip formatter={(v) => fmt(Number(v))} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -351,8 +351,8 @@ export default function ReportesVendedoresPage() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Productos</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Unidades</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Ganancia (95%)</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Comisión (5%)</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">Ganancia</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">Comisión</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">Ingresos brutos</th>
               </tr>
             </thead>

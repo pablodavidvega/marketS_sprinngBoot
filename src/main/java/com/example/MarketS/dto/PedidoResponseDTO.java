@@ -28,6 +28,8 @@ public class PedidoResponseDTO {
         private Double precioUnitario;
         private Integer cantidad;
         private Double subtotal;
+        private Long vendedorId;
+        private String vendedorUsername;
     }
 
     public static PedidoResponseDTO from(Pedido pedido) {
@@ -43,6 +45,8 @@ public class PedidoResponseDTO {
                         .precioUnitario(d.getPrecioUnitario())
                         .cantidad(d.getCantidad())
                         .subtotal(d.getPrecioUnitario() * d.getCantidad())
+                        .vendedorId(d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getId() : null)
+                        .vendedorUsername(d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getUsername() : null)
                         .build())
                         .toList()
                 : List.of();

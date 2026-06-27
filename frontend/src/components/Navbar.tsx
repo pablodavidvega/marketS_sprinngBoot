@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
+import { useAppConfig } from '../context/AppConfigContext'
+import NotificacionesBell from './NotificacionesBell'
 
 export default function Navbar() {
   const { isAuthenticated, hasRole, logout, user } = useAuth()
   const { cantidadTotal } = useCarrito()
+  const { nombreApp, logoUrl } = useAppConfig()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
@@ -19,8 +22,11 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            MarketS
+          <Link to="/" className="flex items-center gap-2">
+            {logoUrl
+              ? <img src={logoUrl} alt={nombreApp} className="h-8 object-contain" />
+              : <span className="text-2xl font-bold text-primary-600">{nombreApp}</span>
+            }
           </Link>
 
           {/* Desktop links */}
@@ -40,9 +46,31 @@ export default function Navbar() {
             )}
 
             {isAuthenticated && hasRole('VENDEDOR') && (
-              <NavLink to="/vendedor/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                Mis productos
-              </NavLink>
+              <>
+                <NavLink to="/vendedor/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Mis productos
+                </NavLink>
+                <NavLink to="/vendedor/carga-masiva" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Carga masiva
+                </NavLink>
+              </>
+            )}
+
+            {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
+              <>
+                <NavLink to="/moderador/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Panel mod
+                </NavLink>
+                <NavLink to="/moderador/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Productos
+                </NavLink>
+                <NavLink to="/moderador/pedidos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Pedidos
+                </NavLink>
+                <NavLink to="/moderador/reportes" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Reportes
+                </NavLink>
+              </>
             )}
 
             {isAuthenticated && hasRole('ADMIN') && (
@@ -53,12 +81,29 @@ export default function Navbar() {
                 <NavLink to="/admin/usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
                   Usuarios
                 </NavLink>
+                <NavLink to="/admin/carga-usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Carga masiva
+                </NavLink>
+                <NavLink to="/admin/invitaciones" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Invitaciones
+                </NavLink>
+                <NavLink to="/admin/configuracion" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Configuración
+                </NavLink>
+                <NavLink to="/admin/banners-slider" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
+                  Banners slider
+                </NavLink>
               </>
             )}
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-3">
+            {/* Campanita */}
+            {isAuthenticated && (
+              <NotificacionesBell />
+            )}
+
             {/* Cart */}
             <Link to="/carrito" className="relative p-2 text-gray-600 hover:text-primary-600">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,12 +154,27 @@ export default function Navbar() {
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
             )}
             {isAuthenticated && hasRole('VENDEDOR') && (
-              <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
+              <>
+                <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
+                <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
+              </>
+            )}
+            {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
+              <>
+                <Link to="/moderador/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Panel mod</Link>
+                <Link to="/moderador/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Productos</Link>
+                <Link to="/moderador/pedidos"   onClick={() => setOpen(false)} className="text-gray-700 py-1">Pedidos</Link>
+                <Link to="/moderador/reportes"  onClick={() => setOpen(false)} className="text-gray-700 py-1">Reportes</Link>
+              </>
             )}
             {isAuthenticated && hasRole('ADMIN') && (
               <>
                 <Link to="/admin/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Panel admin</Link>
                 <Link to="/admin/usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Usuarios</Link>
+                <Link to="/admin/carga-usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
+                <Link to="/admin/invitaciones" onClick={() => setOpen(false)} className="text-gray-700 py-1">Invitaciones</Link>
+                <Link to="/admin/configuracion" onClick={() => setOpen(false)} className="text-gray-700 py-1">Configuración</Link>
+                <Link to="/admin/banners-slider" onClick={() => setOpen(false)} className="text-gray-700 py-1">Banners slider</Link>
               </>
             )}
             {isAuthenticated ? (

@@ -60,6 +60,18 @@ public class ProductoApiController {
         return ResponseEntity.ok(buildDTOs(productos));
     }
 
+    // GET /api/productos/recientes?limit=10 — últimos productos agregados (orden descendente).
+    // limit<=0 devuelve el listado completo, usado por la vista "Ver todos los últimos productos".
+    @GetMapping("/productos/recientes")
+    public ResponseEntity<List<ProductoResponseDTO>> productosRecientes(
+            @RequestParam(defaultValue = "10") int limit) {
+        List<Producto> productos = limit > 0
+                ? productoRepository.findByActivoTrueOrderByFechaAgregacionDesc(
+                        org.springframework.data.domain.PageRequest.of(0, limit))
+                : productoRepository.findByActivoTrueOrderByFechaAgregacionDesc();
+        return ResponseEntity.ok(buildDTOs(productos));
+    }
+
     // GET /api/productos/sugerencias?q=... — autocompletado (máx 8 resultados livianos)
     @GetMapping("/productos/sugerencias")
     public ResponseEntity<List<SugerenciaResponseDTO>> sugerencias(

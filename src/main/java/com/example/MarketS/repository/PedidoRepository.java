@@ -22,7 +22,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByUsuario(User usuario);
 
     // Pedidos del usuario con detalles y productos cargados en una sola query
-    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias LEFT JOIN FETCH pr.vendedor WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
     List<Pedido> findByUsuarioWithDetails(@Param("usuario") User usuario);
 
     // Buscar pedidos por estado
@@ -31,6 +31,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Buscar pedido por ID con detalles cargados (para evitar LazyInitializationException)
     @Query("SELECT p FROM Pedido p LEFT JOIN FETCH p.detalles WHERE p.id = :id")
     Optional<Pedido> findByIdWithDetalles(@Param("id") Long id);
+
+    // Todos los pedidos con comprador cargado (para moderador)
+    @Query("SELECT p FROM Pedido p JOIN FETCH p.usuario ORDER BY p.fecha DESC")
+    List<Pedido> findAllWithUsuario();
 
     // Pedidos que contienen productos del vendedor dado, con detalles y comprador cargados
     @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr JOIN FETCH pr.vendedor LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias JOIN FETCH p.usuario WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")

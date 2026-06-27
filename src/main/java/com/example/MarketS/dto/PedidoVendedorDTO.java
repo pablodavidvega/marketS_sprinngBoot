@@ -13,6 +13,7 @@ import java.util.List;
 public class PedidoVendedorDTO {
 
     private Long pedidoId;
+    private Long vendedorId;
     private LocalDateTime fecha;
     private String estado;
     private String compradorUsername;
@@ -48,6 +49,7 @@ public class PedidoVendedorDTO {
 
         return PedidoVendedorDTO.builder()
                 .pedidoId(pedido.getId())
+                .vendedorId(vendedor.getId())
                 .fecha(pedido.getFecha())
                 .estado(pedido.getEstado())
                 .compradorUsername(comprador.getUsername())
