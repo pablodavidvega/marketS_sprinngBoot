@@ -16,6 +16,7 @@ export const registro = (data: {
   address: string
   tipoUsuario: string
   city?: string
+  invitacion?: string
 }) => api.post<PerfilUsuario>('/api/auth/registro', data)
 
 export const forgotPassword = (email: string) =>

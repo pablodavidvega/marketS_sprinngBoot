@@ -30,7 +30,6 @@ export default function ConfiguracionAppPage() {
   function set<K extends keyof AppConfigData>(field: K, value: AppConfigData[K]) {
     setForm(prev => ({ ...prev, [field]: value }))
     if (field === 'colorPrimario') aplicarColor(value as string)
-    if (field === 'logoError') setLogoError(false)
   }
 
   async function handleSubmit(e: FormEvent) {
