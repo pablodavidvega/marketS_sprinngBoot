@@ -15,7 +15,7 @@ public class CorreoService {
     private static final Logger logger = LoggerFactory.getLogger(CorreoService.class);
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${app.mail.from}")
     private String mailFrom;
 
     public CorreoService(JavaMailSender mailSender) {

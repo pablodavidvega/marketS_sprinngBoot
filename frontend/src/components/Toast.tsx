@@ -79,7 +79,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: num
       </svg>
 
       <span className={`flex-1 text-sm font-medium ${isSuccess ? 'text-green-800' : 'text-red-800'}`}>
-        {toast.message}
+        {String(toast.message)}
       </span>
 
       <button

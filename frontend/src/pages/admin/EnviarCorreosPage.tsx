@@ -139,9 +139,12 @@ export default function EnviarCorreosPage() {
       }
       showToast(texto, 'success')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: string } })?.response?.data ??
-        'Error al enviar los correos'
+      const data = (err as { response?: { data?: unknown } })?.response?.data
+      const msg = typeof data === 'string'
+        ? data
+        : (data as { message?: string })?.message
+          ?? (data as { error?: string })?.error
+          ?? 'Error al enviar los correos'
       showToast(msg, 'error')
     } finally {
       setEnviando(false)
