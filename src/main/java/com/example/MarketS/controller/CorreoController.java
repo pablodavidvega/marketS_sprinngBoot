@@ -3,6 +3,7 @@ package com.example.MarketS.controller;
 import com.example.MarketS.model.Correo;
 import com.example.MarketS.service.CorreoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,9 @@ import java.util.Arrays;
 import java.util.List;
 
 @RestController
-@RequestMapping("/enviar-correo")
-public class    CorreoController {
+@RequestMapping("/api/correos")
+@PreAuthorize("hasRole('ADMIN')")
+public class CorreoController {
 
     @Autowired
     private CorreoService correoService;

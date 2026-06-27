@@ -1,7 +1,7 @@
 import api from './axios'
 
 export function enviarCorreoIndividual(para: string, asunto: string, mensaje: string) {
-  return api.get<string>('/enviar-correo', { params: { para, asunto, mensaje } })
+  return api.get<string>('/api/correos', { params: { para, asunto, mensaje } })
 }
 
 export function enviarCorreoVarios(data: {
@@ -15,7 +15,7 @@ export function enviarCorreoVarios(data: {
   if (data.archivo) form.append('archivo', data.archivo)
   form.append('asunto', data.asunto)
   form.append('mensaje', data.mensaje)
-  return api.post<string>('/enviar-correo/varios', form)
+  return api.post<string>('/api/correos/varios', form)
 }
 
 export function enviarCorreoMasivo(archivo: File, asunto: string, mensaje: string) {
@@ -23,5 +23,5 @@ export function enviarCorreoMasivo(archivo: File, asunto: string, mensaje: strin
   form.append('archivo', archivo)
   form.append('asunto', asunto)
   form.append('mensaje', mensaje)
-  return api.post<string>('/enviar-correo/masivo', form)
+  return api.post<string>('/api/correos/masivo', form)
 }
