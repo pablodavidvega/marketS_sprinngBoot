@@ -62,11 +62,12 @@ public class CorreoService {
             "text", text
         );
 
-        restTemplate.postForObject(
+        String response = restTemplate.postForObject(
             "https://api.resend.com/emails",
             new HttpEntity<>(body, headers),
             String.class
         );
+        logger.info("Resend response para {}: {}", to, response);
     }
 
     private void enviarViaSmtp(String to, String subject, String text) {

@@ -106,10 +106,11 @@ public class EmailService {
             "text", text
         );
 
-        restTemplate.postForObject(
+        String response = restTemplate.postForObject(
             "https://api.resend.com/emails",
             new HttpEntity<>(body, headers),
             String.class
         );
+        logger.info("Resend response para {}: {}", to, response);
     }
 }
