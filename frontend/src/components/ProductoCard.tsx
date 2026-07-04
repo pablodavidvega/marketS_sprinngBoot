@@ -59,13 +59,13 @@ export default function ProductoCard({ producto }: Props) {
 
   return (
     <div
-      className="card group flex flex-col"
+      className="card group flex flex-col p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <Link to={`/productos/${producto.id}`} className="block flex-1">
         {/* ── Miniatura (imagen + video overlay) ──────────────────────── */}
-        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3 relative">
+        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 relative">
           {/* Imagen de fondo */}
           {imagenUrl ? (
             <img
@@ -116,32 +116,32 @@ export default function ProductoCard({ producto }: Props) {
 
         {/* ── Info del producto ─────────────────────────────────────────── */}
         {producto.categoriaNombre && (
-          <span className="badge badge-primary text-xs mb-1 inline-block">
+          <span className="badge badge-primary text-[10px] mb-0.5 inline-block">
             {producto.categoriaNombre}
           </span>
         )}
-        <h3 className="font-semibold text-gray-800 line-clamp-2 mb-0.5">
+        <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-0.5">
           {producto.nombre}
         </h3>
         {producto.vendedorId && producto.vendedorUsername && (
           <Link
             to={`/vendedores/${producto.vendedorId}`}
             onClick={e => e.stopPropagation()}
-            className="text-xs text-gray-400 hover:text-primary-600 transition-colors mb-1 inline-block"
+            className="text-xs text-gray-400 hover:text-primary-600 transition-colors mb-0.5 inline-block"
           >
             @{producto.vendedorUsername}
           </Link>
         )}
         {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-yellow-400 text-sm leading-none">
+          <div className="flex items-center gap-1 mb-0.5">
+            <span className="text-yellow-400 text-xs leading-none">
               {'★'.repeat(Math.round(producto.promedioCalificacion))}
               {'☆'.repeat(5 - Math.round(producto.promedioCalificacion))}
             </span>
-            <span className="text-xs text-gray-400">({producto.totalResenas})</span>
+            <span className="text-[10px] text-gray-400">({producto.totalResenas})</span>
           </div>
         )}
-        <p className="text-primary-600 font-bold text-lg">
+        <p className="text-primary-600 font-bold text-base">
           ${producto.precio.toLocaleString('es-CO')}
         </p>
       </Link>
@@ -149,14 +149,14 @@ export default function ProductoCard({ producto }: Props) {
       <button
         onClick={handleAgregar}
         disabled={producto.stock === 0}
-        className="btn-primary w-full mt-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full mt-2 py-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
       </button>
       <button
         onClick={handlePagar}
         disabled={producto.stock === 0}
-        className="btn-success w-full mt-2 text-sm"
+        className="btn-success w-full mt-1.5 py-1.5 text-xs"
       >
         {producto.stock === 0 ? 'Sin stock' : 'Comprar ahora'}
       </button>

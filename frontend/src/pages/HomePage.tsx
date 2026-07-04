@@ -5,6 +5,8 @@ import ProductoCard from '../components/ProductoCard'
 import BuscadorAvanzado from '../components/BuscadorAvanzado'
 import ProductosRecientesSlider from '../components/ProductosRecientesSlider'
 
+const PRODUCTOS_POR_PAGINA = 40
+
 export default function HomePage() {
   const [productos, setProductos] = useState<Producto[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -13,6 +15,7 @@ export default function HomePage() {
   const [filtro, setFiltro] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [visibles, setVisibles] = useState(PRODUCTOS_POR_PAGINA)
 
   useEffect(() => {
     getCategorias()
@@ -23,9 +26,10 @@ export default function HomePage() {
   useEffect(() => {
     setLoading(true)
     setError('')
+    setVisibles(PRODUCTOS_POR_PAGINA)
     const req = categoriaActiva
       ? getProductosPorCategoria(categoriaActiva)
-      : getProductos(filtro || undefined)
+      : getProductos(filtro || undefined, 200)
 
     req
       .then(r => setProductos(r.data))
@@ -44,10 +48,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Slider de últimos productos agregados */}
+    <>
+      {/* Slider de últimos productos agregados — full width */}
       <ProductosRecientesSlider />
 
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Buscador avanzado */}
       <div className="mb-6">
         <BuscadorAvanzado onSearch={handleSearch} initialValue={filtro} />
@@ -107,10 +112,23 @@ export default function HomePage() {
           {filtro ? `No se encontraron productos para "${filtro}"` : 'No hay productos disponibles'}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {productos.map(p => <ProductoCard key={p.id} producto={p} />)}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {productos.slice(0, visibles).map(p => <ProductoCard key={p.id} producto={p} />)}
+          </div>
+          {visibles < productos.length && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => setVisibles(v => v + PRODUCTOS_POR_PAGINA)}
+                className="btn-secondary px-6"
+              >
+                Ver más
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
+    </>
   )
 }

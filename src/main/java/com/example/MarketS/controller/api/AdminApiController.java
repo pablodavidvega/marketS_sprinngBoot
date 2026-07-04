@@ -2,16 +2,27 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroUsuarioDTO;
+import com.example.MarketS.dto.ReporteAdminDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.ReporteAdminService;
+import com.example.MarketS.service.ReportePdfService;
 import com.example.MarketS.service.UserService;
+import com.example.MarketS.service.reportes.ReporteContexto;
+import com.example.MarketS.service.reportes.ReporteExcelStrategy;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +36,15 @@ public class AdminApiController {
     private final UserService userService;
     private final RolRepository rolRepository;
     private final UserRepository userRepository;
+
+    @Autowired
+    private ReporteAdminService reporteAdminService;
+
+    @Autowired
+    private ReporteContexto reporteContexto;
+
+    @Autowired
+    private ReportePdfService reportePdfService;
 
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository) {
         this.userService = userService;
@@ -161,6 +181,51 @@ public class AdminApiController {
                 .map(r -> Map.<String, Object>of("id", r.getId(), "nombre", r.getRolname()))
                 .toList();
         return ResponseEntity.ok(roles);
+    }
+
+    // GET /api/admin/reportes/usuarios — descarga PDF con la lista de usuarios (respeta los mismos filtros)
+    @GetMapping("/reportes/usuarios")
+    public ResponseEntity<byte[]> reporteUsuariosPdf(
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String valor) {
+        List<User> usuarios;
+        if (tipo == null || valor == null || valor.isBlank()) {
+            usuarios = userService.listarTodos();
+        } else {
+            usuarios = switch (tipo) {
+                case "nombre"    -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
+                case "email"     -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
+                case "direccion" -> userService.buscarPorDireccion(valor);
+                case "rol"       -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
+                default          -> userService.listarTodos();
+            };
+        }
+        try {
+            byte[] pdf = reportePdfService.generarReporteUsuarios(usuarios);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reporte-usuarios.pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // GET /api/admin/reportes/catalogo — datos del catálogo para el reporte React (sin imágenes base64)
+    @GetMapping("/reportes/catalogo")
+    public ResponseEntity<ReporteAdminDTO> reporteCatalogo() {
+        ReporteAdminDTO reporte = reporteAdminService.generarReporte();
+        reporte.setGraficoCategoriasBase64("");
+        reporte.setGraficoPreciosStockBase64("");
+        return ResponseEntity.ok(reporte);
+    }
+
+    // GET /api/admin/reportes/catalogo/excel — descarga Excel generado en el backend
+    @GetMapping("/reportes/catalogo/excel")
+    public void descargarExcelCatalogo(HttpServletResponse response) throws IOException {
+        ReporteAdminDTO reporte = reporteAdminService.generarReporte();
+        reporteContexto.setEstrategia(new ReporteExcelStrategy());
+        reporteContexto.exportar(response, reporte);
     }
 
     // GET /api/admin/reportes/vendedores — estadísticas agregadas por vendedor (también accesible por MODERADOR)

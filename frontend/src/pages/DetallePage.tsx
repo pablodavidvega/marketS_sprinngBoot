@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProducto, getResenas, crearResena } from '../api/productos'
 import { getPreguntas, crearPregunta, responderPregunta } from '../api/preguntas'
 import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
@@ -287,6 +287,15 @@ export default function DetallePage() {
             <span className="badge badge-primary w-fit">{producto.categoriaNombre}</span>
           )}
           <h1 className="text-2xl font-bold text-gray-800">{producto.nombre}</h1>
+
+          {producto.vendedorId && producto.vendedorUsername && (
+            <Link
+              to={`/vendedores/${producto.vendedorId}`}
+              className="text-sm text-gray-400 hover:text-primary-600 transition-colors"
+            >
+              @{producto.vendedorUsername}
+            </Link>
+          )}
 
           {/* Promedio de calificación */}
           {resenas && (

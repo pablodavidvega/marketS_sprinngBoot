@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga } from '../types'
+import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga, ReporteCatalogo } from '../types'
 
 export const getMiPerfil = () =>
   api.get<PerfilUsuario>('/api/me')
@@ -40,6 +40,18 @@ export const getRoles = () =>
 
 export const getReporteVendedores = () =>
   api.get<VendedorEstadisticas[]>('/api/admin/reportes/vendedores')
+
+export const getReporteCatalogo = () =>
+  api.get<ReporteCatalogo>('/api/admin/reportes/catalogo')
+
+export const descargarExcelCatalogo = () =>
+  api.get('/api/admin/reportes/catalogo/excel', { responseType: 'blob' })
+
+export const descargarPdfUsuarios = (tipo?: string, valor?: string) =>
+  api.get('/api/admin/reportes/usuarios', {
+    params: { tipo, valor },
+    responseType: 'blob',
+  })
 
 export const cargarUsuariosMasivo = (
   archivo: File,

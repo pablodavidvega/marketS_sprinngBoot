@@ -121,7 +121,7 @@ export default function ProductosRecientesSlider() {
 
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
           <span className="text-primary-600">✦</span> Últimos productos agregados
         </h2>
@@ -129,7 +129,7 @@ export default function ProductosRecientesSlider() {
           Ver todos →
         </Link>
       </div>
-      <div className="relative w-full h-[350px] rounded-2xl overflow-hidden shadow-lg select-none bg-gray-900">
+      <div className="relative w-full h-[350px] overflow-hidden shadow-lg select-none" style={{ backgroundColor: '#000510' }}>
       <div
         className="flex h-full"
         style={{
@@ -150,7 +150,7 @@ export default function ProductosRecientesSlider() {
                 tabIndex={0}
                 onClick={irAlListado}
                 onKeyDown={e => { if (e.key === 'Enter') irAlListado() }}
-                className="relative w-full h-full flex-shrink-0 cursor-pointer overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 flex flex-col"
+                className="relative w-full h-full flex-shrink-0 cursor-pointer overflow-hidden bg-gradient-to-br from-[#0d1b3d] via-[#060e24] to-[#000510] flex flex-col"
               >
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
 

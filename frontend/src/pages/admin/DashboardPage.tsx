@@ -89,6 +89,17 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/admin/reportes/catalogo" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xl group-hover:bg-indigo-200 transition-colors">
+              🗂️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Reporte del catálogo</h2>
+              <p className="text-sm text-gray-500">Productos por categoría, precios y stock — PDF, Excel y CSV</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )

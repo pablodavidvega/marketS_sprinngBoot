@@ -277,3 +277,13 @@ export interface PreguntasResponse {
   puedeResponder: boolean
   preguntas: Pregunta[]
 }
+
+export interface ReporteCatalogo {
+  totalProductos: number
+  totalCategorias: number
+  totalMarcas: number
+  promedioPrecio: number
+  promedioStock: number
+  nombresCategorias: string[]
+  totalesCategorias: number[]
+}

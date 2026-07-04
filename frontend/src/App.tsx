@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
@@ -22,6 +23,7 @@ import AdminDashboardPage from './pages/admin/DashboardPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
 import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
+import ReportesCatalogoPage from './pages/admin/ReportesCatalogoPage'
 import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
 import EnviarCorreosPage from './pages/admin/EnviarCorreosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
@@ -39,9 +41,9 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 export default function App() {
   return (
     <ToastProvider>
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -156,6 +158,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/reportes/catalogo"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <ReportesCatalogoPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/carga-usuarios"
             element={
               <ProtectedRoute roles={['ADMIN']}>
@@ -232,6 +242,7 @@ export default function App() {
           <Route path="*" element={<HomePage />} />
         </Routes>
       </main>
+      <Footer />
     </div>
     </ToastProvider>
   )

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles } from '../../api/usuario'
+import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles, descargarPdfUsuarios } from '../../api/usuario'
 import type { PerfilUsuario } from '../../types'
 
 // ─── Helpers de presentación ───────────────────────────────────────────────
@@ -23,10 +23,11 @@ export default function UsuariosPage() {
   const [usuarios,  setUsuarios]  = useState<PerfilUsuario[]>([])
   const [roles,     setRoles]     = useState<{ id: number; nombre: string }[]>([])
   const [loading,   setLoading]   = useState(true)
-  const [busqueda,  setBusqueda]  = useState('')
-  const [tipo,      setTipo]      = useState('')
-  const [accionId,  setAccionId]  = useState<number | null>(null)
-  const [error,     setError]     = useState('')
+  const [busqueda,       setBusqueda]       = useState('')
+  const [tipo,           setTipo]           = useState('')
+  const [accionId,       setAccionId]       = useState<number | null>(null)
+  const [error,          setError]          = useState('')
+  const [descargandoPdf, setDescargandoPdf] = useState(false)
 
   function cargar() {
     setLoading(true)
@@ -90,10 +91,38 @@ export default function UsuariosPage() {
     }
   }
 
+  // ── Descargar PDF ──────────────────────────────────────────────────────────
+  async function handleDescargarPdf() {
+    setDescargandoPdf(true)
+    try {
+      const response = await descargarPdfUsuarios(tipo || undefined, busqueda || undefined)
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `reporte-usuarios-${new Date().toISOString().slice(0, 10)}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Error al generar el reporte PDF')
+    } finally {
+      setDescargandoPdf(false)
+    }
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Gestión de usuarios</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Gestión de usuarios</h1>
+        <button
+          onClick={handleDescargarPdf}
+          disabled={descargandoPdf || loading}
+          className="btn-secondary text-sm disabled:opacity-50"
+        >
+          {descargandoPdf ? 'Generando…' : 'Descargar PDF'}
+        </button>
+      </div>
 
       {/* Error global */}
       {error && (
