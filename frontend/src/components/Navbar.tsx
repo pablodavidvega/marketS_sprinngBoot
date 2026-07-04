@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCarrito } from '../context/CarritoContext'
 import { useAppConfig } from '../context/AppConfigContext'
 import NotificacionesBell from './NotificacionesBell'
+import NavbarTabs from './NavbarTabs'
 
 export default function Navbar() {
   const { isAuthenticated, hasRole, logout, user } = useAuth()
@@ -28,77 +29,6 @@ export default function Navbar() {
               : <span className="text-2xl font-bold text-primary-600">{nombreApp}</span>
             }
           </Link>
-
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6">
-            <NavLink to="/" end className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-              Inicio
-            </NavLink>
-
-            <NavLink to="/soporte" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-              Soporte
-            </NavLink>
-
-            {isAuthenticated && hasRole('CLIENTE') && (
-              <NavLink to="/cliente/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                Mi cuenta
-              </NavLink>
-            )}
-
-            {isAuthenticated && hasRole('VENDEDOR') && (
-              <>
-                <NavLink to="/vendedor/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Mis productos
-                </NavLink>
-                <NavLink to="/vendedor/carga-masiva" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Carga masiva
-                </NavLink>
-              </>
-            )}
-
-            {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
-              <>
-                <NavLink to="/moderador/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Panel mod
-                </NavLink>
-                <NavLink to="/moderador/productos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Productos
-                </NavLink>
-                <NavLink to="/moderador/pedidos" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Pedidos
-                </NavLink>
-                <NavLink to="/moderador/reportes" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Reportes
-                </NavLink>
-              </>
-            )}
-
-            {isAuthenticated && hasRole('ADMIN') && (
-              <>
-                <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Panel admin
-                </NavLink>
-                <NavLink to="/admin/usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Usuarios
-                </NavLink>
-                <NavLink to="/admin/categorias" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Categorías
-                </NavLink>
-                <NavLink to="/admin/carga-usuarios" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Carga masiva
-                </NavLink>
-                <NavLink to="/admin/invitaciones" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Invitaciones
-                </NavLink>
-                <NavLink to="/admin/configuracion" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Configuración
-                </NavLink>
-                <NavLink to="/admin/banners-slider" className={({ isActive }) => isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}>
-                  Banners slider
-                </NavLink>
-              </>
-            )}
-          </div>
 
           {/* Right side */}
           <div className="flex items-center gap-3">
@@ -147,7 +77,12 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+      </div>
 
+      {/* Desktop tabs row */}
+      <NavbarTabs />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Mobile menu */}
         {open && (
           <div className="md:hidden border-t border-gray-100 py-3 flex flex-col gap-3">
