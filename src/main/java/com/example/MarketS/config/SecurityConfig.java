@@ -17,8 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -98,59 +96,15 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Cadena 2: todo lo demás → sesión + Thymeleaf (sin cambios)
+    // Cadena 2: todo lo que no sea /api/** → solo recursos estáticos de /uploads/**, el resto denegado
     @Bean
     @Order(2)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain staticResourcesFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers("/enviar-correo/**")
-                )
-
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/", "/login",
-                                "/usuarios/registro", "/usuarios/registro/**",
-                                "/CSS/**", "/JS/**", "/img/**", "/fondos/**",
-                                "/error",
-                                "/redireccionar-por-rol",
-                                "/productos/**",
-                                "/uploads/**",
-                                "/filtros",
-                                "/servicio-cliente",
-                                "/servicio-cliente/enviar",
-                                "/enviar-correo/**",
-                                "/forgot-password",
-                                "/reset-password"
-                        ).permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/vendedor/**").hasAnyAuthority("ROLE_VENDEDOR", "ROLE_ADMIN")
-                        .requestMatchers("/cliente/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_VENDEDOR", "ROLE_ADMIN")
-                        .requestMatchers("/pedido/**", "/carrito/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .usernameParameter("email")
-                        .passwordParameter("password")
-                        .defaultSuccessUrl("/redireccionar-por-rol", true)
-                        .permitAll()
-                )
-
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
-                )
-
-                .exceptionHandling(handling ->
-                        handling.accessDeniedPage("/access_denied")
+                        .requestMatchers("/uploads/**").permitAll()
+                        .anyRequest().denyAll()
                 );
 
         return http.build();
