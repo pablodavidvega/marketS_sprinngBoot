@@ -56,6 +56,17 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/admin/categorias" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center text-teal-600 text-xl group-hover:bg-teal-200 transition-colors">
+              🗃️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Categorías de productos</h2>
+              <p className="text-sm text-gray-500">Crear, renombrar y eliminar categorías</p>
+            </div>
+          </div>
+        </Link>
         <Link to="/admin/correos" className="card hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 text-xl group-hover:bg-orange-200 transition-colors">

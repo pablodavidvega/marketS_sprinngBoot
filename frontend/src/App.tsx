@@ -29,6 +29,7 @@ import EnviarCorreosPage from './pages/admin/EnviarCorreosPage'
 import InvitacionesPage from './pages/admin/InvitacionesPage'
 import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
 import BannerSliderPage from './pages/admin/BannerSliderPage'
+import CategoriasPage from './pages/admin/CategoriasPage'
 import UltimosProductosPage from './pages/UltimosProductosPage'
 import ModeradorDashboardPage from './pages/moderador/DashboardPage'
 import ModeradorProductosPage from './pages/moderador/ProductosPage'
@@ -202,6 +203,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <BannerSliderPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categorias"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <CategoriasPage />
               </ProtectedRoute>
             }
           />

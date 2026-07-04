@@ -68,6 +68,12 @@ export interface Categoria {
   nombre: string
 }
 
+export interface CategoriaAdmin {
+  id: number
+  nombreCategoria: string
+  totalProductos: number
+}
+
 export interface BannerSlide {
   id: number
   imagen: string
