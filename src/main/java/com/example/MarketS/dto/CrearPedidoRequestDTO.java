@@ -17,6 +17,9 @@ public class CrearPedidoRequestDTO {
     @Valid
     private List<ItemCarritoDTO> items;
 
+    // MERCADOPAGO (default si viene vacío), o un acuerdo externo: EFECTIVO, TRANSFERENCIA, NEQUI, OTRO
+    private String metodoPago;
+
     @Getter
     @Setter
     public static class ItemCarritoDTO {

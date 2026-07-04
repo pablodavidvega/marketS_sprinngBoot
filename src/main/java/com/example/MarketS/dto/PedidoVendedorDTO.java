@@ -16,6 +16,7 @@ public class PedidoVendedorDTO {
     private Long vendedorId;
     private LocalDateTime fecha;
     private String estado;
+    private String metodoPago;
     private String compradorUsername;
     private String compradorEmail;
     private String compradorPhone;
@@ -52,6 +53,7 @@ public class PedidoVendedorDTO {
                 .vendedorId(vendedor.getId())
                 .fecha(pedido.getFecha())
                 .estado(pedido.getEstado())
+                .metodoPago(pedido.getMetodoPago())
                 .compradorUsername(comprador.getUsername())
                 .compradorEmail(comprador.getEmail())
                 .compradorPhone(comprador.getPhone())

@@ -6,8 +6,11 @@ export interface CrearPedidoItem {
   cantidad: number
 }
 
-export const crearPedido = (items: CrearPedidoItem[]) =>
-  api.post<PedidoResponse>('/api/pedidos', { items })
+// MERCADOPAGO (default) o un acuerdo externo: EFECTIVO, TRANSFERENCIA, NEQUI, OTRO
+export type MetodoPago = 'MERCADOPAGO' | 'EFECTIVO' | 'TRANSFERENCIA' | 'NEQUI' | 'OTRO'
+
+export const crearPedido = (items: CrearPedidoItem[], metodoPago?: MetodoPago) =>
+  api.post<PedidoResponse>('/api/pedidos', { items, metodoPago })
 
 export const getPedido = (id: number) =>
   api.get<PedidoResponse>(`/api/pedidos/${id}`)
@@ -23,3 +26,9 @@ export const getPedidosVendedor = () =>
 
 export const confirmarRecepcion = (id: number) =>
   api.patch<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/confirmar-recepcion`)
+
+export const marcarCompletado = (id: number) =>
+  api.patch<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/marcar-completado`)
+
+export const marcarRechazado = (id: number) =>
+  api.patch<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/marcar-rechazado`)

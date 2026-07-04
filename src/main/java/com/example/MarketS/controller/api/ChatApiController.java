@@ -10,6 +10,7 @@ import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -40,6 +41,9 @@ public class ChatApiController {
     }
 
     // GET /api/pedidos/{pedidoId}/chat/{vendedorId} — mensajes del hilo, marca como leídos los del otro participante
+    // @Transactional: marcarLeidosParaLector es una consulta @Modifying (UPDATE) y requiere una
+    // transacción activa, si no Hibernate lanza TransactionRequiredException.
+    @Transactional
     @GetMapping
     public ResponseEntity<?> listar(@PathVariable Long pedidoId, @PathVariable Long vendedorId, Authentication auth) {
         User usuario = resolverUsuario(auth);

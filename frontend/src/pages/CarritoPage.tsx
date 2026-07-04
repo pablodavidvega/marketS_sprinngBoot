@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
-import { crearPedido } from '../api/pedidos'
+import { crearPedido, type MetodoPago } from '../api/pedidos'
+
+const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
+  { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
+  { valor: 'TRANSFERENCIA', etiqueta: 'Transferencia' },
+  { valor: 'NEQUI', etiqueta: 'Nequi' },
+  { valor: 'OTRO', etiqueta: 'Otro acuerdo' },
+]
 
 export default function CarritoPage() {
   const { items, total, quitar, actualizar } = useCarrito()
@@ -10,6 +17,7 @@ export default function CarritoPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>('MERCADOPAGO')
 
   async function handleCheckout() {
     if (!isAuthenticated) {
@@ -20,8 +28,13 @@ export default function CarritoPage() {
     setLoading(true)
     try {
       const { data } = await crearPedido(
-        items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad }))
+        items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad })),
+        metodoPago
       )
+      if (metodoPago !== 'MERCADOPAGO') {
+        navigate(`/pedidos/confirmacion?status=acordado&pedido_id=${data.pedidoId}`)
+        return
+      }
       navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {
         state: { paymentUrl: data.paymentUrl },
       })
@@ -109,6 +122,37 @@ export default function CarritoPage() {
             <span>${total.toLocaleString('es-CO')}</span>
           </div>
 
+          <div className="mb-4">
+            <p className="text-sm font-medium text-gray-700 mb-2">¿Cómo vas a pagar?</p>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="metodoPago"
+                  checked={metodoPago === 'MERCADOPAGO'}
+                  onChange={() => setMetodoPago('MERCADOPAGO')}
+                />
+                Pagar con MercadoPago
+              </label>
+              {METODOS_EXTERNOS.map(m => (
+                <label key={m.valor} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="metodoPago"
+                    checked={metodoPago === m.valor}
+                    onChange={() => setMetodoPago(m.valor)}
+                  />
+                  Acordar por fuera de la app ({m.etiqueta})
+                </label>
+              ))}
+            </div>
+            {metodoPago !== 'MERCADOPAGO' && (
+              <p className="text-xs text-gray-500 mt-2">
+                El pedido queda registrado y el vendedor confirmará cuando la venta se concrete. Coordina el pago y la entrega con el vendedor por chat.
+              </p>
+            )}
+          </div>
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-3">
               {error}
@@ -120,7 +164,13 @@ export default function CarritoPage() {
             disabled={loading}
             className="btn-primary w-full"
           >
-            {loading ? 'Procesando...' : isAuthenticated ? 'Pagar con MercadoPago' : 'Ingresar para comprar'}
+            {loading
+              ? 'Procesando...'
+              : !isAuthenticated
+                ? 'Ingresar para comprar'
+                : metodoPago === 'MERCADOPAGO'
+                  ? 'Pagar con MercadoPago'
+                  : 'Registrar pedido'}
           </button>
 
           <Link to="/" className="block text-center text-sm text-gray-500 hover:text-primary-600 mt-3">

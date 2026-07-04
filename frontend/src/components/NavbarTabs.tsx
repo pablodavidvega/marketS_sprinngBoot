@@ -15,6 +15,12 @@ export default function NavbarTabs() {
             Inicio
           </NavLink>
 
+          {isAuthenticated && hasRole('VENDEDOR') && (
+            <NavLink to="/vendedor" end className={linkClass}>
+              Dashboard
+            </NavLink>
+          )}
+
           <NavLink to="/soporte" className={linkClass}>
             Soporte
           </NavLink>
@@ -31,7 +37,7 @@ export default function NavbarTabs() {
                 Mis productos
               </NavLink>
               <NavLink to="/vendedor/carga-masiva" className={linkClass}>
-                Carga masiva
+                Carga masiva de productos
               </NavLink>
             </>
           )}

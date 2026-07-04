@@ -32,6 +32,12 @@ public class Pedido {
     @Column(name = "estado_pedido", nullable = false)
     private String estado;
 
+    // Método de pago elegido al crear el pedido: MERCADOPAGO (default) o un acuerdo externo
+    // (EFECTIVO, TRANSFERENCIA, NEQUI, OTRO). Determina si el pedido pasa por el flujo de
+    // MercadoPago o queda a la espera de que el vendedor confirme manualmente la venta.
+    @Column(name = "metodo_pago", length = 30)
+    private String metodoPago = "MERCADOPAGO";
+
     // ===== CONSTRUCTORES =====
     public Pedido() {
         this.detalles = new ArrayList<>(); // INICIALIZAR SIEMPRE
@@ -97,5 +103,13 @@ public class Pedido {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getMetodoPago() {
+        return metodoPago;
+    }
+
+    public void setMetodoPago(String metodoPago) {
+        this.metodoPago = metodoPago;
     }
 }

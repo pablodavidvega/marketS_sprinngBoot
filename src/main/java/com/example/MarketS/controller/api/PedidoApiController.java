@@ -5,7 +5,9 @@ import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.MercadoPagoService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.PedidoService;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.UserService;
@@ -19,6 +21,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,22 +34,30 @@ public class PedidoApiController {
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
+    private static final Set<String> METODOS_EXTERNOS = Set.of("EFECTIVO", "TRANSFERENCIA", "NEQUI", "OTRO");
+
     private final PedidoService pedidoService;
     private final PedidoRepository pedidoRepository;
     private final MercadoPagoService mercadoPagoService;
     private final ProductoService productoService;
     private final UserService userService;
+    private final NotificacionService notificacionService;
+    private final EmailService emailService;
 
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
                                 MercadoPagoService mercadoPagoService,
                                 ProductoService productoService,
-                                UserService userService) {
+                                UserService userService,
+                                NotificacionService notificacionService,
+                                EmailService emailService) {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
         this.productoService = productoService;
         this.userService = userService;
+        this.notificacionService = notificacionService;
+        this.emailService = emailService;
     }
 
     // POST /api/pedidos — crea pedido y devuelve URL de pago de MercadoPago
@@ -67,6 +78,11 @@ public class PedidoApiController {
             pedido = pedidoService.crearPedido(usuario, carrito);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+
+        String metodoPago = request.getMetodoPago();
+        if (metodoPago != null && METODOS_EXTERNOS.contains(metodoPago.toUpperCase())) {
+            return crearPedidoConAcuerdoExterno(pedido, metodoPago.toUpperCase());
         }
 
         // Generar preferencia de MercadoPago con back_urls al frontend React
@@ -99,6 +115,30 @@ public class PedidoApiController {
         pedidoRepository.save(pedido);
 
         return ResponseEntity.ok(PedidoResponseDTO.from(pedido, paymentUrl, preferenceId));
+    }
+
+    // La venta se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.): no se genera
+    // link de pago, el pedido queda a la espera de que el vendedor confirme si se concretó o no.
+    // pedidoService.crearPedido ya notificó (in-app) a cada vendedor con "NUEVO_PEDIDO"; aquí solo
+    // se avisa por correo, ya que ese flujo genérico no envía email al vendedor y este caso requiere
+    // una acción suya (confirmar o rechazar la venta).
+    private ResponseEntity<?> crearPedidoConAcuerdoExterno(Pedido pedido, String metodoPago) {
+        pedido.setMetodoPago(metodoPago);
+        pedido.setEstado("ACORDADO_EXTERNO");
+        pedidoRepository.save(pedido);
+
+        pedido.getDetalles().stream()
+                .map(d -> d.getProducto().getVendedor())
+                .distinct()
+                .filter(vendedor -> vendedor.getEmail() != null && !vendedor.getEmail().isBlank())
+                .forEach(vendedor -> emailService.enviarCorreo(
+                        vendedor.getEmail(),
+                        "Nuevo pedido acordado por fuera de la app - MarketS",
+                        "Tienes un pedido #" + pedido.getId() + " con pago acordado por fuera de la app (" + metodoPago + ").\n" +
+                                "Cuando se concrete o no la venta, márcalo desde tu panel de pedidos recibidos."
+                ));
+
+        return ResponseEntity.ok(PedidoResponseDTO.from(pedido));
     }
 
     // GET /api/pedidos/{id} — detalle de un pedido (solo el dueño)
@@ -138,6 +178,70 @@ public class PedidoApiController {
         pedido.setEstado("RECIBIDO");
         pedidoRepository.save(pedido);
         return ResponseEntity.ok(Map.of("mensaje", "Recepción confirmada", "estado", "RECIBIDO"));
+    }
+
+    // -------------------------------------------------------------------------
+    // Confirmación manual de ventas acordadas por fuera de la app (efectivo, transferencia, etc.)
+    // -------------------------------------------------------------------------
+
+    // PATCH /api/pedidos/{id}/marcar-completado — el vendedor confirma que la venta externa se concretó
+    @PatchMapping("/{id}/marcar-completado")
+    public ResponseEntity<?> marcarCompletado(@PathVariable Long id, Authentication auth) {
+        return resolverAcuerdoExterno(id, auth, true);
+    }
+
+    // PATCH /api/pedidos/{id}/marcar-rechazado — el vendedor indica que la venta externa no se concretó
+    @PatchMapping("/{id}/marcar-rechazado")
+    public ResponseEntity<?> marcarRechazado(@PathVariable Long id, Authentication auth) {
+        return resolverAcuerdoExterno(id, auth, false);
+    }
+
+    private ResponseEntity<?> resolverAcuerdoExterno(Long id, Authentication auth, boolean completado) {
+        User vendedor = resolverUsuario(auth);
+        Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
+        if (pedido == null) return ResponseEntity.notFound().build();
+
+        boolean esAdmin = "ROLE_ADMIN".equals(vendedor.getRol().getRolname());
+        boolean esVendedorDelPedido = pedido.getDetalles().stream()
+                .anyMatch(d -> d.getProducto().getVendedor() != null
+                        && d.getProducto().getVendedor().getId().equals(vendedor.getId()));
+        if (!esAdmin && !esVendedorDelPedido) {
+            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+        }
+
+        if (!METODOS_EXTERNOS.contains(pedido.getMetodoPago())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Este pedido no es un acuerdo externo"));
+        }
+        if (!"ACORDADO_EXTERNO".equals(pedido.getEstado())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Este pedido ya fue resuelto"));
+        }
+
+        String nuevoEstado = completado ? "COMPLETADO_EXTERNO" : "RECHAZADO_EXTERNO";
+        pedido.setEstado(nuevoEstado);
+        pedidoRepository.save(pedido);
+
+        if (completado) {
+            pedido.getDetalles().stream()
+                    .filter(d -> d.getProducto().getVendedor().getId().equals(vendedor.getId()))
+                    .forEach(d -> {
+                        try {
+                            productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
+                        } catch (Exception e) {
+                            System.err.println("Error reduciendo stock: " + e.getMessage());
+                        }
+                    });
+        }
+
+        User comprador = pedido.getUsuario();
+        String mensaje = completado
+                ? "El vendedor confirmó que tu pedido #" + id + " se realizó."
+                : "El vendedor indicó que tu pedido #" + id + " no se llegó a realizar.";
+        notificacionService.crear(comprador, mensaje, completado ? "PEDIDO_COMPLETADO_EXTERNO" : "PEDIDO_RECHAZADO_EXTERNO", id);
+        if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+            emailService.enviarCorreo(comprador.getEmail(), "Actualización de tu pedido #" + id + " - MarketS", mensaje);
+        }
+
+        return ResponseEntity.ok(Map.of("mensaje", "Pedido actualizado", "estado", nuevoEstado));
     }
 
     // -------------------------------------------------------------------------

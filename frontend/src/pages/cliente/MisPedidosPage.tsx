@@ -12,6 +12,9 @@ const ESTADO_COLOR: Record<string, string> = {
   RECHAZADO: 'bg-red-100 text-red-700',
   CANCELADO: 'bg-red-100 text-red-700',
   PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
+  ACORDADO_EXTERNO: 'bg-blue-100 text-blue-700',
+  COMPLETADO_EXTERNO: 'bg-green-100 text-green-700',
+  RECHAZADO_EXTERNO: 'bg-red-100 text-red-700',
 }
 
 export default function MisPedidosPage() {
@@ -175,6 +178,14 @@ export default function MisPedidosPage() {
                       >
                         {confirmando === pedido.pedidoId ? 'Confirmando...' : 'Confirmar recepción'}
                       </button>
+                    </div>
+                  )}
+
+                  {pedido.estado === 'ACORDADO_EXTERNO' && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-500">
+                        Acordaste el pago por fuera de la app ({pedido.metodoPago?.toLowerCase()}). Coordina la entrega con el vendedor por chat; él confirmará cuando la venta se concrete.
+                      </p>
                     </div>
                   )}
                 </div>

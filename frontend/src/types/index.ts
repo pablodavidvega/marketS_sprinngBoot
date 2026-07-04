@@ -106,6 +106,7 @@ export interface DetallePedido {
 export interface PedidoResponse {
   pedidoId: number
   estado: string
+  metodoPago?: string
   total: number
   fecha: string
   paymentUrl?: string
@@ -202,6 +203,7 @@ export interface PedidoVendedorResponse {
   vendedorId: number
   fecha: string
   estado: string
+  metodoPago?: string
   compradorUsername: string
   compradorEmail: string
   compradorPhone: string

@@ -61,11 +61,15 @@ public class SecurityConfig {
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
 
         http
-                .securityMatcher("/api/**")
+                .securityMatcher("/api/**", "/error")
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Spring reenvía internamente a /error cuando una excepción ocurre procesando /api/**;
+                        // debe quedar accesible o ese reenvío cae en la cadena 2 (denyAll) y enmascara
+                        // cualquier error real (500, 400, etc.) como un 403 en blanco confuso.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()

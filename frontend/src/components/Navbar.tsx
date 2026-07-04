@@ -87,6 +87,9 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden border-t border-gray-100 py-3 flex flex-col gap-3">
             <Link to="/" onClick={() => setOpen(false)} className="text-gray-700 py-1">Inicio</Link>
+            {isAuthenticated && hasRole('VENDEDOR') && (
+              <Link to="/vendedor" onClick={() => setOpen(false)} className="text-gray-700 py-1">Dashboard</Link>
+            )}
             <Link to="/soporte" onClick={() => setOpen(false)} className="text-gray-700 py-1">Soporte</Link>
             {isAuthenticated && hasRole('CLIENTE') && (
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
@@ -94,7 +97,7 @@ export default function Navbar() {
             {isAuthenticated && hasRole('VENDEDOR') && (
               <>
                 <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
-                <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>
+                <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva de productos</Link>
               </>
             )}
             {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (

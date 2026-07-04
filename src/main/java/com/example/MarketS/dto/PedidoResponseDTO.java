@@ -13,6 +13,7 @@ public class PedidoResponseDTO {
 
     private Long pedidoId;
     private String estado;
+    private String metodoPago;
     private Double total;
     private LocalDateTime fecha;
     private String paymentUrl;
@@ -54,6 +55,7 @@ public class PedidoResponseDTO {
         return PedidoResponseDTO.builder()
                 .pedidoId(pedido.getId())
                 .estado(pedido.getEstado())
+                .metodoPago(pedido.getMetodoPago())
                 .total(pedido.getTotal())
                 .fecha(pedido.getFecha())
                 .paymentUrl(paymentUrl)

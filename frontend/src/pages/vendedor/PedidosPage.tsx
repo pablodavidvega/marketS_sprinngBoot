@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getPedidosVendedor } from '../../api/pedidos'
+import { getPedidosVendedor, marcarCompletado, marcarRechazado } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
 import type { PedidoVendedorResponse } from '../../types'
 
@@ -12,6 +12,9 @@ const ESTADO_COLOR: Record<string, string> = {
   RECHAZADO: 'bg-red-100 text-red-700',
   CANCELADO: 'bg-red-100 text-red-700',
   PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
+  ACORDADO_EXTERNO: 'bg-blue-100 text-blue-700',
+  COMPLETADO_EXTERNO: 'bg-green-100 text-green-700',
+  RECHAZADO_EXTERNO: 'bg-red-100 text-red-700',
 }
 
 export default function PedidosVendedorPage() {
@@ -19,12 +22,23 @@ export default function PedidosVendedorPage() {
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<number | null>(null)
+  const [resolviendo, setResolviendo] = useState<number | null>(null)
 
   useEffect(() => {
     getPedidosVendedor()
       .then(r => setPedidos(r.data))
       .finally(() => setLoading(false))
   }, [])
+
+  async function handleResolver(pedidoId: number, completado: boolean) {
+    setResolviendo(pedidoId)
+    try {
+      const { data } = completado ? await marcarCompletado(pedidoId) : await marcarRechazado(pedidoId)
+      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: data.estado } : p))
+    } finally {
+      setResolviendo(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -153,6 +167,31 @@ export default function PedidosVendedorPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Venta acordada por fuera de la app: el vendedor confirma si se concretó */}
+                  {pedido.estado === 'ACORDADO_EXTERNO' && (
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-sm text-gray-500 mb-3">
+                        Este pedido se acordó por fuera de la app ({pedido.metodoPago?.toLowerCase()}). Confirma si la venta se realizó.
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleResolver(pedido.pedidoId, true)}
+                          disabled={resolviendo === pedido.pedidoId}
+                          className="btn-primary flex-1"
+                        >
+                          {resolviendo === pedido.pedidoId ? 'Guardando...' : 'Compra realizada'}
+                        </button>
+                        <button
+                          onClick={() => handleResolver(pedido.pedidoId, false)}
+                          disabled={resolviendo === pedido.pedidoId}
+                          className="btn-secondary flex-1"
+                        >
+                          {resolviendo === pedido.pedidoId ? 'Guardando...' : 'No se realizó'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
