@@ -9,7 +9,9 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "producto")
+@Table(name = "producto", indexes = {
+        @Index(name = "idx_producto_vendedor_id", columnList = "vendedor_id")
+})
 @Getter
 @Setter
 public class Producto {
@@ -67,7 +69,13 @@ public class Producto {
     @ManyToOne
     private Categorias categorias;
 
-    @ManyToOne
+    // LAZY: el id del vendedor se puede leer desde el proxy sin consultar la BD (la FK ya
+    // está en esta misma fila). Cargar el User completo (.getUsername(), etc.) sí dispara una
+    // consulta — y como User.vendedor es un @OneToOne mappedBy sin bytecode enhancement,
+    // Hibernate SIEMPRE dispara una consulta extra a "vendedores" al inicializar ese User,
+    // se acceda o no a ese campo. Por eso el listado de productos usa un batch aparte
+    // (ver ProductoApiController.buildDTOs) en vez de cargar el User completo por producto.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vendedor_id")
     private User vendedor;
 }

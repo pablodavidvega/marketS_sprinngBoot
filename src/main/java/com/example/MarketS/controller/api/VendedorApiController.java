@@ -6,8 +6,8 @@ import com.example.MarketS.dto.TallasStockDTO;
 import com.example.MarketS.model.*;
 import com.example.MarketS.repository.*;
 import com.example.MarketS.service.ProductoService;
-import com.example.MarketS.service.UserService;
 import com.example.MarketS.service.CloudStorageService;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.repository.DetallePedidoRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -41,28 +41,28 @@ public class VendedorApiController {
     private final ProductoService productoService;
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
-    private final UserService userService;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
     private final CloudStorageService cloudStorageService;
     private final DetallePedidoRepository detallePedidoRepository;
+    private final UserRepository userRepository;
 
     public VendedorApiController(ProductoService productoService,
                                   ProductoRepository productoRepository,
                                   PedidoRepository pedidoRepository,
-                                  UserService userService,
                                   CategoriaRepository categoriaRepository,
                                   MarcaRepository marcaRepository,
                                   CloudStorageService cloudStorageService,
-                                  DetallePedidoRepository detallePedidoRepository) {
+                                  DetallePedidoRepository detallePedidoRepository,
+                                  UserRepository userRepository) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
-        this.userService = userService;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
         this.cloudStorageService = cloudStorageService;
         this.detallePedidoRepository = detallePedidoRepository;
+        this.userRepository = userRepository;
     }
 
     // GET /api/vendedor/dashboard
@@ -133,8 +133,24 @@ public class VendedorApiController {
     public ResponseEntity<List<PedidoVendedorDTO>> pedidosRecibidos(Authentication auth) {
         User vendedor = resolverUsuario(auth);
         List<Pedido> pedidos = pedidoRepository.findByVendedorWithDetails(vendedor);
+
+        // Resuelve en 1 sola query los datos de contacto de todos los compradores distintos
+        // (evita cargar el User completo de cada uno, ver Pedido.usuario).
+        List<Long> compradorIds = pedidos.stream()
+                .map(p -> p.getUsuario().getId())
+                .distinct()
+                .toList();
+        Map<Long, PedidoVendedorDTO.CompradorInfo> compradores = new java.util.HashMap<>();
+        if (!compradorIds.isEmpty()) {
+            userRepository.findContactInfoByIdIn(compradorIds).forEach(row ->
+                    compradores.put(
+                            ((Number) row[0]).longValue(),
+                            new PedidoVendedorDTO.CompradorInfo(
+                                    (String) row[1], (String) row[2], (String) row[3], (String) row[4])));
+        }
+
         List<PedidoVendedorDTO> result = pedidos.stream()
-                .map(p -> PedidoVendedorDTO.from(p, vendedor))
+                .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores))
                 .toList();
         return ResponseEntity.ok(result);
     }
@@ -152,8 +168,11 @@ public class VendedorApiController {
                 ? productoService.buscarPorTodosLosCampos(keyword, usuario.getId(), PageRequest.of(page, size))
                 : productoService.listarProductosPorVendedor(usuario.getId(), PageRequest.of(page, size));
 
+        // Todos los productos de esta página son del mismo "usuario" (se filtra por vendedor
+        // arriba), así que no hace falta resolverlo en batch — ya lo conocemos.
+        Map<Long, String> vendedorUsernames = Map.of(usuario.getId(), usuario.getUsername());
         List<ProductoResponseDTO> contenido = paginado.getContent().stream()
-                .map(ProductoResponseDTO::from)
+                .map(p -> ProductoResponseDTO.from(p, null, null, null, vendedorUsernames))
                 .toList();
 
         return ResponseEntity.ok(Map.of(
@@ -170,7 +189,7 @@ public class VendedorApiController {
         User usuario = resolverUsuario(auth);
         return productoRepository.findById(id)
                 .filter(p -> p.getVendedor().getId().equals(usuario.getId()))
-                .map(ProductoResponseDTO::from)
+                .map(p -> ProductoResponseDTO.from(p, null, null, null, Map.of(usuario.getId(), usuario.getUsername())))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -281,7 +300,10 @@ public class VendedorApiController {
         }
 
         productoRepository.save(producto);
-        return ResponseEntity.ok(ProductoResponseDTO.from(producto));
+        // producto.getVendedor() es LAZY y este producto se recargó vía findById (sesión ya
+        // cerrada), pero ya sabemos que el vendedor es "usuario" (se validó arriba).
+        return ResponseEntity.ok(ProductoResponseDTO.from(
+                producto, null, null, null, Map.of(usuario.getId(), usuario.getUsername())));
     }
 
     // PATCH /api/vendedor/productos/{id}/activar
@@ -306,7 +328,9 @@ public class VendedorApiController {
         }
         producto.setActivo(activo);
         productoRepository.save(producto);
-        return ResponseEntity.ok(ProductoResponseDTO.from(producto));
+        // Igual que en actualizar(): producto.getVendedor() es LAZY, pero ya sabemos que es "usuario".
+        return ResponseEntity.ok(ProductoResponseDTO.from(
+                producto, null, null, null, Map.of(usuario.getId(), usuario.getUsername())));
     }
 
     private LocalDateTime calcularDesde(String periodo) {
@@ -322,8 +346,9 @@ public class VendedorApiController {
     }
 
     private User resolverUsuario(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + auth.getName()));
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        return usuario;
     }
 
     private void aplicarCategoria(Producto producto, Long categoriaId) {

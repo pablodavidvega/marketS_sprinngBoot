@@ -3,7 +3,7 @@ package com.example.MarketS.carga.controller;
 import com.example.MarketS.carga.dto.DTOResultadoCarga;
 import com.example.MarketS.carga.service.CargaMasivaVendedorService;
 import com.example.MarketS.model.User;
-import com.example.MarketS.service.UserService;
+import com.example.MarketS.security.UsuarioPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +20,6 @@ import java.util.List;
 public class CargaMasivaVendedorRestController {
 
     private final CargaMasivaVendedorService cargaMasivaService;
-    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<DTOResultadoCarga> subirArchivo(
@@ -34,8 +33,8 @@ public class CargaMasivaVendedorRestController {
                             List.of("Debes seleccionar un archivo CSV o Excel")));
         }
 
-        User vendedor = userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Vendedor no encontrado"));
+        User vendedor = UsuarioPrincipal.from(auth);
+        if (vendedor == null) throw new RuntimeException("Vendedor no encontrado");
 
         DTOResultadoCarga resultado = cargaMasivaService.procesar(archivo, zip, vendedor);
         return ResponseEntity.ok(resultado);

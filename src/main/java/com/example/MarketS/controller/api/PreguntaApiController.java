@@ -5,9 +5,10 @@ import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PreguntaRepository;
 import com.example.MarketS.repository.ProductoRepository;
+import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.NotificacionService;
-import com.example.MarketS.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,20 +24,20 @@ public class PreguntaApiController {
 
     private final PreguntaRepository preguntaRepository;
     private final ProductoRepository productoRepository;
-    private final UserService userService;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
+    private final UserRepository userRepository;
 
     public PreguntaApiController(PreguntaRepository preguntaRepository,
                                   ProductoRepository productoRepository,
-                                  UserService userService,
                                   NotificacionService notificacionService,
-                                  EmailService emailService) {
+                                  EmailService emailService,
+                                  UserRepository userRepository) {
         this.preguntaRepository = preguntaRepository;
         this.productoRepository = productoRepository;
-        this.userService = userService;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
+        this.userRepository = userRepository;
     }
 
     // GET /api/productos/{productoId}/preguntas — público
@@ -53,7 +54,7 @@ public class PreguntaApiController {
 
         boolean puedeResponder = false;
         if (auth != null && auth.isAuthenticated()) {
-            User usuario = userService.buscarPorEmail(auth.getName()).orElse(null);
+            User usuario = UsuarioPrincipal.from(auth);
             if (usuario != null) {
                 boolean esAdmin = "ROLE_ADMIN".equals(usuario.getRol().getRolname());
                 boolean esVendedorDelProducto = producto.getVendedor() != null
@@ -75,7 +76,7 @@ public class PreguntaApiController {
                                     @RequestBody Map<String, Object> body,
                                     Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
-        User usuario = userService.buscarPorEmail(auth.getName()).orElse(null);
+        User usuario = UsuarioPrincipal.from(auth);
         if (usuario == null) return ResponseEntity.status(401).build();
 
         Producto producto = productoRepository.findById(productoId).orElse(null);
@@ -93,22 +94,27 @@ public class PreguntaApiController {
         pregunta.setFechaPregunta(LocalDateTime.now());
         preguntaRepository.save(pregunta);
 
-        User vendedor = producto.getVendedor();
-        if (vendedor != null) {
+        User vendedorRef = producto.getVendedor();
+        if (vendedorRef != null) {
             notificacionService.crear(
-                    vendedor,
+                    vendedorRef,
                     usuario.getUsername() + " preguntó sobre " + producto.getNombre(),
                     "NUEVA_PREGUNTA",
                     null,
                     productoId
             );
-            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
-                emailService.enviarCorreo(
-                        vendedor.getEmail(),
-                        "Nueva pregunta sobre " + producto.getNombre() + " - MarketS",
-                        usuario.getUsername() + " preguntó:\n\n" + contenido
-                );
-            }
+            // Se recarga el vendedor completo aparte: producto.getVendedor() es LAZY y, en este
+            // punto, ya quedó fuera de la sesión que lo cargó (cada llamada a un repository
+            // corre en su propia transacción), así que solo su id es seguro de leer sin querer.
+            userRepository.findById(vendedorRef.getId()).ifPresent(vendedor -> {
+                if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                    emailService.enviarCorreo(
+                            vendedor.getEmail(),
+                            "Nueva pregunta sobre " + producto.getNombre() + " - MarketS",
+                            usuario.getUsername() + " preguntó:\n\n" + contenido
+                    );
+                }
+            });
         }
 
         return ResponseEntity.ok(toMap(pregunta));
@@ -119,7 +125,7 @@ public class PreguntaApiController {
     public ResponseEntity<?> responder(@PathVariable Long productoId, @PathVariable Long preguntaId,
                                         @RequestBody Map<String, Object> body, Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
-        User usuario = userService.buscarPorEmail(auth.getName()).orElse(null);
+        User usuario = UsuarioPrincipal.from(auth);
         if (usuario == null) return ResponseEntity.status(401).build();
 
         Pregunta pregunta = preguntaRepository.findById(preguntaId).orElse(null);

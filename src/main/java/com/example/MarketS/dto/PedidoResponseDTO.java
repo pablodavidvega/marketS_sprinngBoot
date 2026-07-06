@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -38,17 +39,32 @@ public class PedidoResponseDTO {
     }
 
     public static PedidoResponseDTO from(Pedido pedido, String paymentUrl, String preferenceId) {
+        return from(pedido, paymentUrl, preferenceId, null);
+    }
+
+    // Variante para listados (ver PedidoApiController.misPedidos / ClienteApiController.dashboard):
+    // recibe los usernames de vendedores ya resueltos en batch en vez de tocar
+    // d.getProducto().getVendedor().getUsername(), que cargaría el User completo y dispararía
+    // una consulta extra por cada vendedor distinto (ver Producto.vendedor).
+    public static PedidoResponseDTO from(Pedido pedido, String paymentUrl, String preferenceId,
+                                          Map<Long, String> vendedorUsernames) {
         List<DetalleDTO> detalles = pedido.getDetalles() != null
-                ? pedido.getDetalles().stream().map(d -> DetalleDTO.builder()
-                        .productoId(d.getProducto().getId())
-                        .productoNombre(d.getProducto().getNombre())
-                        .productoImagen(normalizeUrl(d.getProducto().getImagen()))
-                        .precioUnitario(d.getPrecioUnitario())
-                        .cantidad(d.getCantidad())
-                        .subtotal(d.getPrecioUnitario() * d.getCantidad())
-                        .vendedorId(d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getId() : null)
-                        .vendedorUsername(d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getUsername() : null)
-                        .build())
+                ? pedido.getDetalles().stream().map(d -> {
+                        Long vendedorId = d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getId() : null;
+                        String vendedorUsername = vendedorUsernames != null && vendedorId != null
+                                ? vendedorUsernames.get(vendedorId)
+                                : (d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getUsername() : null);
+                        return DetalleDTO.builder()
+                                .productoId(d.getProducto().getId())
+                                .productoNombre(d.getProducto().getNombre())
+                                .productoImagen(normalizeUrl(d.getProducto().getImagen()))
+                                .precioUnitario(d.getPrecioUnitario())
+                                .cantidad(d.getCantidad())
+                                .subtotal(d.getPrecioUnitario() * d.getCantidad())
+                                .vendedorId(vendedorId)
+                                .vendedorUsername(vendedorUsername)
+                                .build();
+                    })
                         .toList()
                 : List.of();
 

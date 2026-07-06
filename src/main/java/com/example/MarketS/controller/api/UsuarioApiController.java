@@ -4,6 +4,7 @@ import com.example.MarketS.dto.ActualizarPerfilRequestDTO;
 import com.example.MarketS.dto.CambiarPasswordRequestDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.model.User;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +26,9 @@ public class UsuarioApiController {
     // GET /api/me — perfil del usuario autenticado
     @GetMapping
     public ResponseEntity<PerfilResponseDTO> perfil(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .map(PerfilResponseDTO::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(PerfilResponseDTO.from(usuario));
     }
 
     // PUT /api/me — actualizar datos básicos del perfil
@@ -80,7 +80,8 @@ public class UsuarioApiController {
     }
 
     private User resolverUsuario(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        return usuario;
     }
 }

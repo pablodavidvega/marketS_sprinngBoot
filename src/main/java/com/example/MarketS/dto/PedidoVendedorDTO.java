@@ -7,6 +7,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -34,8 +35,16 @@ public class PedidoVendedorDTO {
         private Double gananciaVendedor;
     }
 
-    public static PedidoVendedorDTO from(Pedido pedido, User vendedor) {
-        User comprador = pedido.getUsuario();
+    // Datos de contacto del comprador, resueltos en batch (ver
+    // UserRepository.findContactInfoByIdIn) en vez de navegar pedido.getUsuario(), que
+    // cargaría el User completo del comprador y dispararía una consulta extra por cada
+    // comprador distinto (ver Pedido.usuario).
+    public record CompradorInfo(String username, String email, String phone, String address) {}
+
+    public static PedidoVendedorDTO from(Pedido pedido, User vendedor, Map<Long, CompradorInfo> compradores) {
+        Long compradorId = pedido.getUsuario().getId(); // seguro: id de un proxy LAZY, sin consulta
+        CompradorInfo comprador = compradores.get(compradorId);
+
         List<ItemDTO> items = pedido.getDetalles().stream()
                 .filter(d -> d.getProducto().getVendedor().getId().equals(vendedor.getId()))
                 .map(d -> ItemDTO.builder()
@@ -54,10 +63,10 @@ public class PedidoVendedorDTO {
                 .fecha(pedido.getFecha())
                 .estado(pedido.getEstado())
                 .metodoPago(pedido.getMetodoPago())
-                .compradorUsername(comprador.getUsername())
-                .compradorEmail(comprador.getEmail())
-                .compradorPhone(comprador.getPhone())
-                .compradorAddress(comprador.getAddress())
+                .compradorUsername(comprador != null ? comprador.username() : null)
+                .compradorEmail(comprador != null ? comprador.email() : null)
+                .compradorPhone(comprador != null ? comprador.phone() : null)
+                .compradorAddress(comprador != null ? comprador.address() : null)
                 .items(items)
                 .build();
     }

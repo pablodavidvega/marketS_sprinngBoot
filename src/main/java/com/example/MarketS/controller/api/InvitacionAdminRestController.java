@@ -2,9 +2,9 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.model.Invitacion;
 import com.example.MarketS.model.User;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.ConfiguracionAppService;
 import com.example.MarketS.service.InvitacionService;
-import com.example.MarketS.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,7 +23,6 @@ public class InvitacionAdminRestController {
 
     private final InvitacionService invitacionService;
     private final ConfiguracionAppService configService;
-    private final UserService userService;
 
     // GET /api/admin/invitaciones — listar todas
     @GetMapping
@@ -40,8 +39,8 @@ public class InvitacionAdminRestController {
             @RequestBody Map<String, Object> body,
             Authentication auth) {
 
-        User admin = userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Admin no encontrado"));
+        User admin = UsuarioPrincipal.from(auth);
+        if (admin == null) throw new RuntimeException("Admin no encontrado");
 
         String descripcion = (String) body.getOrDefault("descripcion", null);
         Integer maxUsos = body.get("maxUsos") != null

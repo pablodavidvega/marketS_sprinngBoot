@@ -7,6 +7,7 @@ import org.hibernate.Hibernate;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -40,6 +41,19 @@ public class ProductoResponseDTO {
     }
 
     public static ProductoResponseDTO from(Producto p, Double promedioCalificacion, Long totalResenas, Long totalVendido) {
+        return from(p, promedioCalificacion, totalResenas, totalVendido, null);
+    }
+
+    // Variante para listados: recibe el username del vendedor ya resuelto en batch
+    // (ver ProductoApiController.buildDTOs) en vez de tocar p.getVendedor().getUsername(),
+    // que cargaría el User completo y dispararía una consulta extra por cada producto.
+    public static ProductoResponseDTO from(Producto p, Double promedioCalificacion, Long totalResenas,
+                                            Long totalVendido, Map<Long, String> vendedorUsernames) {
+        Long vendedorId = p.getVendedor() != null ? p.getVendedor().getId() : null;
+        String vendedorUsername = vendedorUsernames != null && vendedorId != null
+                ? vendedorUsernames.get(vendedorId)
+                : (p.getVendedor() != null ? p.getVendedor().getUsername() : null);
+
         return ProductoResponseDTO.builder()
                 .id(p.getId())
                 .nombre(p.getNombre())
@@ -57,8 +71,8 @@ public class ProductoResponseDTO {
                 .categoriaNombre(p.getCategorias() != null ? p.getCategorias().getNombreCategoria() : null)
                 .marcaId(p.getMarca() != null ? p.getMarca().getId() : null)
                 .marcaNombre(p.getMarca() != null ? p.getMarca().getNombreMarca() : null)
-                .vendedorId(p.getVendedor() != null ? p.getVendedor().getId() : null)
-                .vendedorUsername(p.getVendedor() != null ? p.getVendedor().getUsername() : null)
+                .vendedorId(vendedorId)
+                .vendedorUsername(vendedorUsername)
                 .tallas(Hibernate.isInitialized(p.getTallas())
                         ? p.getTallas().stream()
                             .map(t -> new TallasStockDTO(t.getTalla(), t.getStock()))

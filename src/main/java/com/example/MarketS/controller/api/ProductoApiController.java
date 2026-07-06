@@ -8,6 +8,7 @@ import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.MarcaRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
+import com.example.MarketS.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,17 +26,20 @@ public class ProductoApiController {
     private final MarcaRepository marcaRepository;
     private final ResenaRepository resenaRepository;
     private final DetallePedidoRepository detallePedidoRepository;
+    private final UserRepository userRepository;
 
     public ProductoApiController(ProductoRepository productoRepository,
                                   CategoriaRepository categoriaRepository,
                                   MarcaRepository marcaRepository,
                                   ResenaRepository resenaRepository,
-                                  DetallePedidoRepository detallePedidoRepository) {
+                                  DetallePedidoRepository detallePedidoRepository,
+                                  UserRepository userRepository) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
         this.resenaRepository = resenaRepository;
         this.detallePedidoRepository = detallePedidoRepository;
+        this.userRepository = userRepository;
     }
 
     // GET /api/productos — catálogo principal (aleatoriamente limitado a 30)
@@ -100,11 +104,22 @@ public class ProductoApiController {
     public ResponseEntity<ProductoResponseDTO> detalle(@PathVariable Long id) {
         return productoRepository.findById(id)
                 .filter(Producto::getActivo)
-                .map(p -> ProductoResponseDTO.from(
-                        p,
-                        resenaRepository.avgCalificacionByProductoId(p.getId()),
-                        resenaRepository.countByProductoId(p.getId()),
-                        detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId())))
+                .map(p -> {
+                    // p.getVendedor() es LAZY y ya quedó fuera de sesión en este punto (el
+                    // findById corrió en su propia transacción); se resuelve el username aparte.
+                    Long vendedorId = p.getVendedor() != null ? p.getVendedor().getId() : null;
+                    Map<Long, String> vendedorUsername = vendedorId != null
+                            ? userRepository.findIdAndUsernameByIdIn(List.of(vendedorId)).stream()
+                                    .collect(java.util.stream.Collectors.toMap(
+                                            row -> ((Number) row[0]).longValue(), row -> (String) row[1]))
+                            : Map.of();
+                    return ProductoResponseDTO.from(
+                            p,
+                            resenaRepository.avgCalificacionByProductoId(p.getId()),
+                            resenaRepository.countByProductoId(p.getId()),
+                            detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId()),
+                            vendedorUsername);
+                })
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -140,7 +155,7 @@ public class ProductoApiController {
 
     /**
      * Convierte una lista de productos a DTOs enriquecidos con estadísticas
-     * usando solo 2 queries batch (independientemente de cuántos productos haya).
+     * usando solo 3 queries batch (independientemente de cuántos productos haya).
      */
     private List<ProductoResponseDTO> buildDTOs(List<Producto> productos) {
         if (productos.isEmpty()) return List.of();
@@ -164,6 +179,19 @@ public class ProductoApiController {
             statsVentas.put(pid, total);
         });
 
+        // 1 query para usernames de vendedores (evita cargar el User completo por producto,
+        // lo que dispararía una consulta extra a "vendedores" por cada uno — ver Producto.vendedor)
+        List<Long> vendedorIds = productos.stream()
+                .map(p -> p.getVendedor() != null ? p.getVendedor().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, String> vendedorUsernames = new HashMap<>();
+        if (!vendedorIds.isEmpty()) {
+            userRepository.findIdAndUsernameByIdIn(vendedorIds).forEach(row ->
+                    vendedorUsernames.put(((Number) row[0]).longValue(), (String) row[1]));
+        }
+
         return productos.stream().map(p -> {
             double[] resena = statsResenas.getOrDefault(p.getId(), new double[]{ 0.0, 0 });
             long vendido    = statsVentas.getOrDefault(p.getId(), 0L);
@@ -171,7 +199,8 @@ public class ProductoApiController {
                     p,
                     resena[0] > 0 ? resena[0] : null,
                     (long) resena[1],
-                    vendido
+                    vendido,
+                    vendedorUsernames
             );
         }).toList();
     }

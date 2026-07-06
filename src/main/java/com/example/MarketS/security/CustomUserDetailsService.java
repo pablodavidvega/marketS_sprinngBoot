@@ -5,10 +5,7 @@ import com.example.MarketS.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -24,13 +21,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
-        // Usamos rolname directamente (ej: ROLE_ADMIN, ROLE_VENDEDOR, ROLE_CLIENTE)
-        String roleName = user.getRol().getRolname();
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority(roleName))
-        );
+        // Se envuelve el usuario de dominio en el principal para que los controllers no
+        // tengan que volver a consultarlo por email (evita duplicar el round-trip a la BD).
+        return new UsuarioPrincipal(user);
     }
 }

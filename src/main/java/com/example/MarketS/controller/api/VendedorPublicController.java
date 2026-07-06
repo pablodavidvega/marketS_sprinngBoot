@@ -2,6 +2,7 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.model.Producto;
+import com.example.MarketS.model.User;
 import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
@@ -49,12 +50,12 @@ public class VendedorPublicController {
                 .filter(u -> u.isActive())
                 .map(u -> {
                     List<Producto> productos = productoRepository.findByVendedorIdAndActivoTrue(u.getId());
-                    return ResponseEntity.ok(buildDTOs(productos));
+                    return ResponseEntity.ok(buildDTOs(productos, u));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    private List<ProductoResponseDTO> buildDTOs(List<Producto> productos) {
+    private List<ProductoResponseDTO> buildDTOs(List<Producto> productos, User vendedor) {
         if (productos.isEmpty()) return List.of();
 
         List<Long> ids = productos.stream().map(Producto::getId).toList();
@@ -74,10 +75,13 @@ public class VendedorPublicController {
             statsVentas.put(pid, total);
         });
 
+        // Todos estos productos son de "vendedor" (se filtró por vendedorId arriba), así que
+        // no hace falta resolverlo en batch.
+        Map<Long, String> vendedorUsernames = Map.of(vendedor.getId(), vendedor.getUsername());
         return productos.stream().map(p -> {
             double[] resena = statsResenas.getOrDefault(p.getId(), new double[]{ 0.0, 0 });
             long vendido    = statsVentas.getOrDefault(p.getId(), 0L);
-            return ProductoResponseDTO.from(p, resena[0] > 0 ? resena[0] : null, (long) resena[1], vendido);
+            return ProductoResponseDTO.from(p, resena[0] > 0 ? resena[0] : null, (long) resena[1], vendido, vendedorUsernames);
         }).toList();
     }
 }

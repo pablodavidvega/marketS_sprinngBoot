@@ -4,8 +4,8 @@ import com.example.MarketS.dto.ContactoResponseDTO;
 import com.example.MarketS.model.Contacto;
 import com.example.MarketS.model.EstadoContacto;
 import com.example.MarketS.model.User;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.ContactoService;
-import com.example.MarketS.service.UserService;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,11 +25,9 @@ import java.util.Map;
 public class ContactoApiController {
 
     private final ContactoService contactoService;
-    private final UserService userService;
 
-    public ContactoApiController(ContactoService contactoService, UserService userService) {
+    public ContactoApiController(ContactoService contactoService) {
         this.contactoService = contactoService;
-        this.userService = userService;
     }
 
     // POST /api/contacto — enviar solicitud (público y autenticado)
@@ -51,8 +49,9 @@ public class ContactoApiController {
         contacto.setEstado(EstadoContacto.PENDIENTE);
         contacto.setFechaCreacion(LocalDateTime.now());
 
-        if (auth != null && auth.isAuthenticated()) {
-            userService.buscarPorEmail(auth.getName()).ifPresent(contacto::setUser);
+        User usuarioAutenticado = UsuarioPrincipal.from(auth);
+        if (usuarioAutenticado != null) {
+            contacto.setUser(usuarioAutenticado);
         }
 
         Contacto guardado = contactoService.guardar(contacto);
@@ -63,8 +62,8 @@ public class ContactoApiController {
     @GetMapping("/mis-solicitudes")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ContactoResponseDTO>> misSolicitudes(Authentication auth) {
-        User user = userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        User user = UsuarioPrincipal.from(auth);
+        if (user == null) throw new RuntimeException("Usuario no encontrado");
         List<ContactoResponseDTO> resultado = contactoService.listarPorUsuario(user)
                 .stream().map(ContactoResponseDTO::from).toList();
         return ResponseEntity.ok(resultado);

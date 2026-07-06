@@ -2,8 +2,8 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.model.Notificacion;
 import com.example.MarketS.model.User;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.NotificacionService;
-import com.example.MarketS.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,7 +18,6 @@ import java.util.Map;
 public class NotificacionApiController {
 
     private final NotificacionService notificacionService;
-    private final UserService         userService;
 
     // GET /api/notificaciones — últimas 20 + conteo de no leídas
     @GetMapping
@@ -47,8 +46,9 @@ public class NotificacionApiController {
     }
 
     private User resolverUsuario(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        return usuario;
     }
 
     private Map<String, Object> toMap(Notificacion n) {

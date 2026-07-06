@@ -20,6 +20,10 @@ public class PerfilResponseDTO {
     private LocalDateTime createdAt;
 
     public static PerfilResponseDTO from(User user) {
+        // Evita disparar el fetch LAZY de Vendedor (una consulta extra a la BD) para
+        // usuarios que no son vendedores, ya que nunca tendrán fila asociada.
+        boolean esVendedor = "ROLE_VENDEDOR".equals(user.getRol().getRolname());
+
         return PerfilResponseDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -27,7 +31,7 @@ public class PerfilResponseDTO {
                 .phone(user.getPhone())
                 .address(user.getAddress())
                 .rol(user.getRol().getRolname())
-                .city(user.getVendedor() != null ? user.getVendedor().getCity() : null)
+                .city(esVendedor && user.getVendedor() != null ? user.getVendedor().getCity() : null)
                 .createdAt(user.getCreatedAt())
                 .build();
     }

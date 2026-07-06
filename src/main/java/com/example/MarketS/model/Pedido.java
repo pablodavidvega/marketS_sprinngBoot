@@ -7,7 +7,10 @@ import java.util.ArrayList;
 
 
 @Entity
-@Table(name = "pedidos")
+@Table(name = "pedidos", indexes = {
+        @Index(name = "idx_pedidos_id_usuario", columnList = "id_usuario"),
+        @Index(name = "idx_pedidos_estado_pedido", columnList = "estado_pedido")
+})
 public class Pedido {
 
     @Id
@@ -19,7 +22,11 @@ public class Pedido {
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<DetallePedido> detalles = new ArrayList<>();
 
-    @ManyToOne
+    // LAZY: igual que Producto.vendedor, cargar el User completo del comprador dispara una
+    // consulta extra a "vendedores" (OneToOne mappedBy sin bytecode enhancement). En listados
+    // con muchos compradores distintos (ver PedidoRepository.findByVendedorWithDetails) el
+    // username/email se resuelve aparte en batch en vez de navegar pedido.getUsuario().
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private User usuario;
 

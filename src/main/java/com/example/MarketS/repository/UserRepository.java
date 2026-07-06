@@ -3,6 +3,7 @@ package com.example.MarketS.repository;
 import com.example.MarketS.model.Rol;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import com.example.MarketS.model.User;
 import org.springframework.stereotype.Repository;
 
@@ -25,6 +26,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRolRolname(String rolname);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+
+    // Proyección liviana (solo columnas escalares, no la entidad User completa) para
+    // resolver id+username de varios vendedores sin disparar, por cada uno, la consulta
+    // extra a "vendedores" que Hibernate hace al cargar un User completo (ver Producto.vendedor).
+    @Query("SELECT u.id, u.username FROM User u WHERE u.id IN :ids")
+    List<Object[]> findIdAndUsernameByIdIn(@Param("ids") List<Long> ids);
+
+    // Igual que arriba pero con los datos de contacto que necesita el vendedor para coordinar
+    // la entrega (ver PedidoVendedorDTO / PedidoRepository.findByVendedorWithDetails).
+    @Query("SELECT u.id, u.username, u.email, u.phone, u.address FROM User u WHERE u.id IN :ids")
+    List<Object[]> findContactInfoByIdIn(@Param("ids") List<Long> ids);
 
     @Query(nativeQuery = true, value = """
         SELECT

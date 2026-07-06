@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardCliente } from '../../api/usuario'
 import { confirmarRecepcion } from '../../api/pedidos'
+import ChatPedido from '../../components/ChatPedido'
 import type { DashboardCliente } from '../../types'
 
 export default function ClienteDashboardPage() {
   const [data, setData] = useState<DashboardCliente | null>(null)
   const [loading, setLoading] = useState(true)
   const [confirmando, setConfirmando] = useState<number | null>(null)
+  const [expandido, setExpandido] = useState<number | null>(null)
+  const [chatAbierto, setChatAbierto] = useState<string | null>(null)
 
   useEffect(() => {
     getDashboardCliente()
@@ -48,6 +51,9 @@ export default function ClienteDashboardPage() {
     CANCELADO: 'bg-red-100 text-red-700',
     RECHAZADO: 'bg-red-100 text-red-700',
     PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
+    ACORDADO_EXTERNO: 'bg-blue-100 text-blue-700',
+    COMPLETADO_EXTERNO: 'bg-green-100 text-green-700',
+    RECHAZADO_EXTERNO: 'bg-red-100 text-red-700',
   }
 
   return (
@@ -118,8 +124,11 @@ export default function ClienteDashboardPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {data.pedidosRecientes.map(pedido => (
-                <div key={pedido.pedidoId} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
+                <div key={pedido.pedidoId} className="p-3 bg-gray-50 rounded-lg">
+                  <div
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => setExpandido(expandido === pedido.pedidoId ? null : pedido.pedidoId)}
+                  >
                     <div>
                       <p className="font-medium text-gray-800">Pedido #{pedido.pedidoId}</p>
                       <p className="text-sm text-gray-500">
@@ -128,21 +137,88 @@ export default function ClienteDashboardPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`badge ${estadoColor[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {pedido.estado}
+                        {pedido.estado.replace(/_/g, ' ')}
                       </span>
                       <span className="font-semibold text-gray-800">
                         ${pedido.total.toLocaleString('es-CO')}
                       </span>
+                      <span className="text-gray-400 text-sm">
+                        {expandido === pedido.pedidoId ? '▲' : '▼'}
+                      </span>
                     </div>
                   </div>
-                  {pedido.estado === 'PAGADO' && (
-                    <button
-                      onClick={() => handleConfirmarRecepcion(pedido.pedidoId)}
-                      disabled={confirmando === pedido.pedidoId}
-                      className="btn-primary text-sm self-start"
-                    >
-                      {confirmando === pedido.pedidoId ? 'Confirmando...' : 'Confirmar recepción'}
-                    </button>
+
+                  {expandido === pedido.pedidoId && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex flex-col gap-3">
+                      {pedido.detalles.map((item, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          {item.productoImagen ? (
+                            <img
+                              src={item.productoImagen}
+                              alt={item.productoNombre}
+                              className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-lg">
+                              📦
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-800 truncate text-sm">{item.productoNombre}</p>
+                            <p className="text-xs text-gray-500">
+                              {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-gray-700 text-sm flex-shrink-0">
+                            ${item.subtotal.toLocaleString('es-CO')}
+                          </span>
+                        </div>
+                      ))}
+
+                      {/* Chat con cada vendedor del pedido (un pedido puede tener varios) */}
+                      {Array.from(
+                        new Map(
+                          pedido.detalles
+                            .filter((d): d is typeof d & { vendedorId: number; vendedorUsername: string } => d.vendedorId != null)
+                            .map(d => [d.vendedorId, d.vendedorUsername])
+                        )
+                      ).map(([vendedorId, vendedorUsername]) => {
+                        const key = `${pedido.pedidoId}-${vendedorId}`
+                        return (
+                          <div key={key} className="pt-2 border-t border-gray-200">
+                            <button
+                              onClick={() => setChatAbierto(chatAbierto === key ? null : key)}
+                              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                            >
+                              {chatAbierto === key ? '▲' : '💬'} Chat con {vendedorUsername}
+                            </button>
+                            {chatAbierto === key && (
+                              <div className="mt-3">
+                                <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {pedido.estado === 'PAGADO' && (
+                        <div className="pt-2 border-t border-gray-200">
+                          <button
+                            onClick={() => handleConfirmarRecepcion(pedido.pedidoId)}
+                            disabled={confirmando === pedido.pedidoId}
+                            className="btn-primary text-sm w-full"
+                          >
+                            {confirmando === pedido.pedidoId ? 'Confirmando...' : 'Confirmar recepción'}
+                          </button>
+                        </div>
+                      )}
+
+                      {pedido.estado === 'ACORDADO_EXTERNO' && (
+                        <p className="text-sm text-gray-500 pt-2 border-t border-gray-200">
+                          Acordaste el pago por fuera de la app ({pedido.metodoPago?.toLowerCase()}). Coordina la entrega con el vendedor por chat; él confirmará cuando la venta se concrete.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

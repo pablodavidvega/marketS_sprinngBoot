@@ -5,6 +5,7 @@ import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.ChatMensajeRepository;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
@@ -93,10 +94,16 @@ public class ChatApiController {
         mensaje.setFechaEnvio(LocalDateTime.now());
         chatMensajeRepository.save(mensaje);
 
-        User destinatario = usuario.getId().equals(pedido.getUsuario().getId()) ? vendedor : pedido.getUsuario();
+        boolean esParaComprador = !usuario.getId().equals(pedido.getUsuario().getId());
+        // Si el destinatario es el comprador, pedido.getUsuario() es un proxy LAZY (el pedido
+        // se cargó sin fetch join de usuario) — se recarga completo para poder leer su email.
+        User destinatarioRef = esParaComprador ? pedido.getUsuario() : vendedor;
+        User destinatario = esParaComprador
+                ? userService.buscarPorId(destinatarioRef.getId()).orElse(destinatarioRef)
+                : destinatarioRef;
         String resumen = contenido.length() > 80 ? contenido.substring(0, 80) + "…" : contenido;
         notificacionService.crear(
-                destinatario,
+                destinatarioRef,
                 usuario.getUsername() + " te escribió sobre el pedido #" + pedidoId + ": " + resumen,
                 "NUEVO_MENSAJE_CHAT",
                 pedidoId,
@@ -124,8 +131,9 @@ public class ChatApiController {
     }
 
     private User resolverUsuario(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + auth.getName()));
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        return usuario;
     }
 
     private Map<String, Object> toMap(ChatMensaje m) {

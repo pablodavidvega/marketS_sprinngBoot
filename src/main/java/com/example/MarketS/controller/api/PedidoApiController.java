@@ -5,12 +5,13 @@ import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.MercadoPagoService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.PedidoService;
 import com.example.MarketS.service.ProductoService;
-import com.example.MarketS.service.UserService;
+import com.example.MarketS.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -40,24 +41,40 @@ public class PedidoApiController {
     private final PedidoRepository pedidoRepository;
     private final MercadoPagoService mercadoPagoService;
     private final ProductoService productoService;
-    private final UserService userService;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
+    private final UserRepository userRepository;
 
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
                                 MercadoPagoService mercadoPagoService,
                                 ProductoService productoService,
-                                UserService userService,
                                 NotificacionService notificacionService,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                UserRepository userRepository) {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
         this.productoService = productoService;
-        this.userService = userService;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
+        this.userRepository = userRepository;
+    }
+
+    // Resuelve en 1 sola query los usernames de todos los vendedores distintos presentes en
+    // los pedidos, evitando cargar el User completo de cada vendedor (ver Producto.vendedor).
+    private Map<Long, String> resolverVendedorUsernames(List<Pedido> pedidos) {
+        List<Long> vendedorIds = pedidos.stream()
+                .flatMap(p -> p.getDetalles().stream())
+                .map(d -> d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (vendedorIds.isEmpty()) return Map.of();
+        Map<Long, String> resultado = new HashMap<>();
+        userRepository.findIdAndUsernameByIdIn(vendedorIds).forEach(row ->
+                resultado.put(((Number) row[0]).longValue(), (String) row[1]));
+        return resultado;
     }
 
     // POST /api/pedidos — crea pedido y devuelve URL de pago de MercadoPago
@@ -114,7 +131,8 @@ public class PedidoApiController {
         pedido.setEstado("PROCESANDO_PAGO");
         pedidoRepository.save(pedido);
 
-        return ResponseEntity.ok(PedidoResponseDTO.from(pedido, paymentUrl, preferenceId));
+        Map<Long, String> vendedorUsernames = resolverVendedorUsernames(List.of(pedido));
+        return ResponseEntity.ok(PedidoResponseDTO.from(pedido, paymentUrl, preferenceId, vendedorUsernames));
     }
 
     // La venta se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.): no se genera
@@ -127,18 +145,28 @@ public class PedidoApiController {
         pedido.setEstado("ACORDADO_EXTERNO");
         pedidoRepository.save(pedido);
 
-        pedido.getDetalles().stream()
+        // producto.getVendedor() es LAZY: solo el id es seguro de leer aquí (la sesión que
+        // cargó el producto ya se cerró). Se recargan los vendedores completos aparte para
+        // poder leer su email.
+        List<Long> vendedorIds = pedido.getDetalles().stream()
                 .map(d -> d.getProducto().getVendedor())
+                .filter(java.util.Objects::nonNull)
+                .map(User::getId)
                 .distinct()
-                .filter(vendedor -> vendedor.getEmail() != null && !vendedor.getEmail().isBlank())
-                .forEach(vendedor -> emailService.enviarCorreo(
+                .toList();
+        userRepository.findAllById(vendedorIds).forEach(vendedor -> {
+            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                emailService.enviarCorreo(
                         vendedor.getEmail(),
                         "Nuevo pedido acordado por fuera de la app - MarketS",
                         "Tienes un pedido #" + pedido.getId() + " con pago acordado por fuera de la app (" + metodoPago + ").\n" +
                                 "Cuando se concrete o no la venta, márcalo desde tu panel de pedidos recibidos."
-                ));
+                );
+            }
+        });
 
-        return ResponseEntity.ok(PedidoResponseDTO.from(pedido));
+        Map<Long, String> vendedorUsernames = resolverVendedorUsernames(List.of(pedido));
+        return ResponseEntity.ok(PedidoResponseDTO.from(pedido, null, null, vendedorUsernames));
     }
 
     // GET /api/pedidos/{id} — detalle de un pedido (solo el dueño)
@@ -147,7 +175,7 @@ public class PedidoApiController {
         User usuario = resolverUsuario(auth);
         return pedidoRepository.findByIdWithDetalles(id)
                 .filter(p -> p.getUsuario().getId().equals(usuario.getId()))
-                .map(PedidoResponseDTO::from)
+                .map(p -> PedidoResponseDTO.from(p, null, null, resolverVendedorUsernames(List.of(p))))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -156,9 +184,11 @@ public class PedidoApiController {
     @GetMapping("/mis-pedidos")
     public ResponseEntity<List<PedidoResponseDTO>> misPedidos(Authentication auth) {
         User usuario = resolverUsuario(auth);
-        List<PedidoResponseDTO> pedidos = pedidoRepository.findByUsuarioWithDetails(usuario)
+        List<Pedido> pedidosEntidad = pedidoRepository.findByUsuarioWithDetails(usuario);
+        Map<Long, String> vendedorUsernames = resolverVendedorUsernames(pedidosEntidad);
+        List<PedidoResponseDTO> pedidos = pedidosEntidad
                 .stream()
-                .map(PedidoResponseDTO::from)
+                .map(p -> PedidoResponseDTO.from(p, null, null, vendedorUsernames))
                 .toList();
         return ResponseEntity.ok(pedidos);
     }
@@ -232,14 +262,16 @@ public class PedidoApiController {
                     });
         }
 
-        User comprador = pedido.getUsuario();
+        User compradorRef = pedido.getUsuario(); // proxy LAZY: solo el id es seguro de leer aquí
         String mensaje = completado
                 ? "El vendedor confirmó que tu pedido #" + id + " se realizó."
                 : "El vendedor indicó que tu pedido #" + id + " no se llegó a realizar.";
-        notificacionService.crear(comprador, mensaje, completado ? "PEDIDO_COMPLETADO_EXTERNO" : "PEDIDO_RECHAZADO_EXTERNO", id);
-        if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
-            emailService.enviarCorreo(comprador.getEmail(), "Actualización de tu pedido #" + id + " - MarketS", mensaje);
-        }
+        notificacionService.crear(compradorRef, mensaje, completado ? "PEDIDO_COMPLETADO_EXTERNO" : "PEDIDO_RECHAZADO_EXTERNO", id);
+        userRepository.findById(compradorRef.getId()).ifPresent(comprador -> {
+            if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+                emailService.enviarCorreo(comprador.getEmail(), "Actualización de tu pedido #" + id + " - MarketS", mensaje);
+            }
+        });
 
         return ResponseEntity.ok(Map.of("mensaje", "Pedido actualizado", "estado", nuevoEstado));
     }
@@ -250,8 +282,7 @@ public class PedidoApiController {
 
     @PostMapping("/{id}/simular-pago")
     public ResponseEntity<?> simularPago(@PathVariable Long id, Authentication auth) {
-        User usuario = userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        User usuario = resolverUsuario(auth);
 
         Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
         if (pedido == null) {
@@ -412,7 +443,8 @@ public class PedidoApiController {
     }
 
     private User resolverUsuario(Authentication auth) {
-        return userService.buscarPorEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + auth.getName()));
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        return usuario;
     }
 }

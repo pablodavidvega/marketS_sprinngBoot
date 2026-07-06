@@ -15,7 +15,17 @@ import java.util.List;
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
 
-    List<Producto> findByNombreContainingIgnoreCase(String nombre);
+    // Con JOIN FETCH: evita N+1 sobre marca/categorias (ambas @ManyToOne EAGER que, sin
+    // fetch join, Hibernate resuelve con un SELECT separado por cada producto). El vendedor
+    // se resuelve aparte en batch (ver ProductoApiController.buildDTOs) para no cargar el
+    // User completo por producto.
+    @Query("""
+        SELECT p FROM Producto p
+        LEFT JOIN FETCH p.marca
+        LEFT JOIN FETCH p.categorias
+        WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :nombre, '%'))
+    """)
+    List<Producto> findByNombreContainingIgnoreCase(@Param("nombre") String nombre);
 
 
     @Query("""
@@ -51,12 +61,38 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     List<Producto> findByCategorias_NombreCategoriaIgnoreCase(String nombreCategoria);
 
-    List<Producto> findByCategoriasIdAndActivoTrue(Long categoriasId);
+    @Query("""
+        SELECT p FROM Producto p
+        LEFT JOIN FETCH p.marca
+        LEFT JOIN FETCH p.categorias
+        WHERE p.categorias.id = :categoriasId AND p.activo = true
+    """)
+    List<Producto> findByCategoriasIdAndActivoTrue(@Param("categoriasId") Long categoriasId);
 
+    @Query("""
+        SELECT p FROM Producto p
+        LEFT JOIN FETCH p.marca
+        LEFT JOIN FETCH p.categorias
+        WHERE p.activo = true
+    """)
     List<Producto> findByActivoTrue();
 
+    @Query("""
+        SELECT p FROM Producto p
+        LEFT JOIN FETCH p.marca
+        LEFT JOIN FETCH p.categorias
+        WHERE p.activo = true
+        ORDER BY p.fechaAgregacion DESC
+    """)
     List<Producto> findByActivoTrueOrderByFechaAgregacionDesc(Pageable pageable);
 
+    @Query("""
+        SELECT p FROM Producto p
+        LEFT JOIN FETCH p.marca
+        LEFT JOIN FETCH p.categorias
+        WHERE p.activo = true
+        ORDER BY p.fechaAgregacion DESC
+    """)
     List<Producto> findByActivoTrueOrderByFechaAgregacionDesc();
 
     List<Producto> findByVendedor(User vendedor);

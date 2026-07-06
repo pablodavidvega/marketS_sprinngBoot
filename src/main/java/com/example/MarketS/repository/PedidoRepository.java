@@ -21,8 +21,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Buscar pedidos por usuario
     List<Pedido> findByUsuario(User usuario);
 
-    // Pedidos del usuario con detalles y productos cargados en una sola query
-    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias LEFT JOIN FETCH pr.vendedor WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
+    // Pedidos del usuario con detalles y productos cargados en una sola query.
+    // OJO: no se hace JOIN FETCH de pr.vendedor (el User del vendedor) a propósito — cargar
+    // un User completo dispara, por cada uno, una consulta extra a "vendedores" (OneToOne
+    // mappedBy sin bytecode enhancement, ver Producto.vendedor), lo que reintroduciría un N+1.
+    // El id del vendedor se lee del proxy LAZY sin costo; el username se resuelve aparte en
+    // batch (ver PedidoResponseDTO / UserRepository.findIdAndUsernameByIdIn).
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE p.usuario = :usuario ORDER BY p.fecha DESC")
     List<Pedido> findByUsuarioWithDetails(@Param("usuario") User usuario);
 
     // Buscar pedidos por estado
@@ -36,7 +41,12 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("SELECT p FROM Pedido p JOIN FETCH p.usuario ORDER BY p.fecha DESC")
     List<Pedido> findAllWithUsuario();
 
-    // Pedidos que contienen productos del vendedor dado, con detalles y comprador cargados
-    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr JOIN FETCH pr.vendedor LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias JOIN FETCH p.usuario WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")
+    // Pedidos que contienen productos del vendedor dado, con detalles cargados.
+    // OJO: no se hace JOIN FETCH de pr.vendedor (ya lo conocemos, es el parámetro "vendedor")
+    // ni de p.usuario (el comprador) — un pedido puede tener muchos compradores DISTINTOS, y
+    // cargar cada User completo dispara la consulta extra a "vendedores" (ver Pedido.usuario).
+    // El id del comprador se lee del proxy LAZY sin costo; sus datos de contacto se resuelven
+    // aparte en batch (ver PedidoVendedorDTO / UserRepository.findContactInfoByIdIn).
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")
     List<Pedido> findByVendedorWithDetails(@Param("vendedor") User vendedor);
 }

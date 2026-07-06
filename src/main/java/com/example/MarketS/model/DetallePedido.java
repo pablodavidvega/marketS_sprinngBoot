@@ -3,7 +3,10 @@ package com.example.MarketS.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "detalle_pedido")
+@Table(name = "detalle_pedido", indexes = {
+        @Index(name = "idx_detalle_pedido_id_pedido", columnList = "id_pedido"),
+        @Index(name = "idx_detalle_pedido_id_producto", columnList = "id_producto")
+})
 public class DetallePedido {
 
     @Id

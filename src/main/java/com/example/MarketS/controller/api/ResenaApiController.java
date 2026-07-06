@@ -6,7 +6,7 @@ import com.example.MarketS.model.User;
 import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
-import com.example.MarketS.service.UserService;
+import com.example.MarketS.security.UsuarioPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,16 +23,13 @@ public class ResenaApiController {
     private final ResenaRepository resenaRepository;
     private final ProductoRepository productoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
-    private final UserService userService;
 
     public ResenaApiController(ResenaRepository resenaRepository,
                                ProductoRepository productoRepository,
-                               DetallePedidoRepository detallePedidoRepository,
-                               UserService userService) {
+                               DetallePedidoRepository detallePedidoRepository) {
         this.resenaRepository = resenaRepository;
         this.productoRepository = productoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
-        this.userService = userService;
     }
 
     // GET /api/productos/{productoId}/resenas — público
@@ -63,7 +60,7 @@ public class ResenaApiController {
         boolean puedeResenar = false;
 
         if (auth != null && auth.isAuthenticated()) {
-            User usuario = userService.buscarPorEmail(auth.getName()).orElse(null);
+            User usuario = UsuarioPrincipal.from(auth);
             if (usuario != null) {
                 yaReseno = resenaRepository.existsByProductoIdAndCompradorId(productoId, usuario.getId());
                 puedeResenar = !yaReseno && detallePedidoRepository.haCompradoProducto(productoId, usuario.getId());
@@ -87,7 +84,7 @@ public class ResenaApiController {
                                    Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
 
-        User usuario = userService.buscarPorEmail(auth.getName()).orElse(null);
+        User usuario = UsuarioPrincipal.from(auth);
         if (usuario == null) return ResponseEntity.status(401).build();
 
         Producto producto = productoRepository.findById(productoId).orElse(null);
