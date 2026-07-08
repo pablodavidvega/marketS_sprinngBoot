@@ -3,8 +3,10 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.CrearPedidoRequestDTO;
 import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.model.Pedido;
+import com.example.MarketS.model.ResenaComprador;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.repository.ResenaCompradorRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.MercadoPagoService;
@@ -19,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,7 @@ public class PedidoApiController {
     private final NotificacionService notificacionService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final ResenaCompradorRepository resenaCompradorRepository;
 
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
@@ -51,7 +55,8 @@ public class PedidoApiController {
                                 ProductoService productoService,
                                 NotificacionService notificacionService,
                                 EmailService emailService,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                ResenaCompradorRepository resenaCompradorRepository) {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
@@ -59,6 +64,7 @@ public class PedidoApiController {
         this.notificacionService = notificacionService;
         this.emailService = emailService;
         this.userRepository = userRepository;
+        this.resenaCompradorRepository = resenaCompradorRepository;
     }
 
     // Resuelve en 1 sola query los usernames de todos los vendedores distintos presentes en
@@ -274,6 +280,64 @@ public class PedidoApiController {
         });
 
         return ResponseEntity.ok(Map.of("mensaje", "Pedido actualizado", "estado", nuevoEstado));
+    }
+
+    // -------------------------------------------------------------------------
+    // Reputación: el vendedor califica al comprador tras una transacción completada
+    // -------------------------------------------------------------------------
+
+    // PATCH /api/pedidos/{id}/calificar-comprador — solo cuando el pedido quedó RECIBIDO o
+    // COMPLETADO_EXTERNO (ver ReputacionService). Una calificación por vendedor y por pedido.
+    @PatchMapping("/{id}/calificar-comprador")
+    public ResponseEntity<?> calificarComprador(@PathVariable Long id,
+                                                 @RequestBody Map<String, Object> body,
+                                                 Authentication auth) {
+        User vendedor = resolverUsuario(auth);
+        Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
+        if (pedido == null) return ResponseEntity.notFound().build();
+
+        boolean esVendedorDelPedido = pedido.getDetalles().stream()
+                .anyMatch(d -> d.getProducto().getVendedor() != null
+                        && d.getProducto().getVendedor().getId().equals(vendedor.getId()));
+        if (!esVendedorDelPedido) {
+            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+        }
+
+        if (!"RECIBIDO".equals(pedido.getEstado()) && !"COMPLETADO_EXTERNO".equals(pedido.getEstado())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Solo puedes calificar al comprador de un pedido completado"));
+        }
+
+        if (resenaCompradorRepository.existsByPedidoIdAndVendedorId(id, vendedor.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya calificaste al comprador de este pedido"));
+        }
+
+        Object calObj = body.get("calificacion");
+        if (calObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La calificación es requerida"));
+        }
+        int calificacion = Integer.parseInt(calObj.toString());
+        if (calificacion < 1 || calificacion > 5) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La calificación debe ser entre 1 y 5"));
+        }
+
+        String comentario = body.get("comentario") instanceof String s ? s.trim() : null;
+        if (comentario != null && comentario.isEmpty()) comentario = null;
+
+        ResenaComprador resena = new ResenaComprador();
+        resena.setPedido(pedido);
+        resena.setVendedor(vendedor);
+        resena.setComprador(pedido.getUsuario());
+        resena.setCalificacion(calificacion);
+        resena.setComentario(comentario);
+        resena.setFecha(LocalDateTime.now());
+        resenaCompradorRepository.save(resena);
+
+        User compradorRef = pedido.getUsuario(); // proxy LAZY: solo el id es seguro de leer aquí
+        notificacionService.crear(compradorRef,
+                "El vendedor @" + vendedor.getUsername() + " te calificó con " + calificacion + " estrellas por el pedido #" + id + ".",
+                "CALIFICACION_COMPRADOR", id);
+
+        return ResponseEntity.ok(Map.of("mensaje", "Calificación registrada"));
     }
 
     // -------------------------------------------------------------------------

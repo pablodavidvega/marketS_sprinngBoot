@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getPedidosVendedor, marcarCompletado, marcarRechazado } from '../../api/pedidos'
+import { getPedidosVendedor, marcarCompletado, marcarRechazado, calificarComprador } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
+import ReputacionBar from '../../components/ReputacionBar'
+import Stars from '../../components/Stars'
 import type { PedidoVendedorResponse } from '../../types'
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -23,6 +25,10 @@ export default function PedidosVendedorPage() {
   const [expandido, setExpandido] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<number | null>(null)
   const [resolviendo, setResolviendo] = useState<number | null>(null)
+  const [calificacionValor, setCalificacionValor] = useState(0)
+  const [comentarioValor, setComentarioValor] = useState('')
+  const [enviandoCalificacion, setEnviandoCalificacion] = useState<number | null>(null)
+  const [errorCalificacion, setErrorCalificacion] = useState('')
 
   useEffect(() => {
     getPedidosVendedor()
@@ -37,6 +43,31 @@ export default function PedidosVendedorPage() {
       setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: data.estado } : p))
     } finally {
       setResolviendo(null)
+    }
+  }
+
+  function toggleExpandido(pedidoId: number) {
+    setExpandido(expandido === pedidoId ? null : pedidoId)
+    setCalificacionValor(0)
+    setComentarioValor('')
+    setErrorCalificacion('')
+  }
+
+  async function handleCalificarComprador(e: React.FormEvent, pedidoId: number) {
+    e.preventDefault()
+    if (calificacionValor === 0) { setErrorCalificacion('Selecciona una calificación'); return }
+    setEnviandoCalificacion(pedidoId)
+    setErrorCalificacion('')
+    try {
+      await calificarComprador(pedidoId, { calificacion: calificacionValor, comentario: comentarioValor.trim() || undefined })
+      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, yaCalifiqueComprador: true, puedeCalificarComprador: false } : p))
+      setCalificacionValor(0)
+      setComentarioValor('')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setErrorCalificacion(msg || 'Error al enviar la calificación')
+    } finally {
+      setEnviandoCalificacion(null)
     }
   }
 
@@ -68,7 +99,7 @@ export default function PedidosVendedorPage() {
               {/* Cabecera */}
               <div
                 className="flex items-center justify-between cursor-pointer"
-                onClick={() => setExpandido(expandido === pedido.pedidoId ? null : pedido.pedidoId)}
+                onClick={() => toggleExpandido(pedido.pedidoId)}
               >
                 <div>
                   <p className="font-semibold text-gray-800">Pedido #{pedido.pedidoId}</p>
@@ -94,9 +125,12 @@ export default function PedidosVendedorPage() {
                 <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-5">
                   {/* Datos del comprador */}
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Datos del comprador
-                    </p>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                        Datos del comprador
+                      </p>
+                      <ReputacionBar compact reputacion={pedido.compradorReputacion} />
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div>
                         <span className="text-gray-500">Usuario: </span>
@@ -190,6 +224,39 @@ export default function PedidosVendedorPage() {
                           {resolviendo === pedido.pedidoId ? 'Guardando...' : 'No se realizó'}
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Calificar al comprador — solo cuando la transacción quedó completada */}
+                  {pedido.puedeCalificarComprador && (
+                    <form onSubmit={e => handleCalificarComprador(e, pedido.pedidoId)} className="border-t border-gray-100 pt-4">
+                      <h3 className="font-semibold text-gray-700 mb-3">Califica a {pedido.compradorUsername}</h3>
+                      <div className="flex items-center gap-3 mb-3">
+                        <Stars value={calificacionValor} size="lg" interactive onChange={setCalificacionValor} />
+                        {calificacionValor > 0 && (
+                          <span className="text-sm text-gray-500">
+                            {['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][calificacionValor]}
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        value={comentarioValor}
+                        onChange={e => setComentarioValor(e.target.value)}
+                        placeholder="Comentario opcional..."
+                        maxLength={500}
+                        rows={2}
+                        className="input w-full resize-none text-sm"
+                      />
+                      {errorCalificacion && <p className="text-red-500 text-sm mt-2">{errorCalificacion}</p>}
+                      <button type="submit" disabled={enviandoCalificacion === pedido.pedidoId} className="btn-primary mt-3">
+                        {enviandoCalificacion === pedido.pedidoId ? 'Enviando...' : 'Calificar comprador'}
+                      </button>
+                    </form>
+                  )}
+
+                  {pedido.yaCalifiqueComprador && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 text-sm">
+                      Ya calificaste al comprador de este pedido.
                     </div>
                   )}
                 </div>

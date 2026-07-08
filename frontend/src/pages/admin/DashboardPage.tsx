@@ -1,7 +1,54 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardAdmin } from '../../api/usuario'
+import { NIVEL_META, COLOR_NUEVO, NIVELES_ORDEN } from '../../components/ReputacionBar'
 import type { DashboardAdmin } from '../../types'
+
+function metaDe(nivel: string) {
+  return nivel === 'NUEVO' ? { color: COLOR_NUEVO, label: 'Nuevo' } : NIVEL_META[nivel]
+}
+
+// Barra apilada con la distribución de usuarios por banda de reputación (peor → mejor).
+function DistribucionReputacion({ titulo, conteos }: { titulo: string; conteos: Record<string, number> }) {
+  const total = NIVELES_ORDEN.reduce((sum, n) => sum + (conteos[n] ?? 0), 0)
+
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-gray-700">{titulo}</h3>
+        <span className="text-sm text-gray-400">{total} {total === 1 ? 'usuario' : 'usuarios'}</span>
+      </div>
+
+      {total === 0 ? (
+        <p className="text-sm text-gray-400">Sin datos aún.</p>
+      ) : (
+        <>
+          <div className="flex h-3 w-full gap-0.5 rounded-full overflow-hidden bg-gray-100">
+            {NIVELES_ORDEN.map(nivel => {
+              const count = conteos[nivel] ?? 0
+              if (count === 0) return null
+              return (
+                <div
+                  key={nivel}
+                  style={{ width: `${(count / total) * 100}%`, backgroundColor: metaDe(nivel).color }}
+                  title={`${metaDe(nivel).label}: ${count}`}
+                />
+              )
+            })}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
+            {NIVELES_ORDEN.filter(n => (conteos[n] ?? 0) > 0).map(nivel => (
+              <span key={nivel} className="inline-flex items-center gap-1.5 text-xs text-gray-600">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: metaDe(nivel).color }} />
+                {metaDe(nivel).label} ({conteos[nivel]})
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardAdmin | null>(null)
@@ -41,6 +88,12 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-gray-500 mt-1">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      <h2 className="text-lg font-semibold text-gray-700 mb-4">Reputación de la comunidad</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <DistribucionReputacion titulo="Vendedores" conteos={data.reputacionVendedores} />
+        <DistribucionReputacion titulo="Compradores" conteos={data.reputacionCompradores} />
       </div>
 
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>

@@ -7,6 +7,7 @@ import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.ReputacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class VendedorPublicController {
     private final ProductoRepository     productoRepository;
     private final ResenaRepository       resenaRepository;
     private final DetallePedidoRepository detallePedidoRepository;
+    private final ReputacionService      reputacionService;
 
     // GET /api/vendedores/{id}/perfil — información pública del vendedor
     @GetMapping("/{id}/perfil")
@@ -38,6 +40,7 @@ public class VendedorPublicController {
                     resp.put("miembroDesde",    u.getCreatedAt());
                     resp.put("totalProductos",  totalProductos);
                     resp.put("city",            u.getVendedor() != null ? u.getVendedor().getCity() : null);
+                    resp.put("reputacion",      reputacionService.calcularVendedor(u.getId()));
                     return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());

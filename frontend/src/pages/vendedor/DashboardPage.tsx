@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboardVendedor } from '../../api/usuario'
+import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardVendedor } from '../../types'
 
 function StatCard({
@@ -56,25 +57,30 @@ export default function VendedorDashboardPage() {
           ))}
         </div>
       ) : stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <StatCard
-            icon="🛒"
-            label="Unidades vendidas"
-            value={stats.totalVentas.toString()}
-          />
-          <StatCard
-            icon="📦"
-            label="Productos publicados"
-            value={stats.totalProductos.toString()}
-          />
-          <StatCard
-            icon="💰"
-            label="Ganancias totales"
-            value={fmt(stats.gananciaTotal)}
-            color="text-green-600"
-            borderColor="border-green-500"
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <StatCard
+              icon="🛒"
+              label="Unidades vendidas"
+              value={stats.totalVentas.toString()}
+            />
+            <StatCard
+              icon="📦"
+              label="Productos publicados"
+              value={stats.totalProductos.toString()}
+            />
+            <StatCard
+              icon="💰"
+              label="Ganancias totales"
+              value={fmt(stats.gananciaTotal)}
+              color="text-green-600"
+              borderColor="border-green-500"
+            />
+          </div>
+          <div className="card mb-8">
+            <ReputacionBar reputacion={stats.reputacion} label="Tu reputación como vendedor" />
+          </div>
+        </>
       )}
 
       {/* Acciones */}

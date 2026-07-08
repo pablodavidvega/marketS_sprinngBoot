@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getPerfilVendedor, getProductosVendedor } from '../api/vendedores'
 import ProductoCard from '../components/ProductoCard'
+import ReputacionBar from '../components/ReputacionBar'
 import type { PerfilVendedor, Producto } from '../types'
 
 function AvatarLetra({ username }: { username: string }) {
@@ -111,6 +112,10 @@ export default function VendedorPerfilPage() {
               {perfil.totalProductos === 1 ? 'Producto' : 'Productos'}
             </p>
           </div>
+        </div>
+
+        <div className="mt-5 pt-5 border-t border-gray-100 max-w-sm">
+          <ReputacionBar reputacion={perfil.reputacion} label="Reputación como vendedor" />
         </div>
       </div>
 

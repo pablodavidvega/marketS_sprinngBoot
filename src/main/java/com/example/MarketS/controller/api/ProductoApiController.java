@@ -9,6 +9,7 @@ import com.example.MarketS.repository.MarcaRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.ReputacionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,19 +28,22 @@ public class ProductoApiController {
     private final ResenaRepository resenaRepository;
     private final DetallePedidoRepository detallePedidoRepository;
     private final UserRepository userRepository;
+    private final ReputacionService reputacionService;
 
     public ProductoApiController(ProductoRepository productoRepository,
                                   CategoriaRepository categoriaRepository,
                                   MarcaRepository marcaRepository,
                                   ResenaRepository resenaRepository,
                                   DetallePedidoRepository detallePedidoRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  ReputacionService reputacionService) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.marcaRepository = marcaRepository;
         this.resenaRepository = resenaRepository;
         this.detallePedidoRepository = detallePedidoRepository;
         this.userRepository = userRepository;
+        this.reputacionService = reputacionService;
     }
 
     // GET /api/productos — catálogo principal (aleatoriamente limitado a 30)
@@ -118,7 +122,8 @@ public class ProductoApiController {
                             resenaRepository.avgCalificacionByProductoId(p.getId()),
                             resenaRepository.countByProductoId(p.getId()),
                             detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId()),
-                            vendedorUsername);
+                            vendedorUsername,
+                            vendedorId != null ? reputacionService.calcularVendedor(vendedorId) : null);
                 })
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

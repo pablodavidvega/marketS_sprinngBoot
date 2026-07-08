@@ -32,3 +32,6 @@ export const marcarCompletado = (id: number) =>
 
 export const marcarRechazado = (id: number) =>
   api.patch<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/marcar-rechazado`)
+
+export const calificarComprador = (id: number, data: { calificacion: number; comentario?: string }) =>
+  api.patch<{ mensaje: string }>(`/api/pedidos/${id}/calificar-comprador`, data)

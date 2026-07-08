@@ -33,6 +33,9 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Buscar pedidos por estado
     List<Pedido> findByEstado(String estado);
 
+    // Reputación del comprador: pedidos propios en un conjunto de estados dado.
+    long countByUsuarioIdAndEstadoIn(Long usuarioId, List<String> estados);
+
     // Buscar pedido por ID con detalles cargados (para evitar LazyInitializationException)
     @Query("SELECT p FROM Pedido p LEFT JOIN FETCH p.detalles WHERE p.id = :id")
     Optional<Pedido> findByIdWithDetalles(@Param("id") Long id);

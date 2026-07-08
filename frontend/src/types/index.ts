@@ -53,6 +53,7 @@ export interface Producto {
   promedioCalificacion?: number | null
   totalResenas?: number | null
   totalVendido?: number | null
+  reputacionVendedor?: Reputacion | null
 }
 
 export interface PerfilVendedor {
@@ -61,6 +62,7 @@ export interface PerfilVendedor {
   miembroDesde: string
   totalProductos: number
   city?: string | null
+  reputacion: Reputacion
 }
 
 export interface Categoria {
@@ -114,12 +116,23 @@ export interface PedidoResponse {
   detalles: DetallePedido[]
 }
 
+export interface Reputacion {
+  estado: 'NUEVO' | 'CALCULADA'
+  score: number | null
+  nivel: 'BAJA' | 'REGULAR' | 'BUENA' | 'MUY_BUENA' | 'EXCELENTE' | null
+  promedioEstrellas: number | null
+  totalCalificaciones: number
+  tasaExito: number | null
+  transaccionesResueltas: number
+}
+
 export interface DashboardCliente {
   perfil: PerfilUsuario
   pedidosRecientes: PedidoResponse[]
   totalPedidos: number
   pedidosPagados: number
   gastoTotal: number
+  reputacion: Reputacion
 }
 
 export interface DashboardAdmin {
@@ -127,6 +140,8 @@ export interface DashboardAdmin {
   totalClientes: number
   totalVendedores: number
   totalAdmins: number
+  reputacionVendedores: Record<string, number>
+  reputacionCompradores: Record<string, number>
 }
 
 export interface DashboardVendedor {
@@ -134,6 +149,7 @@ export interface DashboardVendedor {
   comisionTotal: number
   totalVentas: number
   totalProductos: number
+  reputacion: Reputacion
 }
 
 export interface Resena {
@@ -208,6 +224,9 @@ export interface PedidoVendedorResponse {
   compradorEmail: string
   compradorPhone: string
   compradorAddress: string
+  compradorReputacion: Reputacion
+  puedeCalificarComprador: boolean
+  yaCalifiqueComprador: boolean
   items: ItemPedidoVendedor[]
 }
 

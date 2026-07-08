@@ -6,34 +6,8 @@ import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { buildImageUrl } from '../utils/image'
-
-// ─── Estrellas ────────────────────────────────────────────────────────────────
-function Stars({ value, max = 5, size = 'sm', interactive = false, onChange }: {
-  value: number
-  max?: number
-  size?: 'sm' | 'lg'
-  interactive?: boolean
-  onChange?: (v: number) => void
-}) {
-  const [hover, setHover] = useState(0)
-  const sz = size === 'lg' ? 'text-2xl' : 'text-base'
-  return (
-    <span className={`flex gap-0.5 ${sz}`}>
-      {Array.from({ length: max }, (_, i) => i + 1).map(i => (
-        <span
-          key={i}
-          className={`${interactive ? 'cursor-pointer' : ''} transition-colors leading-none`}
-          style={{ color: i <= (interactive ? hover || value : value) ? '#f59e0b' : '#d1d5db' }}
-          onMouseEnter={() => interactive && setHover(i)}
-          onMouseLeave={() => interactive && setHover(0)}
-          onClick={() => interactive && onChange?.(i)}
-        >
-          ★
-        </span>
-      ))}
-    </span>
-  )
-}
+import Stars from '../components/Stars'
+import ReputacionBar from '../components/ReputacionBar'
 
 // ─── Tipo de ítem en el carrusel de medios ─────────────────────────────────
 type MediaItem =
@@ -289,12 +263,17 @@ export default function DetallePage() {
           <h1 className="text-2xl font-bold text-gray-800">{producto.nombre}</h1>
 
           {producto.vendedorId && producto.vendedorUsername && (
-            <Link
-              to={`/vendedores/${producto.vendedorId}`}
-              className="text-sm text-gray-400 hover:text-primary-600 transition-colors"
-            >
-              @{producto.vendedorUsername}
-            </Link>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link
+                to={`/vendedores/${producto.vendedorId}`}
+                className="text-sm text-gray-400 hover:text-primary-600 transition-colors"
+              >
+                @{producto.vendedorUsername}
+              </Link>
+              {producto.reputacionVendedor && (
+                <ReputacionBar compact reputacion={producto.reputacionVendedor} />
+              )}
+            </div>
           )}
 
           {/* Promedio de calificación */}

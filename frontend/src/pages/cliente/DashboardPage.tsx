@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getDashboardCliente } from '../../api/usuario'
 import { confirmarRecepcion } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
+import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardCliente } from '../../types'
 
 export default function ClienteDashboardPage() {
@@ -108,6 +109,9 @@ export default function ClienteDashboardPage() {
                 <span className="ml-2 font-medium">{data.perfil.city}</span>
               </div>
             )}
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <ReputacionBar reputacion={data.reputacion} label="Tu reputación como comprador" />
           </div>
         </div>
 

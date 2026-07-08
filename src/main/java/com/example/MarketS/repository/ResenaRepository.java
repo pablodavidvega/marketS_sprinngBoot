@@ -22,4 +22,10 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
     // Devuelve [productoId, promedio, totalResenas] para una lista de IDs — 1 sola query
     @Query("SELECT r.producto.id, AVG(r.calificacion), COUNT(r) FROM Resena r WHERE r.producto.id IN :ids GROUP BY r.producto.id")
     List<Object[]> findEstadisticasByProductoIds(@Param("ids") List<Long> ids);
+
+    // Reputación agregada del vendedor: promedio/total de las reseñas de TODOS sus productos.
+    @Query("SELECT COALESCE(AVG(r.calificacion), 0.0) FROM Resena r WHERE r.producto.vendedor.id = :vendedorId")
+    Double avgCalificacionByVendedorId(@Param("vendedorId") Long vendedorId);
+
+    long countByProductoVendedorId(Long vendedorId);
 }

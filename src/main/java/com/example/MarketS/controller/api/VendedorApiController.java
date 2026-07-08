@@ -2,11 +2,13 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.PedidoVendedorDTO;
 import com.example.MarketS.dto.ProductoResponseDTO;
+import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.TallasStockDTO;
 import com.example.MarketS.model.*;
 import com.example.MarketS.repository.*;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.service.CloudStorageService;
+import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.repository.DetallePedidoRepository;
 import jakarta.validation.constraints.NotBlank;
@@ -46,6 +48,8 @@ public class VendedorApiController {
     private final CloudStorageService cloudStorageService;
     private final DetallePedidoRepository detallePedidoRepository;
     private final UserRepository userRepository;
+    private final ResenaCompradorRepository resenaCompradorRepository;
+    private final ReputacionService reputacionService;
 
     public VendedorApiController(ProductoService productoService,
                                   ProductoRepository productoRepository,
@@ -54,7 +58,9 @@ public class VendedorApiController {
                                   MarcaRepository marcaRepository,
                                   CloudStorageService cloudStorageService,
                                   DetallePedidoRepository detallePedidoRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  ResenaCompradorRepository resenaCompradorRepository,
+                                  ReputacionService reputacionService) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
@@ -63,6 +69,8 @@ public class VendedorApiController {
         this.cloudStorageService = cloudStorageService;
         this.detallePedidoRepository = detallePedidoRepository;
         this.userRepository = userRepository;
+        this.resenaCompradorRepository = resenaCompradorRepository;
+        this.reputacionService = reputacionService;
     }
 
     // GET /api/vendedor/dashboard
@@ -74,7 +82,8 @@ public class VendedorApiController {
                 "gananciaTotal",  detallePedidoRepository.sumGananciaByVendedor(usuario),
                 "comisionTotal",  detallePedidoRepository.sumComisionByVendedor(usuario),
                 "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario),
-                "totalProductos", totalProductos
+                "totalProductos", totalProductos,
+                "reputacion",     reputacionService.calcularVendedor(usuario.getId())
         ));
     }
 
@@ -149,8 +158,19 @@ public class VendedorApiController {
                                     (String) row[1], (String) row[2], (String) row[3], (String) row[4])));
         }
 
+        // Reputación de cada comprador distinto (una consulta agregada por comprador — la
+        // comunidad es cerrada y de escala chica, no vale la pena una versión batch aparte).
+        Map<Long, ReputacionDTO> reputaciones = new java.util.HashMap<>();
+        compradorIds.forEach(id -> reputaciones.put(id, reputacionService.calcularComprador(id)));
+
+        // Pedidos que este vendedor ya calificó — 1 sola query batch.
+        List<Long> pedidoIds = pedidos.stream().map(Pedido::getId).toList();
+        java.util.Set<Long> pedidosCalificados = pedidoIds.isEmpty()
+                ? java.util.Set.of()
+                : new java.util.HashSet<>(resenaCompradorRepository.findPedidoIdsCalificados(vendedor.getId(), pedidoIds));
+
         List<PedidoVendedorDTO> result = pedidos.stream()
-                .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores))
+                .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores, reputaciones, pedidosCalificados))
                 .toList();
         return ResponseEntity.ok(result);
     }

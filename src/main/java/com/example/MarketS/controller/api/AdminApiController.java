@@ -3,6 +3,7 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroUsuarioDTO;
 import com.example.MarketS.dto.ReporteAdminDTO;
+import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
@@ -10,6 +11,7 @@ import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.ReporteAdminService;
 import com.example.MarketS.service.ReportePdfService;
+import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.service.UserService;
 import com.example.MarketS.service.reportes.ReporteContexto;
 import com.example.MarketS.service.reportes.ReporteExcelStrategy;
@@ -36,6 +38,7 @@ public class AdminApiController {
     private final UserService userService;
     private final RolRepository rolRepository;
     private final UserRepository userRepository;
+    private final ReputacionService reputacionService;
 
     @Autowired
     private ReporteAdminService reporteAdminService;
@@ -46,10 +49,12 @@ public class AdminApiController {
     @Autowired
     private ReportePdfService reportePdfService;
 
-    public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository) {
+    public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
+                               ReputacionService reputacionService) {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.userRepository = userRepository;
+        this.reputacionService = reputacionService;
     }
 
     // GET /api/admin/dashboard
@@ -59,8 +64,25 @@ public class AdminApiController {
                 "totalUsuarios",   userService.contarTodos(),
                 "totalClientes",   userService.contarPorRol("ROLE_CLIENTE"),
                 "totalVendedores", userService.contarPorRol("ROLE_VENDEDOR"),
-                "totalAdmins",     userService.contarPorRol("ROLE_ADMIN")
+                "totalAdmins",     userService.contarPorRol("ROLE_ADMIN"),
+                "reputacionVendedores",  distribucionReputacion("ROLE_VENDEDOR", true),
+                "reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false)
         ));
+    }
+
+    // Cuenta cuántos usuarios de un rol caen en cada nivel de reputación (incluye "NUEVO").
+    // Comunidad cerrada / escala chica: iterar todos los usuarios del rol es aceptable, mismo
+    // criterio que ya usa findEstadisticasTodosVendedores() para el reporte de vendedores.
+    private Map<String, Long> distribucionReputacion(String rolname, boolean comoVendedor) {
+        Map<String, Long> distribucion = new java.util.LinkedHashMap<>();
+        userRepository.findByRolRolname(rolname).forEach(u -> {
+            ReputacionDTO rep = comoVendedor
+                    ? reputacionService.calcularVendedor(u.getId())
+                    : reputacionService.calcularComprador(u.getId());
+            String nivel = "NUEVO".equals(rep.estado()) ? "NUEVO" : rep.nivel();
+            distribucion.merge(nivel, 1L, Long::sum);
+        });
+        return distribucion;
     }
 
     // GET /api/admin/usuarios?tipo=email&valor=x

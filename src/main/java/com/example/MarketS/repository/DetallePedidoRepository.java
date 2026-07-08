@@ -38,6 +38,11 @@ public interface DetallePedidoRepository extends JpaRepository<DetallePedido, Lo
            "ORDER BY COALESCE(SUM(d.gananciaVendedor), 0) DESC")
     List<Object[]> findVentasPorProducto(@Param("vendedor") User vendedor, @Param("desde") LocalDateTime desde);
 
+    // Reputación: pedidos DISTINTOS donde el vendedor tiene al menos un detalle, filtrados por
+    // un conjunto de estados (p.ej. exitosos = RECIBIDO/COMPLETADO_EXTERNO, fallidos = RECHAZADO_EXTERNO).
+    @Query("SELECT COUNT(DISTINCT d.pedido.id) FROM DetallePedido d WHERE d.producto.vendedor.id = :vendedorId AND d.pedido.estado IN :estados")
+    long countPedidosDistinctByVendedorAndEstadoIn(@Param("vendedorId") Long vendedorId, @Param("estados") List<String> estados);
+
     // Reporte vendedor: ventas agrupadas por año/mes desde una fecha
     @Query("SELECT EXTRACT(YEAR FROM d.pedido.fecha), EXTRACT(MONTH FROM d.pedido.fecha), COALESCE(SUM(d.gananciaVendedor), 0), COALESCE(SUM(d.cantidad), 0) " +
            "FROM DetallePedido d " +

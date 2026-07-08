@@ -35,6 +35,7 @@ public class ProductoResponseDTO {
     private Double promedioCalificacion;
     private Long totalResenas;
     private Long totalVendido;
+    private ReputacionDTO reputacionVendedor;
 
     public static ProductoResponseDTO from(Producto p) {
         return from(p, null, null, null);
@@ -49,6 +50,15 @@ public class ProductoResponseDTO {
     // que cargaría el User completo y dispararía una consulta extra por cada producto.
     public static ProductoResponseDTO from(Producto p, Double promedioCalificacion, Long totalResenas,
                                             Long totalVendido, Map<Long, String> vendedorUsernames) {
+        return from(p, promedioCalificacion, totalResenas, totalVendido, vendedorUsernames, null);
+    }
+
+    // Variante para el detalle de un solo producto: incluye la reputación del vendedor
+    // (ver ProductoApiController.detalle) — no se calcula en listados para evitar tener que
+    // computar la reputación de N vendedores distintos por cada catálogo/búsqueda.
+    public static ProductoResponseDTO from(Producto p, Double promedioCalificacion, Long totalResenas,
+                                            Long totalVendido, Map<Long, String> vendedorUsernames,
+                                            ReputacionDTO reputacionVendedor) {
         Long vendedorId = p.getVendedor() != null ? p.getVendedor().getId() : null;
         String vendedorUsername = vendedorUsernames != null && vendedorId != null
                 ? vendedorUsernames.get(vendedorId)
@@ -81,6 +91,7 @@ public class ProductoResponseDTO {
                 .promedioCalificacion(promedioCalificacion)
                 .totalResenas(totalResenas)
                 .totalVendido(totalVendido)
+                .reputacionVendedor(reputacionVendedor)
                 .build();
     }
 

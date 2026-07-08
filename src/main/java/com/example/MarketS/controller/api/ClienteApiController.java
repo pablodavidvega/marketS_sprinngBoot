@@ -6,6 +6,7 @@ import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,10 +26,13 @@ public class ClienteApiController {
 
     private final PedidoRepository pedidoRepository;
     private final UserRepository userRepository;
+    private final ReputacionService reputacionService;
 
-    public ClienteApiController(PedidoRepository pedidoRepository, UserRepository userRepository) {
+    public ClienteApiController(PedidoRepository pedidoRepository, UserRepository userRepository,
+                                 ReputacionService reputacionService) {
         this.pedidoRepository = pedidoRepository;
         this.userRepository = userRepository;
+        this.reputacionService = reputacionService;
     }
 
     // GET /api/cliente/dashboard
@@ -77,7 +81,8 @@ public class ClienteApiController {
                 "pedidosRecientes", recientes,
                 "totalPedidos", pedidos.size(),
                 "pedidosPagados", pedidosPagados,
-                "gastoTotal", gastoTotal
+                "gastoTotal", gastoTotal,
+                "reputacion", reputacionService.calcularComprador(usuario.getId())
         ));
     }
 }
