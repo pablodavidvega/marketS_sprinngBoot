@@ -63,6 +63,25 @@ export interface PerfilVendedor {
   totalProductos: number
   city?: string | null
   reputacion: Reputacion
+  totalVentas: number
+  unidadesVendidas: number
+}
+
+export interface PuntoSemana {
+  semana: string
+  total: number
+}
+
+export interface EmbudoAdmin {
+  totalRegistrados: number
+  totalVendedores: number
+  totalPublicaron: number
+  totalCompraron: number
+  pedidosElegibles: number
+  pedidosAbandonados: number
+  tasaAbandonoCheckout: number | null
+  diasPromedioRegistroAPublicacion: number | null
+  registrosPorSemana: PuntoSemana[]
 }
 
 export interface Categoria {

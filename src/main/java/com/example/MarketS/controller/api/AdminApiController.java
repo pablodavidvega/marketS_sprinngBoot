@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.dto.EmbudoAdminDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroUsuarioDTO;
 import com.example.MarketS.dto.ReporteAdminDTO;
@@ -7,6 +8,8 @@ import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
+import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.ReporteAdminService;
@@ -35,10 +38,17 @@ import java.util.Map;
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminApiController {
 
+    private static final List<String> ESTADOS_VENTA_CONCRETADA = List.of("PAGADO", "RECIBIDO", "COMPLETADO_EXTERNO");
+    private static final List<String> ESTADOS_CHECKOUT_SIN_RESOLVER = List.of("PENDIENTE", "PROCESANDO_PAGO", "PENDIENTE_PAGO");
+    private static final int HORAS_PARA_CONSIDERAR_ABANDONADO = 24;
+    private static final int SEMANAS_REGISTROS = 8;
+
     private final UserService userService;
     private final RolRepository rolRepository;
     private final UserRepository userRepository;
     private final ReputacionService reputacionService;
+    private final ProductoRepository productoRepository;
+    private final PedidoRepository pedidoRepository;
 
     @Autowired
     private ReporteAdminService reporteAdminService;
@@ -50,11 +60,14 @@ public class AdminApiController {
     private ReportePdfService reportePdfService;
 
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
-                               ReputacionService reputacionService) {
+                               ReputacionService reputacionService, ProductoRepository productoRepository,
+                               PedidoRepository pedidoRepository) {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.userRepository = userRepository;
         this.reputacionService = reputacionService;
+        this.productoRepository = productoRepository;
+        this.pedidoRepository = pedidoRepository;
     }
 
     // GET /api/admin/dashboard
@@ -83,6 +96,41 @@ public class AdminApiController {
             distribucion.merge(nivel, 1L, Long::sum);
         });
         return distribucion;
+    }
+
+    // GET /api/admin/estadisticas/embudo — adopción de la comunidad: registros, quién publica,
+    // quién compra, abandono de checkout y tiempo registro→primera publicación.
+    @GetMapping("/estadisticas/embudo")
+    public ResponseEntity<EmbudoAdminDTO> embudo() {
+        long totalRegistrados = userRepository.countByRolRolname("ROLE_CLIENTE")
+                + userRepository.countByRolRolname("ROLE_VENDEDOR");
+        long totalVendedores = userRepository.countByRolRolname("ROLE_VENDEDOR");
+        long totalPublicaron = productoRepository.countDistinctVendedores();
+        long totalCompraron = pedidoRepository.countDistinctUsuarioByEstadoIn(ESTADOS_VENTA_CONCRETADA);
+
+        LocalDateTime antesDe = LocalDateTime.now().minusHours(HORAS_PARA_CONSIDERAR_ABANDONADO);
+        long pedidosElegibles = pedidoRepository.countByFechaBefore(antesDe);
+        long pedidosAbandonados = pedidoRepository.countByFechaBeforeAndEstadoIn(antesDe, ESTADOS_CHECKOUT_SIN_RESOLVER);
+        Double tasaAbandonoCheckout = pedidosElegibles > 0 ? pedidosAbandonados / (double) pedidosElegibles : null;
+
+        Double diasPromedioRegistroAPublicacion = userRepository.avgDiasRegistroAPublicacion();
+
+        LocalDateTime desde = LocalDateTime.now().minusWeeks(SEMANAS_REGISTROS);
+        List<EmbudoAdminDTO.PuntoSemana> registrosPorSemana = userRepository.countRegistrosPorSemana(desde).stream()
+                .map(row -> new EmbudoAdminDTO.PuntoSemana(row[0].toString(), ((Number) row[1]).longValue()))
+                .toList();
+
+        return ResponseEntity.ok(new EmbudoAdminDTO(
+                totalRegistrados,
+                totalVendedores,
+                totalPublicaron,
+                totalCompraron,
+                pedidosElegibles,
+                pedidosAbandonados,
+                tasaAbandonoCheckout,
+                diasPromedioRegistroAPublicacion,
+                registrosPorSemana
+        ));
     }
 
     // GET /api/admin/usuarios?tipo=email&valor=x

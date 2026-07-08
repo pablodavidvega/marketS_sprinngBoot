@@ -21,6 +21,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VendedorPublicController {
 
+    // Estados que representan una venta concretada (RECIBIDO siempre viene después de PAGADO,
+    // así que no hay doble conteo al incluir los tres).
+    private static final List<String> ESTADOS_VENTA_CONCRETADA = List.of("PAGADO", "RECIBIDO", "COMPLETADO_EXTERNO");
+
     private final UserRepository         userRepository;
     private final ProductoRepository     productoRepository;
     private final ResenaRepository       resenaRepository;
@@ -41,6 +45,8 @@ public class VendedorPublicController {
                     resp.put("totalProductos",  totalProductos);
                     resp.put("city",            u.getVendedor() != null ? u.getVendedor().getCity() : null);
                     resp.put("reputacion",      reputacionService.calcularVendedor(u.getId()));
+                    resp.put("totalVentas",     detallePedidoRepository.countPedidosDistinctByVendedorAndEstadoIn(u.getId(), ESTADOS_VENTA_CONCRETADA));
+                    resp.put("unidadesVendidas", detallePedidoRepository.sumUnidadesByVendedorAndEstadoIn(u.getId(), ESTADOS_VENTA_CONCRETADA));
                     return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());

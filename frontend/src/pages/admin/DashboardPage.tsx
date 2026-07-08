@@ -1,11 +1,82 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getDashboardAdmin } from '../../api/usuario'
+import { getDashboardAdmin, getEmbudoAdmin } from '../../api/usuario'
 import { NIVEL_META, COLOR_NUEVO, NIVELES_ORDEN } from '../../components/ReputacionBar'
-import type { DashboardAdmin } from '../../types'
+import type { DashboardAdmin, EmbudoAdmin } from '../../types'
 
 function metaDe(nivel: string) {
   return nivel === 'NUEVO' ? { color: COLOR_NUEVO, label: 'Nuevo' } : NIVEL_META[nivel]
+}
+
+// Hue secuencial (azul) reservado para magnitud/ratio — distinto de las bandas de reputación,
+// que son categóricas por calidad. Ver skill dataviz: "ratio contra un límite" → medidor.
+const COLOR_SECUENCIAL = '#2a78d6'
+
+// Medidor: qué proporción de "total" alcanzó una condición (ratio 0-100%, no una calificación
+// por bandas). Reusa el lenguaje visual de track + barra de ReputacionBar/DistribucionReputacion.
+function Medidor({ titulo, alcanzaron, total }: { titulo: string; alcanzaron: number; total: number }) {
+  const pct = total > 0 ? Math.round((alcanzaron / total) * 100) : null
+  return (
+    <div className="card">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h3 className="font-semibold text-gray-700">{titulo}</h3>
+        <span className="text-sm font-semibold" style={{ color: COLOR_SECUENCIAL }}>
+          {pct != null ? `${pct}%` : 'Sin datos'}
+        </span>
+      </div>
+      <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct ?? 0}%`, backgroundColor: COLOR_SECUENCIAL }}
+        />
+      </div>
+      <p className="text-xs text-gray-400 mt-1">{alcanzaron} de {total}</p>
+    </div>
+  )
+}
+
+function StatSimple({ titulo, valor }: { titulo: string; valor: string }) {
+  return (
+    <div className="card">
+      <h3 className="font-semibold text-gray-700 mb-2">{titulo}</h3>
+      <p className="text-2xl font-bold" style={{ color: COLOR_SECUENCIAL }}>{valor}</p>
+    </div>
+  )
+}
+
+// Barras de registros por semana (serie única, hue secuencial fijo — no varía por magnitud,
+// eso es solo para heatmaps/choropletas).
+function GraficoRegistros({ puntos }: { puntos: { semana: string; total: number }[] }) {
+  const max = Math.max(1, ...puntos.map(p => p.total))
+  const totalRegistros = puntos.reduce((sum, p) => sum + p.total, 0)
+
+  return (
+    <div className="card">
+      <h3 className="font-semibold text-gray-700 mb-4">Registros por semana (últimas 8 semanas)</h3>
+      {totalRegistros === 0 ? (
+        <p className="text-sm text-gray-400">Sin registros en las últimas 8 semanas.</p>
+      ) : (
+        <div className="flex items-end gap-2 h-32">
+          {puntos.map(p => (
+            <div key={p.semana} className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
+              {p.total > 0 && <span className="text-xs font-medium text-gray-500">{p.total}</span>}
+              <div
+                className="w-full rounded-t-md"
+                style={{
+                  height: `${Math.max(4, (p.total / max) * 100)}%`,
+                  backgroundColor: COLOR_SECUENCIAL,
+                }}
+                title={`Semana del ${new Date(p.semana).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}: ${p.total}`}
+              />
+              <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                {new Date(p.semana).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Barra apilada con la distribución de usuarios por banda de reputación (peor → mejor).
@@ -52,11 +123,15 @@ function DistribucionReputacion({ titulo, conteos }: { titulo: string; conteos: 
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardAdmin | null>(null)
+  const [embudo, setEmbudo] = useState<EmbudoAdmin | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getDashboardAdmin()
-      .then(r => setData(r.data))
+    Promise.all([getDashboardAdmin(), getEmbudoAdmin()])
+      .then(([dashRes, embudoRes]) => {
+        setData(dashRes.data)
+        setEmbudo(embudoRes.data)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -95,6 +170,29 @@ export default function AdminDashboardPage() {
         <DistribucionReputacion titulo="Vendedores" conteos={data.reputacionVendedores} />
         <DistribucionReputacion titulo="Compradores" conteos={data.reputacionCompradores} />
       </div>
+
+      {embudo && (
+        <>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">Embudo de adopción</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <Medidor titulo="Vendedores que publicaron" alcanzaron={embudo.totalPublicaron} total={embudo.totalVendedores} />
+            <Medidor titulo="Usuarios que compraron" alcanzaron={embudo.totalCompraron} total={embudo.totalRegistrados} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <StatSimple
+              titulo="Abandono de checkout"
+              valor={embudo.tasaAbandonoCheckout != null ? `${Math.round(embudo.tasaAbandonoCheckout * 100)}%` : 'Sin datos'}
+            />
+            <StatSimple
+              titulo="Días registro → primera publicación"
+              valor={embudo.diasPromedioRegistroAPublicacion != null ? embudo.diasPromedioRegistroAPublicacion.toFixed(1) : 'Sin datos'}
+            />
+          </div>
+          <div className="mb-8">
+            <GraficoRegistros puntos={embudo.registrosPorSemana} />
+          </div>
+        </>
+      )}
 
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

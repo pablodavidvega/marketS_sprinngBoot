@@ -59,4 +59,31 @@ public interface UserRepository extends JpaRepository<User, Long> {
         ORDER BY gananciaTotal DESC
     """)
     List<Object[]> findEstadisticasTodosVendedores();
+
+    // Embudo admin: promedio de días entre el registro de un vendedor y su primera publicación
+    // (solo considera vendedores que ya publicaron al menos un producto).
+    @Query(nativeQuery = true, value = """
+        SELECT AVG(EXTRACT(EPOCH FROM (pp.primera_publicacion::timestamp - u.created_at)) / 86400.0)
+        FROM users u
+        JOIN (
+            SELECT vendedor_id, MIN(fecha_agregacion) AS primera_publicacion
+            FROM producto
+            WHERE vendedor_id IS NOT NULL
+            GROUP BY vendedor_id
+        ) pp ON pp.vendedor_id = u.id
+    """)
+    Double avgDiasRegistroAPublicacion();
+
+    // Embudo admin: registros de clientes/vendedores agrupados por semana desde una fecha —
+    // devuelve [inicioSemana (Date), total (Long)].
+    @Query(nativeQuery = true, value = """
+        SELECT DATE_TRUNC('week', u.created_at)::date AS semana, COUNT(*) AS total
+        FROM users u
+        JOIN roles r ON u.rol_id = r.id
+        WHERE r.rolname IN ('ROLE_CLIENTE', 'ROLE_VENDEDOR')
+          AND u.created_at >= :desde
+        GROUP BY semana
+        ORDER BY semana
+    """)
+    List<Object[]> countRegistrosPorSemana(@Param("desde") LocalDateTime desde);
 }

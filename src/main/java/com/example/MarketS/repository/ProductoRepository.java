@@ -105,4 +105,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     int countByCategoriasId(Long categoriaId);
 
     long countByVendedorId(Long vendedorId);
+
+    // Embudo admin: cuántos vendedores distintos han publicado al menos un producto.
+    @Query("SELECT COUNT(DISTINCT p.vendedor.id) FROM Producto p")
+    long countDistinctVendedores();
 }

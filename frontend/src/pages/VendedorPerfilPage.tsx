@@ -105,12 +105,26 @@ export default function VendedorPerfilPage() {
             </div>
           </div>
 
-          {/* Stat: total productos */}
-          <div className="text-center px-6 py-3 bg-primary-50 rounded-xl border border-primary-100">
-            <p className="text-2xl font-bold text-primary-600">{perfil.totalProductos}</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {perfil.totalProductos === 1 ? 'Producto' : 'Productos'}
-            </p>
+          {/* Stats: productos, ventas, unidades vendidas */}
+          <div className="flex gap-3 flex-wrap">
+            <div className="text-center px-6 py-3 bg-primary-50 rounded-xl border border-primary-100">
+              <p className="text-2xl font-bold text-primary-600">{perfil.totalProductos}</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {perfil.totalProductos === 1 ? 'Producto' : 'Productos'}
+              </p>
+            </div>
+            <div className="text-center px-6 py-3 bg-primary-50 rounded-xl border border-primary-100">
+              <p className="text-2xl font-bold text-primary-600">{perfil.totalVentas}</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {perfil.totalVentas === 1 ? 'Venta' : 'Ventas'}
+              </p>
+            </div>
+            <div className="text-center px-6 py-3 bg-primary-50 rounded-xl border border-primary-100">
+              <p className="text-2xl font-bold text-primary-600">{perfil.unidadesVendidas}</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {perfil.unidadesVendidas === 1 ? 'Unidad vendida' : 'Unidades vendidas'}
+              </p>
+            </div>
           </div>
         </div>
 

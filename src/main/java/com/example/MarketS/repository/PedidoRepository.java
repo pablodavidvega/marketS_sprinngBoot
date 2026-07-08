@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,4 +53,14 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // aparte en batch (ver PedidoVendedorDTO / UserRepository.findContactInfoByIdIn).
     @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")
     List<Pedido> findByVendedorWithDetails(@Param("vendedor") User vendedor);
+
+    // Embudo admin: usuarios distintos que compraron al menos una vez en un conjunto de estados.
+    @Query("SELECT COUNT(DISTINCT p.usuario.id) FROM Pedido p WHERE p.estado IN :estados")
+    long countDistinctUsuarioByEstadoIn(@Param("estados") List<String> estados);
+
+    // Embudo admin: pedidos creados hace más de X tiempo (suficiente para haberse resuelto).
+    long countByFechaBefore(LocalDateTime antesDe);
+
+    // Embudo admin: de esos, los que siguen en un estado "sin resolver" (abandono de checkout).
+    long countByFechaBeforeAndEstadoIn(LocalDateTime antesDe, List<String> estados);
 }
