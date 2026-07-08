@@ -33,6 +33,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.id, u.username FROM User u WHERE u.id IN :ids")
     List<Object[]> findIdAndUsernameByIdIn(@Param("ids") List<Long> ids);
 
+    // Proyección liviana de solo ids por rol — evita cargar la entidad User completa cuando
+    // solo hace falta el id (ver AdminApiController.distribucionReputacion).
+    @Query("SELECT u.id FROM User u WHERE u.rol.rolname = :rolname")
+    List<Long> findIdsByRolRolname(@Param("rolname") String rolname);
+
+    // Proyección liviana para listados de usuarios: selecciona solo columnas escalares, nunca
+    // instancia la entidad User completa. Esto es clave — User.vendedor es un OneToOne
+    // mappedBy sin bytecode enhancement, así que Hibernate NO puede hacerlo perezoso de verdad:
+    // dispara una consulta extra a "vendedores" por cada User que se materializa como entidad,
+    // sin importar si el código llama a getVendedor() o no. Una proyección escalar nunca
+    // materializa el User, así que ese disparo automático no ocurre (ver AdminApiController.listarUsuarios).
+    @Query("SELECT u.id, u.username, u.email, u.phone, u.address, u.rol.rolname, u.createdAt FROM User u")
+    List<Object[]> findAllPerfilProjection();
+
     // Igual que arriba pero con los datos de contacto que necesita el vendedor para coordinar
     // la entrega (ver PedidoVendedorDTO / PedidoRepository.findByVendedorWithDetails).
     @Query("SELECT u.id, u.username, u.email, u.phone, u.address FROM User u WHERE u.id IN :ids")

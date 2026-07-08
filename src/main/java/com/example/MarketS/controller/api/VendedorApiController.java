@@ -158,10 +158,9 @@ public class VendedorApiController {
                                     (String) row[1], (String) row[2], (String) row[3], (String) row[4])));
         }
 
-        // Reputación de cada comprador distinto (una consulta agregada por comprador — la
-        // comunidad es cerrada y de escala chica, no vale la pena una versión batch aparte).
-        Map<Long, ReputacionDTO> reputaciones = new java.util.HashMap<>();
-        compradorIds.forEach(id -> reputaciones.put(id, reputacionService.calcularComprador(id)));
+        // Reputación de cada comprador distinto — batch (ver ReputacionService), no una
+        // consulta por comprador.
+        Map<Long, ReputacionDTO> reputaciones = reputacionService.calcularCompradoresBatch(compradorIds);
 
         // Pedidos que este vendedor ya calificó — 1 sola query batch.
         List<Long> pedidoIds = pedidos.stream().map(Pedido::getId).toList();

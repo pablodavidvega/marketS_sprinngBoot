@@ -43,6 +43,11 @@ public interface DetallePedidoRepository extends JpaRepository<DetallePedido, Lo
     @Query("SELECT COUNT(DISTINCT d.pedido.id) FROM DetallePedido d WHERE d.producto.vendedor.id = :vendedorId AND d.pedido.estado IN :estados")
     long countPedidosDistinctByVendedorAndEstadoIn(@Param("vendedorId") Long vendedorId, @Param("estados") List<String> estados);
 
+    // Batch: [vendedorId, count] de pedidos distintos en un conjunto de estados, para TODOS los
+    // vendedores — 1 sola query en vez de una por vendedor (ver ReputacionService batch).
+    @Query("SELECT d.producto.vendedor.id, COUNT(DISTINCT d.pedido.id) FROM DetallePedido d WHERE d.pedido.estado IN :estados GROUP BY d.producto.vendedor.id")
+    List<Object[]> countPedidosDistinctAgrupadoPorVendedor(@Param("estados") List<String> estados);
+
     // Perfil público de vendedor: unidades totales vendidas en un conjunto de estados dado.
     @Query("SELECT COALESCE(SUM(d.cantidad), 0) FROM DetallePedido d WHERE d.producto.vendedor.id = :vendedorId AND d.pedido.estado IN :estados")
     long sumUnidadesByVendedorAndEstadoIn(@Param("vendedorId") Long vendedorId, @Param("estados") List<String> estados);

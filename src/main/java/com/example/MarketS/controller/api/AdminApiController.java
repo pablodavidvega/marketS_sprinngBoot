@@ -12,6 +12,7 @@ import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.repository.VendedorRepository;
 import com.example.MarketS.service.ReporteAdminService;
 import com.example.MarketS.service.ReportePdfService;
 import com.example.MarketS.service.ReputacionService;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -49,6 +51,7 @@ public class AdminApiController {
     private final ReputacionService reputacionService;
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
+    private final VendedorRepository vendedorRepository;
 
     @Autowired
     private ReporteAdminService reporteAdminService;
@@ -61,17 +64,22 @@ public class AdminApiController {
 
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
                                ReputacionService reputacionService, ProductoRepository productoRepository,
-                               PedidoRepository pedidoRepository) {
+                               PedidoRepository pedidoRepository, VendedorRepository vendedorRepository) {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.userRepository = userRepository;
         this.reputacionService = reputacionService;
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
+        this.vendedorRepository = vendedorRepository;
     }
 
     // GET /api/admin/dashboard
+    // @Transactional: agrupa todas las consultas de este método en una sola conexión/transacción
+    // en vez de una por cada llamada al repositorio — con una BD remota (pooler), abrir y cerrar
+    // conexión por consulta es el costo dominante, no la cantidad de queries en sí.
     @GetMapping("/dashboard")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard() {
         return ResponseEntity.ok(Map.of(
                 "totalUsuarios",   userService.contarTodos(),
@@ -84,14 +92,16 @@ public class AdminApiController {
     }
 
     // Cuenta cuántos usuarios de un rol caen en cada nivel de reputación (incluye "NUEVO").
-    // Comunidad cerrada / escala chica: iterar todos los usuarios del rol es aceptable, mismo
-    // criterio que ya usa findEstadisticasTodosVendedores() para el reporte de vendedores.
+    // Usa los métodos batch de ReputacionService (un puñado de queries fijas, no una por
+    // usuario) — con muchos usuarios, calcular uno por uno volvía lento el panel de admin.
     private Map<String, Long> distribucionReputacion(String rolname, boolean comoVendedor) {
+        List<Long> ids = userRepository.findIdsByRolRolname(rolname);
+        Map<Long, ReputacionDTO> reputaciones = comoVendedor
+                ? reputacionService.calcularVendedoresBatch(ids)
+                : reputacionService.calcularCompradoresBatch(ids);
+
         Map<String, Long> distribucion = new java.util.LinkedHashMap<>();
-        userRepository.findByRolRolname(rolname).forEach(u -> {
-            ReputacionDTO rep = comoVendedor
-                    ? reputacionService.calcularVendedor(u.getId())
-                    : reputacionService.calcularComprador(u.getId());
+        reputaciones.values().forEach(rep -> {
             String nivel = "NUEVO".equals(rep.estado()) ? "NUEVO" : rep.nivel();
             distribucion.merge(nivel, 1L, Long::sum);
         });
@@ -101,10 +111,10 @@ public class AdminApiController {
     // GET /api/admin/estadisticas/embudo — adopción de la comunidad: registros, quién publica,
     // quién compra, abandono de checkout y tiempo registro→primera publicación.
     @GetMapping("/estadisticas/embudo")
+    @Transactional(readOnly = true)
     public ResponseEntity<EmbudoAdminDTO> embudo() {
-        long totalRegistrados = userRepository.countByRolRolname("ROLE_CLIENTE")
-                + userRepository.countByRolRolname("ROLE_VENDEDOR");
         long totalVendedores = userRepository.countByRolRolname("ROLE_VENDEDOR");
+        long totalRegistrados = userRepository.countByRolRolname("ROLE_CLIENTE") + totalVendedores;
         long totalPublicaron = productoRepository.countDistinctVendedores();
         long totalCompraron = pedidoRepository.countDistinctUsuarioByEstadoIn(ESTADOS_VENTA_CONCRETADA);
 
@@ -135,29 +145,60 @@ public class AdminApiController {
 
     // GET /api/admin/usuarios?tipo=email&valor=x
     @GetMapping("/usuarios")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<PerfilResponseDTO>> listarUsuarios(
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String valor) {
 
-        List<User> usuarios;
-
+        // Caso más común (sin filtro, "ver todos"): proyección escalar, nunca instancia la
+        // entidad User — evita el disparo automático de Hibernate al inicializar
+        // User.vendedor en cada fila (ver UserRepository.findAllPerfilProjection).
         if (tipo == null || valor == null || valor.isBlank()) {
-            usuarios = userService.listarTodos();
-        } else {
-            usuarios = switch (tipo) {
-                case "nombre" -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
-                case "email"  -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
-                case "direccion" -> userService.buscarPorDireccion(valor);
-                case "rol"    -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
-                default       -> userService.listarTodos();
-            };
+            List<Object[]> filas = userRepository.findAllPerfilProjection();
+
+            List<Long> vendedorIds = filas.stream()
+                    .filter(f -> "ROLE_VENDEDOR".equals(f[5]))
+                    .map(f -> ((Number) f[0]).longValue())
+                    .toList();
+            Map<Long, String> ciudades = resolverCiudades(vendedorIds);
+
+            List<PerfilResponseDTO> respuesta = filas.stream()
+                    .map(f -> PerfilResponseDTO.fromProjection(f, ciudades.get(((Number) f[0]).longValue())))
+                    .toList();
+            return ResponseEntity.ok(respuesta);
         }
 
+        // Búsquedas filtradas: resultados acotados (0-1 para nombre/email), se mantiene la
+        // ruta por entidad completa.
+        List<User> usuarios = switch (tipo) {
+            case "nombre" -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
+            case "email"  -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
+            case "direccion" -> userService.buscarPorDireccion(valor);
+            case "rol"    -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
+            default       -> userService.listarTodos();
+        };
+
+        List<Long> vendedorIds = usuarios.stream()
+                .filter(u -> u.getRol() != null && "ROLE_VENDEDOR".equals(u.getRol().getRolname()))
+                .map(User::getId)
+                .toList();
+        Map<Long, String> ciudades = resolverCiudades(vendedorIds);
+
         List<PerfilResponseDTO> respuesta = usuarios.stream()
-                .map(PerfilResponseDTO::from)
+                .map(u -> PerfilResponseDTO.from(u, ciudades.get(u.getId())))
                 .toList();
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    // Ciudad de cada vendedor, resuelta en batch (evita el N+1 de user.getVendedor()).
+    private Map<Long, String> resolverCiudades(List<Long> vendedorIds) {
+        Map<Long, String> ciudades = new java.util.HashMap<>();
+        if (!vendedorIds.isEmpty()) {
+            vendedorRepository.findCityByUserIdIn(vendedorIds).forEach(row ->
+                    ciudades.put(((Number) row[0]).longValue(), (String) row[1]));
+        }
+        return ciudades;
     }
 
     // GET /api/admin/usuarios/{id}

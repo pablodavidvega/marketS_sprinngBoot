@@ -37,6 +37,11 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Reputación del comprador: pedidos propios en un conjunto de estados dado.
     long countByUsuarioIdAndEstadoIn(Long usuarioId, List<String> estados);
 
+    // Batch: [usuarioId, count] de pedidos en un conjunto de estados, para TODOS los usuarios —
+    // 1 sola query en vez de una por usuario (ver ReputacionService batch).
+    @Query("SELECT p.usuario.id, COUNT(p) FROM Pedido p WHERE p.estado IN :estados GROUP BY p.usuario.id")
+    List<Object[]> countAgrupadoPorUsuarioYEstadoIn(@Param("estados") List<String> estados);
+
     // Buscar pedido por ID con detalles cargados (para evitar LazyInitializationException)
     @Query("SELECT p FROM Pedido p LEFT JOIN FETCH p.detalles WHERE p.id = :id")
     Optional<Pedido> findByIdWithDetalles(@Param("id") Long id);

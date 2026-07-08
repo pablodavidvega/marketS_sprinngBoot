@@ -28,4 +28,9 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
     Double avgCalificacionByVendedorId(@Param("vendedorId") Long vendedorId);
 
     long countByProductoVendedorId(Long vendedorId);
+
+    // Batch: [vendedorId, promedio, total] para TODOS los vendedores con al menos una reseña —
+    // 1 sola query en vez de una por vendedor (ver AdminApiController.distribucionReputacion).
+    @Query("SELECT r.producto.vendedor.id, AVG(r.calificacion), COUNT(r) FROM Resena r GROUP BY r.producto.vendedor.id")
+    List<Object[]> findEstadisticasAgrupadasPorVendedor();
 }

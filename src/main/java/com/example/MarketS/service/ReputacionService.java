@@ -7,7 +7,9 @@ import com.example.MarketS.repository.ResenaCompradorRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Calcula la reputación de un usuario (como vendedor o como comprador) combinando el promedio
 // de calificaciones (estrellas) con la tasa de éxito de sus transacciones, estilo el
@@ -51,6 +53,58 @@ public class ReputacionService {
         long exitosos = pedidoRepository.countByUsuarioIdAndEstadoIn(compradorId, ESTADOS_EXITOSOS);
         long fallidos = pedidoRepository.countByUsuarioIdAndEstadoIn(compradorId, ESTADOS_FALLIDOS);
         return calcular(avgEstrellas, totalCalificaciones, exitosos, fallidos);
+    }
+
+    // Batch: reputación de vendedores para una lista de ids en un número fijo de queries (3),
+    // en vez de 4 por vendedor — evita el N+1 que hacía lento el panel de admin con muchos
+    // usuarios (ver AdminApiController.distribucionReputacion).
+    public Map<Long, ReputacionDTO> calcularVendedoresBatch(List<Long> vendedorIds) {
+        if (vendedorIds.isEmpty()) return Map.of();
+
+        Map<Long, double[]> resenas = new HashMap<>();
+        resenaRepository.findEstadisticasAgrupadasPorVendedor().forEach(row -> {
+            Long id = ((Number) row[0]).longValue();
+            double avg = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+            long count = ((Number) row[2]).longValue();
+            resenas.put(id, new double[]{ avg, count });
+        });
+        Map<Long, Long> exitosos = aMapa(detallePedidoRepository.countPedidosDistinctAgrupadoPorVendedor(ESTADOS_EXITOSOS));
+        Map<Long, Long> fallidos = aMapa(detallePedidoRepository.countPedidosDistinctAgrupadoPorVendedor(ESTADOS_FALLIDOS));
+
+        Map<Long, ReputacionDTO> resultado = new HashMap<>();
+        for (Long id : vendedorIds) {
+            double[] stats = resenas.getOrDefault(id, new double[]{ 0.0, 0 });
+            resultado.put(id, calcular(stats[0], (long) stats[1], exitosos.getOrDefault(id, 0L), fallidos.getOrDefault(id, 0L)));
+        }
+        return resultado;
+    }
+
+    // Batch: mismo criterio que calcularVendedoresBatch pero para compradores.
+    public Map<Long, ReputacionDTO> calcularCompradoresBatch(List<Long> compradorIds) {
+        if (compradorIds.isEmpty()) return Map.of();
+
+        Map<Long, double[]> resenas = new HashMap<>();
+        resenaCompradorRepository.findEstadisticasAgrupadasPorComprador().forEach(row -> {
+            Long id = ((Number) row[0]).longValue();
+            double avg = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+            long count = ((Number) row[2]).longValue();
+            resenas.put(id, new double[]{ avg, count });
+        });
+        Map<Long, Long> exitosos = aMapa(pedidoRepository.countAgrupadoPorUsuarioYEstadoIn(ESTADOS_EXITOSOS));
+        Map<Long, Long> fallidos = aMapa(pedidoRepository.countAgrupadoPorUsuarioYEstadoIn(ESTADOS_FALLIDOS));
+
+        Map<Long, ReputacionDTO> resultado = new HashMap<>();
+        for (Long id : compradorIds) {
+            double[] stats = resenas.getOrDefault(id, new double[]{ 0.0, 0 });
+            resultado.put(id, calcular(stats[0], (long) stats[1], exitosos.getOrDefault(id, 0L), fallidos.getOrDefault(id, 0L)));
+        }
+        return resultado;
+    }
+
+    private Map<Long, Long> aMapa(List<Object[]> filas) {
+        Map<Long, Long> mapa = new HashMap<>();
+        filas.forEach(fila -> mapa.put(((Number) fila[0]).longValue(), ((Number) fila[1]).longValue()));
+        return mapa;
     }
 
     private ReputacionDTO calcular(double avgEstrellas, long totalCalificaciones, long exitosos, long fallidos) {
