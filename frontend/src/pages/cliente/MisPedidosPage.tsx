@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getMisPedidos, confirmarRecepcion } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
+import EncuentroPedido from '../../components/EncuentroPedido'
 import type { PedidoResponse } from '../../types'
 
 const ESTADO_COLOR: Record<string, string> = {
@@ -149,6 +150,9 @@ export default function MisPedidosPage() {
                             <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
                           </div>
                         )}
+                        <div className="mt-3">
+                          <EncuentroPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                        </div>
                       </div>
                     )
                   })}

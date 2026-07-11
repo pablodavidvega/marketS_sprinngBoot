@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getPedidosVendedor, marcarCompletado, marcarRechazado, calificarComprador } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
+import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
 import type { PedidoVendedorResponse } from '../../types'
@@ -200,6 +201,11 @@ export default function PedidosVendedorPage() {
                         <ChatPedido pedidoId={pedido.pedidoId} vendedorId={pedido.vendedorId} />
                       </div>
                     )}
+                  </div>
+
+                  {/* Agendar encuentro para la entrega en persona */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <EncuentroPedido pedidoId={pedido.pedidoId} vendedorId={pedido.vendedorId} />
                   </div>
 
                   {/* Venta acordada por fuera de la app: el vendedor confirma si se concretó */}

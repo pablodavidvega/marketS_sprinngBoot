@@ -150,13 +150,14 @@ export default function AdminDashboardPage() {
     { label: 'Clientes', value: data.totalClientes, color: 'text-blue-600' },
     { label: 'Vendedores', value: data.totalVendedores, color: 'text-green-600' },
     { label: 'Admins', value: data.totalAdmins, color: 'text-purple-600' },
+    { label: 'Favoritos guardados', value: data.totalFavoritos, color: 'text-red-500' },
   ]
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de administración</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {stats.map(s => (
           <div key={s.label} className="card text-center">
             <p className={`text-4xl font-bold ${s.color}`}>{s.value}</p>
@@ -169,6 +170,19 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <DistribucionReputacion titulo="Vendedores" conteos={data.reputacionVendedores} />
         <DistribucionReputacion titulo="Compradores" conteos={data.reputacionCompradores} />
+      </div>
+
+      <h2 className="text-lg font-semibold text-gray-700 mb-4">Favoritos</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <StatSimple titulo="Total de favoritos guardados" valor={String(data.totalFavoritos)} />
+        <StatSimple
+          titulo="Producto más guardado"
+          valor={
+            data.productoMasGuardado.nombre
+              ? `${data.productoMasGuardado.nombre} (${data.productoMasGuardado.totalFavoritos})`
+              : 'Sin datos'
+          }
+        />
       </div>
 
       {embudo && (

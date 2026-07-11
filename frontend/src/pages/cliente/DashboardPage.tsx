@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getDashboardCliente } from '../../api/usuario'
 import { confirmarRecepcion } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
+import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardCliente } from '../../types'
 
@@ -201,6 +202,9 @@ export default function ClienteDashboardPage() {
                                 <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
                               </div>
                             )}
+                            <div className="mt-3">
+                              <EncuentroPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                            </div>
                           </div>
                         )
                       })}

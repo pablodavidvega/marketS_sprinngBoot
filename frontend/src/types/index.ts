@@ -161,6 +161,9 @@ export interface DashboardAdmin {
   totalAdmins: number
   reputacionVendedores: Record<string, number>
   reputacionCompradores: Record<string, number>
+  totalFavoritos: number
+  // Mapa vacío ({}) cuando todavía nadie ha guardado ningún favorito.
+  productoMasGuardado: Partial<{ id: number; nombre: string; totalFavoritos: number }>
 }
 
 export interface DashboardVendedor {
@@ -307,6 +310,15 @@ export interface ChatMensaje {
   esVendedor: boolean
   contenido: string
   fechaEnvio: string
+}
+
+export interface Encuentro {
+  id: number
+  lugar: string
+  fechaHora: string
+  nota: string | null
+  propuestoPorId: number
+  propuestoPorUsername: string
 }
 
 export interface Pregunta {

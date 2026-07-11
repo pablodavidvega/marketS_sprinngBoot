@@ -8,6 +8,9 @@ interface Stats {
   totalPedidos: number
   totalVendedores: number
   totalUsuarios: number
+  totalFavoritos: number
+  // Objeto vacío ({}) cuando todavía nadie ha guardado ningún favorito.
+  productoMasGuardado: Partial<{ id: number; nombre: string; totalFavoritos: number }>
 }
 
 function StatCard({ label, valor, sub, color }: { label: string; valor: number; sub?: string; color: string }) {
@@ -46,13 +49,15 @@ export default function ModeradorDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard label="Productos totales"  valor={stats?.totalProductos   ?? 0} color="text-gray-800" />
         <StatCard label="Activos"            valor={stats?.productosActivos  ?? 0} color="text-green-600"
           sub={`${stats ? Math.round((stats.productosActivos / Math.max(stats.totalProductos, 1)) * 100) : 0}% del total`} />
         <StatCard label="Pedidos"            valor={stats?.totalPedidos      ?? 0} color="text-primary-600" />
         <StatCard label="Vendedores"         valor={stats?.totalVendedores   ?? 0} color="text-purple-600" />
         <StatCard label="Usuarios"           valor={stats?.totalUsuarios     ?? 0} color="text-gray-600" />
+        <StatCard label="Favoritos guardados" valor={stats?.totalFavoritos   ?? 0} color="text-red-500"
+          sub={stats?.productoMasGuardado.nombre ? `Top: ${stats.productoMasGuardado.nombre}` : undefined} />
       </div>
 
       {/* Accesos rápidos */}

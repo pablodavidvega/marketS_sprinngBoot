@@ -36,7 +36,10 @@ public class User {
     private String resetToken;
     private LocalDateTime resetTokenExpira;
 
-    @Column(name = "acepto_terminos", nullable = false)
+    // columnDefinition con DEFAULT: permite que Hibernate agregue esta columna NOT NULL
+    // sobre una tabla "users" que ya tiene filas (Postgres backfillea con el default en
+    // vez de rechazar el ALTER TABLE por valores nulos existentes).
+    @Column(name = "acepto_terminos", nullable = false, columnDefinition = "boolean default false")
     private boolean aceptoTerminos;
 
     @Column(name = "fecha_aceptacion_terminos")

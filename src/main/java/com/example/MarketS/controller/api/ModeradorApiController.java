@@ -3,10 +3,12 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.Producto;
+import com.example.MarketS.repository.FavoritoRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,7 @@ public class ModeradorApiController {
     private final ProductoRepository productoRepository;
     private final PedidoRepository   pedidoRepository;
     private final UserRepository      userRepository;
+    private final FavoritoRepository  favoritoRepository;
 
     // GET /api/moderador/dashboard
     @GetMapping("/dashboard")
@@ -39,8 +42,24 @@ public class ModeradorApiController {
             "productosActivos", productosActivos,
             "totalPedidos",     totalPedidos,
             "totalVendedores",  totalVendedores,
-            "totalUsuarios",    totalUsuarios
+            "totalUsuarios",    totalUsuarios,
+            "totalFavoritos",      favoritoRepository.count(),
+            "productoMasGuardado", productoMasGuardado()
         ));
+    }
+
+    // Producto con más favoritos guardados en toda la plataforma. Map.of(...) no admite valores
+    // null, así que si todavía nadie ha guardado nada se devuelve un mapa vacío en vez de null
+    // (el frontend lo trata igual: ausencia de "id" = sin datos aún).
+    private Map<String, Object> productoMasGuardado() {
+        List<Object[]> top = favoritoRepository.findProductosMasGuardados(PageRequest.of(0, 1));
+        if (top.isEmpty()) return Map.of();
+        Object[] row = top.get(0);
+        return Map.of(
+                "id", ((Number) row[0]).longValue(),
+                "nombre", (String) row[1],
+                "totalFavoritos", ((Number) row[2]).longValue()
+        );
     }
 
     // GET /api/moderador/productos — todos los productos (activos e inactivos)

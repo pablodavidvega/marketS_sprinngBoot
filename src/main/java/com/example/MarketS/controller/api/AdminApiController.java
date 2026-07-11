@@ -8,6 +8,7 @@ import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
+import com.example.MarketS.repository.FavoritoRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.RolRepository;
@@ -19,6 +20,7 @@ import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.service.UserService;
 import com.example.MarketS.service.reportes.ReporteContexto;
 import com.example.MarketS.service.reportes.ReporteExcelStrategy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import jakarta.servlet.http.HttpServletResponse;
@@ -52,6 +54,7 @@ public class AdminApiController {
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
     private final VendedorRepository vendedorRepository;
+    private final FavoritoRepository favoritoRepository;
 
     @Autowired
     private ReporteAdminService reporteAdminService;
@@ -64,7 +67,8 @@ public class AdminApiController {
 
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
                                ReputacionService reputacionService, ProductoRepository productoRepository,
-                               PedidoRepository pedidoRepository, VendedorRepository vendedorRepository) {
+                               PedidoRepository pedidoRepository, VendedorRepository vendedorRepository,
+                               FavoritoRepository favoritoRepository) {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.userRepository = userRepository;
@@ -72,6 +76,7 @@ public class AdminApiController {
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
         this.vendedorRepository = vendedorRepository;
+        this.favoritoRepository = favoritoRepository;
     }
 
     // GET /api/admin/dashboard
@@ -87,8 +92,24 @@ public class AdminApiController {
                 "totalVendedores", userService.contarPorRol("ROLE_VENDEDOR"),
                 "totalAdmins",     userService.contarPorRol("ROLE_ADMIN"),
                 "reputacionVendedores",  distribucionReputacion("ROLE_VENDEDOR", true),
-                "reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false)
+                "reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false),
+                "totalFavoritos",      favoritoRepository.count(),
+                "productoMasGuardado", productoMasGuardado()
         ));
+    }
+
+    // Producto con más favoritos guardados en toda la plataforma. Map.of(...) no admite valores
+    // null, así que si todavía nadie ha guardado nada se devuelve un mapa vacío en vez de null
+    // (el frontend lo trata igual: ausencia de "id" = sin datos aún).
+    private Map<String, Object> productoMasGuardado() {
+        List<Object[]> top = favoritoRepository.findProductosMasGuardados(PageRequest.of(0, 1));
+        if (top.isEmpty()) return Map.of();
+        Object[] row = top.get(0);
+        return Map.of(
+                "id", ((Number) row[0]).longValue(),
+                "nombre", (String) row[1],
+                "totalFavoritos", ((Number) row[2]).longValue()
+        );
     }
 
     // Cuenta cuántos usuarios de un rol caen en cada nivel de reputación (incluye "NUEVO").

@@ -1,6 +1,7 @@
 package com.example.MarketS.repository;
 
 import com.example.MarketS.model.Favorito;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,4 +29,14 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
 
     @Query("SELECT f.producto.id FROM Favorito f WHERE f.usuario.id = :usuarioId")
     List<Long> findProductoIdsByUsuarioId(@Param("usuarioId") Long usuarioId);
+
+    // Producto(s) con más favoritos guardados — [productoId, nombre, totalFavoritos],
+    // usado en el dashboard de admin/moderador (limitar con Pageable, ej. PageRequest.of(0, 1)).
+    @Query("""
+        SELECT f.producto.id, f.producto.nombre, COUNT(f)
+        FROM Favorito f
+        GROUP BY f.producto.id, f.producto.nombre
+        ORDER BY COUNT(f) DESC
+    """)
+    List<Object[]> findProductosMasGuardados(Pageable pageable);
 }
