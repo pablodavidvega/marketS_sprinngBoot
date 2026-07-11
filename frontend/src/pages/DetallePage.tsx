@@ -5,6 +5,7 @@ import { getPreguntas, crearPregunta, responderPregunta } from '../api/preguntas
 import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
+import { useFavoritos } from '../context/FavoritosContext'
 import { buildImageUrl } from '../utils/image'
 import Stars from '../components/Stars'
 import ReputacionBar from '../components/ReputacionBar'
@@ -19,6 +20,7 @@ export default function DetallePage() {
   const navigate        = useNavigate()
   const { agregar }     = useCarrito()
   const { user, isAuthenticated } = useAuth()
+  const { esFavorito, toggleFavorito } = useFavoritos()
   const [producto, setProducto] = useState<Producto | null>(null)
   const [loading, setLoading]   = useState(true)
   const [activoIdx, setActivoIdx] = useState(0)
@@ -180,6 +182,15 @@ export default function DetallePage() {
       cantidad,
     })
     navigate('/carrito')
+  }
+
+  function handleToggleFavorito() {
+    if (!producto) return
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    toggleFavorito(producto.id)
   }
 
   return (
@@ -349,6 +360,15 @@ export default function DetallePage() {
             className="btn-success mt-2"
           >
             {producto.stock === 0 ? 'Sin stock' : 'Comprar ahora'}
+          </button>
+          <button
+            onClick={handleToggleFavorito}
+            className="btn-secondary mt-2 flex items-center justify-center gap-2"
+          >
+            <span className={esFavorito(producto.id) ? 'text-red-500' : ''}>
+              {esFavorito(producto.id) ? '♥' : '♡'}
+            </span>
+            {esFavorito(producto.id) ? 'Guardado en favoritos' : 'Guardar en favoritos'}
           </button>
 
           {producto.marcaNombre && (

@@ -35,6 +35,8 @@ import ModeradorDashboardPage from './pages/moderador/DashboardPage'
 import ModeradorProductosPage from './pages/moderador/ProductosPage'
 import ModeradorPedidosPage from './pages/moderador/PedidosPage'
 import ServicioClientePage from './pages/ServicioClientePage'
+import TerminosPage from './pages/TerminosPage'
+import MisFavoritosPage from './pages/MisFavoritosPage'
 import VendedorPerfilPage from './pages/VendedorPerfilPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -58,6 +60,15 @@ export default function App() {
           <Route path="/pagos/pendiente" element={<PagoPendientePage />} />
           <Route path="/pagos/fallo" element={<PagoFallidoPage />} />
           <Route path="/soporte" element={<ServicioClientePage />} />
+          <Route path="/terminos" element={<TerminosPage />} />
+          <Route
+            path="/favoritos"
+            element={
+              <ProtectedRoute>
+                <MisFavoritosPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/vendedores/:id" element={<VendedorPerfilPage />} />
 
           <Route

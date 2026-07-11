@@ -184,6 +184,8 @@ public class AuthApiController {
         user.setPhone(dto.getPhone());
         user.setAddress(dto.getAddress());
         user.setRol(rol);
+        user.setAceptoTerminos(dto.isAceptaTerminos());
+        user.setFechaAceptacionTerminos(LocalDateTime.now());
 
         if ("VENDEDOR".equals(tipoRol)) {
             Vendedor vendedor = new Vendedor();

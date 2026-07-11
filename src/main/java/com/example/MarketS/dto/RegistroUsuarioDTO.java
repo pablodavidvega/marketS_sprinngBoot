@@ -1,5 +1,6 @@
 package com.example.MarketS.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -30,6 +31,8 @@ public class RegistroUsuarioDTO {
     @NotBlank(message = "La direccion no puede estar vacia")
     private String address;
 
+    @AssertTrue(message = "Debes aceptar los Términos de Uso para continuar")
+    private boolean aceptaTerminos;
 
     private String tipoUsuario;
 }

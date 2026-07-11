@@ -36,6 +36,12 @@ public class User {
     private String resetToken;
     private LocalDateTime resetTokenExpira;
 
+    @Column(name = "acepto_terminos", nullable = false)
+    private boolean aceptoTerminos;
+
+    @Column(name = "fecha_aceptacion_terminos")
+    private LocalDateTime fechaAceptacionTerminos;
+
     @ManyToOne
     @JoinColumn(name="rol_id")
     private Rol rol;

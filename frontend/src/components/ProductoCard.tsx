@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
+import { useFavoritos } from '../context/FavoritosContext'
+import { useAuth } from '../context/AuthContext'
 import { buildImageUrl } from '../utils/image'
 
 interface Props {
@@ -10,6 +12,8 @@ interface Props {
 
 export default function ProductoCard({ producto }: Props) {
   const { agregar } = useCarrito()
+  const { isAuthenticated } = useAuth()
+  const { esFavorito, toggleFavorito } = useFavoritos()
   const navigate    = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoActivo,    setVideoActivo]    = useState(false)
@@ -57,63 +61,88 @@ export default function ProductoCard({ producto }: Props) {
     navigate('/carrito')
   }
 
+  function handleToggleFavorito(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    toggleFavorito(producto.id)
+  }
+
   return (
     <div
       className="card group flex flex-col p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* ── Miniatura (imagen + video overlay) ──────────────────────── */}
+      <div className="relative mb-2">
+        <Link to={`/productos/${producto.id}`} className="block">
+          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+            {/* Imagen de fondo */}
+            {imagenUrl ? (
+              <img
+                src={imagenUrl}
+                alt={producto.nombre}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+                  videoActivo ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
+                }`}
+              />
+            ) : (
+              <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-sm transition-opacity duration-300 ${videoActivo ? 'opacity-0' : 'opacity-100'}`}>
+                Sin imagen
+              </div>
+            )}
+
+            {/* Video (se muestra sobre la imagen al hacer hover) */}
+            {videoUrl && (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                muted
+                loop
+                playsInline
+                preload="none"
+                onWaiting={() => setVideoCargando(true)}
+                onCanPlay={() => setVideoCargando(false)}
+                onPlaying={() => setVideoCargando(false)}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                  videoActivo ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            )}
+
+            {/* Spinner mientras el video bufferea */}
+            {videoActivo && videoCargando && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-8 h-8 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+              </div>
+            )}
+
+            {/* Badge "▶ Video" — visible sólo cuando no está reproduciendo */}
+            {videoUrl && !videoActivo && (
+              <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 pointer-events-none">
+                <span>▶</span> Video
+              </div>
+            )}
+          </div>
+        </Link>
+
+        {/* Botón de favorito — fuera del <Link> para no anidar <button> dentro de <a> */}
+        <button
+          onClick={handleToggleFavorito}
+          aria-label={esFavorito(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-sm transition-colors"
+        >
+          <span className={esFavorito(producto.id) ? 'text-red-500' : 'text-gray-400'}>
+            {esFavorito(producto.id) ? '♥' : '♡'}
+          </span>
+        </button>
+      </div>
+
       <Link to={`/productos/${producto.id}`} className="block flex-1">
-        {/* ── Miniatura (imagen + video overlay) ──────────────────────── */}
-        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 relative">
-          {/* Imagen de fondo */}
-          {imagenUrl ? (
-            <img
-              src={imagenUrl}
-              alt={producto.nombre}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
-                videoActivo ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
-              }`}
-            />
-          ) : (
-            <div className={`absolute inset-0 flex items-center justify-center text-gray-400 text-sm transition-opacity duration-300 ${videoActivo ? 'opacity-0' : 'opacity-100'}`}>
-              Sin imagen
-            </div>
-          )}
-
-          {/* Video (se muestra sobre la imagen al hacer hover) */}
-          {videoUrl && (
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              muted
-              loop
-              playsInline
-              preload="none"
-              onWaiting={() => setVideoCargando(true)}
-              onCanPlay={() => setVideoCargando(false)}
-              onPlaying={() => setVideoCargando(false)}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                videoActivo ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          )}
-
-          {/* Spinner mientras el video bufferea */}
-          {videoActivo && videoCargando && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-8 h-8 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-            </div>
-          )}
-
-          {/* Badge "▶ Video" — visible sólo cuando no está reproduciendo */}
-          {videoUrl && !videoActivo && (
-            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 pointer-events-none">
-              <span>▶</span> Video
-            </div>
-          )}
-        </div>
-
         {/* ── Info del producto ─────────────────────────────────────────── */}
         {producto.categoriaNombre && (
           <span className="badge badge-primary text-[10px] mb-0.5 inline-block">

@@ -13,6 +13,7 @@ const initialForm = {
   address: '',
   city: '',
   tipoUsuario: 'CLIENTE',
+  aceptaTerminos: false,
 }
 
 export default function RegistroPage() {
@@ -57,6 +58,10 @@ export default function RegistroPage() {
     setError('')
     if (form.password !== form.confirmPassword) {
       setError('Las contraseñas no coinciden')
+      return
+    }
+    if (!form.aceptaTerminos) {
+      setError('Debes aceptar los Términos de Uso para continuar')
       return
     }
     setLoading(true)
@@ -191,6 +196,23 @@ export default function RegistroPage() {
               <option value="CLIENTE">Cliente</option>
               <option value="VENDEDOR">Vendedor</option>
             </select>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              id="aceptaTerminos"
+              type="checkbox"
+              checked={form.aceptaTerminos}
+              onChange={e => setForm(f => ({ ...f, aceptaTerminos: e.target.checked }))}
+              className="w-4 h-4 mt-0.5"
+              required
+            />
+            <label htmlFor="aceptaTerminos" className="text-sm text-gray-700">
+              He leído y acepto los{' '}
+              <Link to="/terminos" target="_blank" className="text-primary-600 hover:underline font-medium">
+                Términos de Uso
+              </Link>
+            </label>
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary mt-2">

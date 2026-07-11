@@ -15,6 +15,7 @@ export const registro = (data: {
   phone: string
   address: string
   tipoUsuario: string
+  aceptaTerminos: boolean
   city?: string
   invitacion?: string
 }) => api.post<PerfilUsuario>('/api/auth/registro', data)
