@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getPedidosVendedor, marcarCompletado, marcarRechazado, calificarComprador } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
@@ -21,6 +21,7 @@ const ESTADO_COLOR: Record<string, string> = {
 }
 
 export default function PedidosVendedorPage() {
+  const [searchParams] = useSearchParams()
   const [pedidos, setPedidos] = useState<PedidoVendedorResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
@@ -30,12 +31,34 @@ export default function PedidosVendedorPage() {
   const [comentarioValor, setComentarioValor] = useState('')
   const [enviandoCalificacion, setEnviandoCalificacion] = useState<number | null>(null)
   const [errorCalificacion, setErrorCalificacion] = useState('')
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  const deepLinkAplicado = useRef(false)
 
   useEffect(() => {
     getPedidosVendedor()
       .then(r => setPedidos(r.data))
       .finally(() => setLoading(false))
   }, [])
+
+  // Deep-link desde la campanita de notificaciones: ?pedido=123&foco=chat|encuentro
+  // expande el pedido exacto y, si aplica, abre el chat (cada fila ya es por-vendedor).
+  useEffect(() => {
+    if (loading || deepLinkAplicado.current) return
+    const pedidoParam = searchParams.get('pedido')
+    if (!pedidoParam) return
+    const pedidoId = Number(pedidoParam)
+    if (!pedidos.some(p => p.pedidoId === pedidoId)) return
+
+    deepLinkAplicado.current = true
+    setExpandido(pedidoId)
+    if (searchParams.get('foco') === 'chat') {
+      setChatAbierto(pedidoId)
+    }
+
+    requestAnimationFrame(() => {
+      cardRefs.current[pedidoId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }, [loading, pedidos, searchParams])
 
   async function handleResolver(pedidoId: number, completado: boolean) {
     setResolviendo(pedidoId)
@@ -96,7 +119,7 @@ export default function PedidosVendedorPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {pedidos.map(pedido => (
-            <div key={pedido.pedidoId} className="card">
+            <div key={pedido.pedidoId} ref={el => { cardRefs.current[pedido.pedidoId] = el }} className="card">
               {/* Cabecera */}
               <div
                 className="flex items-center justify-between cursor-pointer"

@@ -15,15 +15,33 @@ function formatTiempo(fechaStr: string) {
   return `hace ${d} d`
 }
 
+// Construye la URL de destino con los query params que cada página de pedidos usa para
+// auto-expandir el pedido exacto y, si aplica, abrir el hilo de chat/encuentro correcto
+// (un pedido puede tener varios vendedores, por eso a veces hace falta también "vendedor").
+function destinoPedido(esVendedor: boolean, pedidoId: number, vendedorId: number | '', foco?: 'chat' | 'encuentro') {
+  const base = esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+  const params = new URLSearchParams({ pedido: String(pedidoId) })
+  if (foco) params.set('foco', foco)
+  if (vendedorId !== '') params.set('vendedor', String(vendedorId))
+  return `${base}?${params.toString()}`
+}
+
 function destinoDe(n: Notificacion, esVendedor: boolean): string {
   switch (n.tipo) {
     case 'NUEVO_PEDIDO':
-      return '/vendedor/pedidos'
+    case 'PEDIDO_COMPLETADO_EXTERNO':
+    case 'PEDIDO_RECHAZADO_EXTERNO':
+    case 'CALIFICACION_COMPRADOR':
+      return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, '') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVO_MENSAJE_CHAT':
-      return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+      return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, n.vendedorId, 'chat') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
+    case 'ENCUENTRO_PROPUESTO':
+    case 'ENCUENTRO_ACTUALIZADO':
+    case 'ENCUENTRO_CANCELADO':
+      return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, n.vendedorId, 'encuentro') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVA_PREGUNTA':
     case 'PREGUNTA_RESPONDIDA':
-      return n.productoId !== '' ? `/productos/${n.productoId}` : '/'
+      return n.productoId !== '' ? `/productos/${n.productoId}?foco=preguntas` : '/'
     default:
       return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
   }

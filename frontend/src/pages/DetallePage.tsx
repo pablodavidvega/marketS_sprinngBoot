@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getProducto, getResenas, crearResena } from '../api/productos'
 import { getPreguntas, crearPregunta, responderPregunta } from '../api/preguntas'
 import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
@@ -17,8 +17,10 @@ type MediaItem =
 
 export default function DetallePage() {
   const { id }          = useParams<{ id: string }>()
+  const [searchParams]  = useSearchParams()
   const navigate        = useNavigate()
   const { agregar }     = useCarrito()
+  const preguntasRef    = useRef<HTMLDivElement>(null)
   const { user, isAuthenticated } = useAuth()
   const { esFavorito, toggleFavorito } = useFavoritos()
   const [producto, setProducto] = useState<Producto | null>(null)
@@ -67,6 +69,13 @@ export default function DetallePage() {
       .then(r => setPreguntas(r.data))
       .catch(() => setPreguntas({ total: 0, puedeResponder: false, preguntas: [] }))
   }, [id, user?.email])
+
+  // Deep-link desde la campanita de notificaciones (?foco=preguntas): baja hasta la sección
+  // de preguntas una vez que ya se cargaron (si no, la página aún no tiene esa altura).
+  useEffect(() => {
+    if (searchParams.get('foco') !== 'preguntas' || !preguntas) return
+    preguntasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [searchParams, preguntas])
 
   if (loading) {
     return (
@@ -441,7 +450,7 @@ export default function DetallePage() {
 
       {/* ── Sección de preguntas y respuestas ───────────────────────────────── */}
       {preguntas && (
-        <div className="mt-12 border-t pt-8">
+        <div ref={preguntasRef} className="mt-12 border-t pt-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">
             Preguntas y respuestas {preguntas.total > 0 && <span className="text-gray-400 font-normal text-base">({preguntas.total})</span>}
           </h2>

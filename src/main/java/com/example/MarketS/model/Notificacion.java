@@ -42,4 +42,9 @@ public class Notificacion {
 
     @Column(name = "producto_id")
     private Long productoId;
+
+    // Solo se usa para hilos de chat/encuentro (un pedido puede tener varios vendedores),
+    // así el frontend sabe cuál hilo abrir. Null para el resto de tipos de notificación.
+    @Column(name = "vendedor_id")
+    private Long vendedorId;
 }

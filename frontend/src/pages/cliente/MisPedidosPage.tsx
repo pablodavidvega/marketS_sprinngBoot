@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getMisPedidos, confirmarRecepcion } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
@@ -19,17 +19,42 @@ const ESTADO_COLOR: Record<string, string> = {
 }
 
 export default function MisPedidosPage() {
+  const [searchParams] = useSearchParams()
   const [pedidos, setPedidos] = useState<PedidoResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [confirmando, setConfirmando] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<string | null>(null)
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  const deepLinkAplicado = useRef(false)
 
   useEffect(() => {
     getMisPedidos()
       .then(r => setPedidos(r.data))
       .finally(() => setLoading(false))
   }, [])
+
+  // Deep-link desde la campanita de notificaciones: ?pedido=123&vendedor=45&foco=chat|encuentro
+  // expande el pedido exacto y, si aplica, abre el hilo de chat correcto.
+  useEffect(() => {
+    if (loading || deepLinkAplicado.current) return
+    const pedidoParam = searchParams.get('pedido')
+    if (!pedidoParam) return
+    const pedidoId = Number(pedidoParam)
+    if (!pedidos.some(p => p.pedidoId === pedidoId)) return
+
+    deepLinkAplicado.current = true
+    setExpandido(pedidoId)
+
+    const vendedorParam = searchParams.get('vendedor')
+    if (searchParams.get('foco') === 'chat' && vendedorParam) {
+      setChatAbierto(`${pedidoId}-${vendedorParam}`)
+    }
+
+    requestAnimationFrame(() => {
+      cardRefs.current[pedidoId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }, [loading, pedidos, searchParams])
 
   async function handleConfirmarRecepcion(pedidoId: number) {
     setConfirmando(pedidoId)
@@ -68,7 +93,7 @@ export default function MisPedidosPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {pedidos.map(pedido => (
-            <div key={pedido.pedidoId} className="card">
+            <div key={pedido.pedidoId} ref={el => { cardRefs.current[pedido.pedidoId] = el }} className="card">
               {/* Cabecera del pedido */}
               <div
                 className="flex items-center justify-between cursor-pointer"

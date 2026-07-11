@@ -107,7 +107,8 @@ public class ChatApiController {
                 usuario.getUsername() + " te escribió sobre el pedido #" + pedidoId + ": " + resumen,
                 "NUEVO_MENSAJE_CHAT",
                 pedidoId,
-                null
+                null,
+                vendedorId
         );
         if (destinatario.getEmail() != null && !destinatario.getEmail().isBlank()) {
             emailService.enviarCorreo(

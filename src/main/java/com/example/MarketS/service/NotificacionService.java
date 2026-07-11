@@ -18,16 +18,23 @@ public class NotificacionService {
     private final NotificacionRepository repo;
 
     public void crear(User usuario, String mensaje, String tipo, Long pedidoId) {
-        crear(usuario, mensaje, tipo, pedidoId, null);
+        crear(usuario, mensaje, tipo, pedidoId, null, null);
     }
 
     public void crear(User usuario, String mensaje, String tipo, Long pedidoId, Long productoId) {
+        crear(usuario, mensaje, tipo, pedidoId, productoId, null);
+    }
+
+    // vendedorId: solo para notificaciones de chat/encuentro, permite al frontend abrir
+    // directamente el hilo correcto cuando un pedido tiene varios vendedores.
+    public void crear(User usuario, String mensaje, String tipo, Long pedidoId, Long productoId, Long vendedorId) {
         Notificacion n = new Notificacion();
         n.setUsuario(usuario);
         n.setMensaje(mensaje);
         n.setTipo(tipo);
         n.setPedidoId(pedidoId);
         n.setProductoId(productoId);
+        n.setVendedorId(vendedorId);
         n.setFechaCreacion(LocalDateTime.now());
         repo.save(n);
     }

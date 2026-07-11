@@ -296,6 +296,7 @@ export interface Notificacion {
   fechaCreacion: string
   pedidoId: number | ''
   productoId: number | ''
+  vendedorId: number | ''
 }
 
 export interface NotificacionesResponse {
