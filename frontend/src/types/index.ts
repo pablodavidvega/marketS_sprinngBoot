@@ -84,6 +84,23 @@ export interface EmbudoAdmin {
   registrosPorSemana: PuntoSemana[]
 }
 
+export interface PuntoSemanaTransaccion {
+  semana: string
+  total: number
+  monto: number
+}
+
+export interface EstadisticasComunidad {
+  totalRegistrados: number
+  totalTransaccionaron: number
+  tasaAdopcion: number | null
+  totalTransacciones: number
+  gmvTotal: number
+  totalFavoritos: number
+  totalEncuentros: number
+  transaccionesPorSemana: PuntoSemanaTransaccion[]
+}
+
 export interface Categoria {
   id: number
   nombre: string

@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.dto.ComunidadEstadisticasDTO;
 import com.example.MarketS.dto.EmbudoAdminDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroUsuarioDTO;
@@ -8,6 +9,7 @@ import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
+import com.example.MarketS.repository.EncuentroRepository;
 import com.example.MarketS.repository.FavoritoRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
@@ -55,6 +57,7 @@ public class AdminApiController {
     private final PedidoRepository pedidoRepository;
     private final VendedorRepository vendedorRepository;
     private final FavoritoRepository favoritoRepository;
+    private final EncuentroRepository encuentroRepository;
 
     @Autowired
     private ReporteAdminService reporteAdminService;
@@ -68,7 +71,7 @@ public class AdminApiController {
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
                                ReputacionService reputacionService, ProductoRepository productoRepository,
                                PedidoRepository pedidoRepository, VendedorRepository vendedorRepository,
-                               FavoritoRepository favoritoRepository) {
+                               FavoritoRepository favoritoRepository, EncuentroRepository encuentroRepository) {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.userRepository = userRepository;
@@ -77,6 +80,7 @@ public class AdminApiController {
         this.pedidoRepository = pedidoRepository;
         this.vendedorRepository = vendedorRepository;
         this.favoritoRepository = favoritoRepository;
+        this.encuentroRepository = encuentroRepository;
     }
 
     // GET /api/admin/dashboard
@@ -162,6 +166,55 @@ public class AdminApiController {
                 diasPromedioRegistroAPublicacion,
                 registrosPorSemana
         ));
+    }
+
+    // GET /api/admin/estadisticas/comunidad — uso y transacciones concretadas, pensado como
+    // reporte para justificar el pago B2B ante quien administra la comunidad.
+    @GetMapping("/estadisticas/comunidad")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ComunidadEstadisticasDTO> estadisticasComunidad() {
+        long totalVendedores = userRepository.countByRolRolname("ROLE_VENDEDOR");
+        long totalRegistrados = userRepository.countByRolRolname("ROLE_CLIENTE") + totalVendedores;
+        long totalTransaccionaron = pedidoRepository.countDistinctUsuarioByEstadoIn(ESTADOS_VENTA_CONCRETADA);
+        Double tasaAdopcion = totalRegistrados > 0 ? totalTransaccionaron / (double) totalRegistrados : null;
+
+        long totalTransacciones = pedidoRepository.countByEstadoIn(ESTADOS_VENTA_CONCRETADA);
+        double gmvTotal = pedidoRepository.sumTotalByEstadoIn(ESTADOS_VENTA_CONCRETADA);
+
+        LocalDateTime desde = LocalDateTime.now().minusWeeks(SEMANAS_REGISTROS);
+        List<ComunidadEstadisticasDTO.PuntoSemana> transaccionesPorSemana = agruparPorSemana(
+                pedidoRepository.findFechaYTotalByEstadoInAndFechaAfter(ESTADOS_VENTA_CONCRETADA, desde));
+
+        return ResponseEntity.ok(new ComunidadEstadisticasDTO(
+                totalRegistrados,
+                totalTransaccionaron,
+                tasaAdopcion,
+                totalTransacciones,
+                gmvTotal,
+                favoritoRepository.count(),
+                encuentroRepository.count(),
+                transaccionesPorSemana
+        ));
+    }
+
+    // Agrupa (fecha, monto) por semana —lunes de esa semana, mismo criterio que
+    // DATE_TRUNC('week', ...) en Postgres— sumando monto y contando filas en memoria, para no
+    // depender de una query nativa con funciones específicas del dialecto.
+    private List<ComunidadEstadisticasDTO.PuntoSemana> agruparPorSemana(List<Object[]> filas) {
+        Map<java.time.LocalDate, Long> conteo = new java.util.TreeMap<>();
+        Map<java.time.LocalDate, Double> monto = new java.util.TreeMap<>();
+        for (Object[] fila : filas) {
+            LocalDateTime fecha = (LocalDateTime) fila[0];
+            Double total = (Double) fila[1];
+            java.time.LocalDate semana = fecha.toLocalDate()
+                    .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+            conteo.merge(semana, 1L, Long::sum);
+            monto.merge(semana, total != null ? total : 0.0, Double::sum);
+        }
+        return conteo.entrySet().stream()
+                .map(e -> new ComunidadEstadisticasDTO.PuntoSemana(
+                        e.getKey().toString(), e.getValue(), monto.getOrDefault(e.getKey(), 0.0)))
+                .toList();
     }
 
     // GET /api/admin/usuarios?tipo=email&valor=x

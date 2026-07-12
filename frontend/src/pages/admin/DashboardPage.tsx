@@ -210,6 +210,17 @@ export default function AdminDashboardPage() {
 
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link to="/admin/estadisticas-comunidad" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl group-hover:bg-red-200 transition-colors">
+              📈
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Estadísticas de la comunidad</h2>
+              <p className="text-sm text-gray-500">Uso y transacciones concretadas — reporte para justificar el pago</p>
+            </div>
+          </div>
+        </Link>
         <Link to="/admin/usuarios" className="card hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 text-xl group-hover:bg-primary-200 transition-colors">

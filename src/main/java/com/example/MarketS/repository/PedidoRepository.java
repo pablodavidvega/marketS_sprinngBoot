@@ -68,4 +68,16 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     // Embudo admin: de esos, los que siguen en un estado "sin resolver" (abandono de checkout).
     long countByFechaBeforeAndEstadoIn(LocalDateTime antesDe, List<String> estados);
+
+    // Panel de estadísticas de comunidad (admin): cuántas transacciones se concretaron.
+    long countByEstadoIn(List<String> estados);
+
+    // Monto total movido por transacciones concretadas (GMV).
+    @Query("SELECT COALESCE(SUM(p.total), 0) FROM Pedido p WHERE p.estado IN :estados")
+    double sumTotalByEstadoIn(@Param("estados") List<String> estados);
+
+    // Fecha y monto de cada transacción concretada desde cierta fecha, para agrupar por semana
+    // en Java (ver AdminApiController.agruparPorSemana) — evita una query nativa con DATE_TRUNC.
+    @Query("SELECT p.fecha, p.total FROM Pedido p WHERE p.estado IN :estados AND p.fecha >= :desde")
+    List<Object[]> findFechaYTotalByEstadoInAndFechaAfter(@Param("estados") List<String> estados, @Param("desde") LocalDateTime desde);
 }

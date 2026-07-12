@@ -20,6 +20,7 @@ import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import EditarPerfilPage from './pages/cliente/EditarPerfilPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
+import EstadisticasComunidadPage from './pages/admin/EstadisticasComunidadPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
 import SoporteAdminPage from './pages/admin/SoportePage'
 import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
@@ -142,6 +143,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['ADMIN']}>
                 <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/estadisticas-comunidad"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <EstadisticasComunidadPage />
               </ProtectedRoute>
             }
           />
