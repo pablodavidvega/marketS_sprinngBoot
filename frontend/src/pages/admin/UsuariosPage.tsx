@@ -24,16 +24,23 @@ export default function UsuariosPage() {
   const [roles,     setRoles]     = useState<{ id: number; nombre: string }[]>([])
   const [loading,   setLoading]   = useState(true)
   const [busqueda,       setBusqueda]       = useState('')
-  const [tipo,           setTipo]           = useState('')
+  const [rolFiltro,      setRolFiltro]      = useState('') // sufijo sin "ROLE_", ej. "ADMIN"
   const [accionId,       setAccionId]       = useState<number | null>(null)
   const [error,          setError]          = useState('')
   const [descargandoPdf, setDescargandoPdf] = useState(false)
 
+  // Filtrar por rol y buscar por texto son mutuamente excluyentes: el rol, al ser una
+  // coincidencia exacta, tiene prioridad sobre la búsqueda inteligente por texto.
+  function parametrosBusqueda(): [string | undefined, string | undefined] {
+    return rolFiltro ? ['rol', rolFiltro] : [undefined, busqueda || undefined]
+  }
+
   function cargar() {
     setLoading(true)
     setError('')
+    const [tipo, valor] = parametrosBusqueda()
     Promise.all([
-      getUsuarios(tipo || undefined, busqueda || undefined),
+      getUsuarios(tipo, valor),
       getRoles(),
     ])
       .then(([u, r]) => {
@@ -44,7 +51,12 @@ export default function UsuariosPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Búsqueda inteligente: se dispara sola mientras el admin escribe o cambia el rol
+  // (con un pequeño debounce), sin necesidad de presionar Enter ni el botón Buscar.
+  useEffect(() => {
+    const t = setTimeout(() => cargar(), 350)
+    return () => clearTimeout(t)
+  }, [busqueda, rolFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Cambiar rol ────────────────────────────────────────────────────────────
   async function handleCambiarRol(usuario: PerfilUsuario, rolId: number) {
@@ -95,7 +107,8 @@ export default function UsuariosPage() {
   async function handleDescargarPdf() {
     setDescargandoPdf(true)
     try {
-      const response = await descargarPdfUsuarios(tipo || undefined, busqueda || undefined)
+      const [tipo, valor] = parametrosBusqueda()
+      const response = await descargarPdfUsuarios(tipo, valor)
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -134,25 +147,31 @@ export default function UsuariosPage() {
 
       {/* Filtros */}
       <div className="card mb-6 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[180px]">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <div className="flex-1 min-w-[220px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por usuario o email</label>
           <input
             className="input"
-            placeholder="Email o username..."
+            placeholder="Ej: caro, maria@correo.com..."
             value={busqueda}
+            disabled={!!rolFiltro}
             onChange={e => setBusqueda(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && cargar()}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por</label>
-          <select className="input" value={tipo} onChange={e => setTipo(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="rol">Por rol</option>
-            <option value="email">Por email</option>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+          <select
+            className="input"
+            value={rolFiltro}
+            onChange={e => { setRolFiltro(e.target.value); if (e.target.value) setBusqueda('') }}
+          >
+            <option value="">Todos los roles</option>
+            {roles.map(r => (
+              <option key={r.id} value={r.nombre.replace('ROLE_', '')}>
+                {formatRol(r.nombre)}
+              </option>
+            ))}
           </select>
         </div>
-        <button onClick={cargar} className="btn-primary">Buscar</button>
       </div>
 
       {/* Tabla */}

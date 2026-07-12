@@ -217,7 +217,8 @@ public class AdminApiController {
                 .toList();
     }
 
-    // GET /api/admin/usuarios?tipo=email&valor=x
+    // GET /api/admin/usuarios?valor=x — búsqueda inteligente por username o email (parcial,
+    // sin distinguir mayúsculas). ?tipo=rol&valor=vendedor filtra por rol en su lugar.
     @GetMapping("/usuarios")
     @Transactional(readOnly = true)
     public ResponseEntity<List<PerfilResponseDTO>> listarUsuarios(
@@ -227,7 +228,9 @@ public class AdminApiController {
         // Caso más común (sin filtro, "ver todos"): proyección escalar, nunca instancia la
         // entidad User — evita el disparo automático de Hibernate al inicializar
         // User.vendedor en cada fila (ver UserRepository.findAllPerfilProjection).
-        if (tipo == null || valor == null || valor.isBlank()) {
+        // Nota: "tipo" es opcional (la búsqueda inteligente por texto no lo envía), así que
+        // el único criterio real para decidir si hay filtro es si llegó "valor".
+        if (valor == null || valor.isBlank()) {
             List<Object[]> filas = userRepository.findAllPerfilProjection();
 
             List<Long> vendedorIds = filas.stream()
@@ -243,13 +246,15 @@ public class AdminApiController {
         }
 
         // Búsquedas filtradas: resultados acotados (0-1 para nombre/email), se mantiene la
-        // ruta por entidad completa.
-        List<User> usuarios = switch (tipo) {
+        // ruta por entidad completa. tipo puede venir null (búsqueda inteligente por defecto).
+        List<User> usuarios = switch (tipo == null ? "" : tipo) {
             case "nombre" -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
             case "email"  -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
             case "direccion" -> userService.buscarPorDireccion(valor);
             case "rol"    -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
-            default       -> userService.listarTodos();
+            // Búsqueda inteligente: sin "tipo" explícito, se busca por coincidencia parcial
+            // (case-insensitive) en username O email a la vez — ver UserService.buscarPorNombreOCorreo.
+            default       -> userService.buscarPorNombreOCorreo(valor);
         };
 
         List<Long> vendedorIds = usuarios.stream()
@@ -374,15 +379,15 @@ public class AdminApiController {
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) String valor) {
         List<User> usuarios;
-        if (tipo == null || valor == null || valor.isBlank()) {
+        if (valor == null || valor.isBlank()) {
             usuarios = userService.listarTodos();
         } else {
-            usuarios = switch (tipo) {
+            usuarios = switch (tipo == null ? "" : tipo) {
                 case "nombre"    -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
                 case "email"     -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
                 case "direccion" -> userService.buscarPorDireccion(valor);
                 case "rol"       -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
-                default          -> userService.listarTodos();
+                default          -> userService.buscarPorNombreOCorreo(valor);
             };
         }
         try {
