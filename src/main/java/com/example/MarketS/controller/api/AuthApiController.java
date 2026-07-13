@@ -7,17 +7,17 @@ import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.RolRepository;
+import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.JwtTokenProvider;
-import com.example.MarketS.service.ConfiguracionAppService;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
+import com.example.MarketS.service.RegistroElegibilidadService;
 import com.example.MarketS.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,14 +36,7 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthApiController {
 
-    private static final String COOKIE_NAME = "auth_token";
     private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
-
-    @Value("${cookie.secure:false}")
-    private boolean cookieSecure;
-
-    @Value("${cookie.samesite:Lax}")
-    private String cookieSameSite;
 
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -53,33 +46,26 @@ public class AuthApiController {
     private final UserService userService;
     private final RolRepository rolRepository;
     private final EmailService emailService;
-    private final ConfiguracionAppService configService;
     private final InvitacionService invitacionService;
+    private final RegistroElegibilidadService elegibilidadService;
+    private final AuthCookieService cookieService;
 
     public AuthApiController(AuthenticationManager authenticationManager,
                               JwtTokenProvider tokenProvider,
                               UserService userService,
                               RolRepository rolRepository,
                               EmailService emailService,
-                              ConfiguracionAppService configService,
-                              InvitacionService invitacionService) {
+                              InvitacionService invitacionService,
+                              RegistroElegibilidadService elegibilidadService,
+                              AuthCookieService cookieService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.emailService = emailService;
-        this.configService = configService;
         this.invitacionService = invitacionService;
-    }
-
-    private ResponseCookie buildCookie(String value, Duration maxAge) {
-        return ResponseCookie.from(COOKIE_NAME, value)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite(cookieSameSite)
-                .path("/")
-                .maxAge(maxAge)
-                .build();
+        this.elegibilidadService = elegibilidadService;
+        this.cookieService = cookieService;
     }
 
     // POST /api/auth/login — devuelve JWT como cookie httpOnly (no en el body)
@@ -96,7 +82,7 @@ public class AuthApiController {
                     .orElse("")
                     .replace("ROLE_", "");
 
-            response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(token, COOKIE_MAX_AGE).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
             return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
@@ -106,7 +92,7 @@ public class AuthApiController {
     // POST /api/auth/logout — limpia la cookie
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie("", Duration.ZERO).toString());
         return ResponseEntity.ok(Map.of("mensaje", "Sesión cerrada"));
     }
 
@@ -118,47 +104,10 @@ public class AuthApiController {
         }
 
         // ── Validación de acceso según modo de registro ──────────────────────
-        String modo    = configService.getModoRegistro();
-        String dominio = configService.getDominioPermitido();
-        String token   = dto.getInvitacion();
-
-        if (!ConfiguracionAppService.MODO_ABIERTO.equals(modo)) {
-            boolean dominioOk    = false;
-            boolean invitacionOk = false;
-
-            if ((ConfiguracionAppService.MODO_DOMINIO.equals(modo) ||
-                 ConfiguracionAppService.MODO_DOMINIO_O_INVITACION.equals(modo))
-                 && !dominio.isBlank()) {
-                String emailDomain = dto.getEmail().contains("@")
-                        ? dto.getEmail().substring(dto.getEmail().indexOf('@') + 1).toLowerCase()
-                        : "";
-                dominioOk = emailDomain.equalsIgnoreCase(dominio.trim());
-            }
-
-            if ((ConfiguracionAppService.MODO_INVITACION.equals(modo) ||
-                 ConfiguracionAppService.MODO_DOMINIO_O_INVITACION.equals(modo))
-                 && token != null && !token.isBlank()) {
-                invitacionOk = invitacionService.esVigente(token);
-            }
-
-            boolean acceso = switch (modo) {
-                case ConfiguracionAppService.MODO_DOMINIO             -> dominioOk;
-                case ConfiguracionAppService.MODO_INVITACION          -> invitacionOk;
-                case ConfiguracionAppService.MODO_DOMINIO_O_INVITACION -> dominioOk || invitacionOk;
-                default -> true;
-            };
-
-            if (!acceso) {
-                String mensaje = switch (modo) {
-                    case ConfiguracionAppService.MODO_DOMINIO ->
-                            "Solo pueden registrarse usuarios con correo @" + dominio;
-                    case ConfiguracionAppService.MODO_INVITACION ->
-                            "El registro requiere un link de invitación válido";
-                    default ->
-                            "Acceso restringido: se requiere correo @" + dominio + " o link de invitación";
-                };
-                return ResponseEntity.status(403).body(Map.of("error", mensaje));
-            }
+        String token = dto.getInvitacion();
+        var evaluacion = elegibilidadService.evaluar(dto.getEmail(), token);
+        if (!evaluacion.permitido()) {
+            return ResponseEntity.status(403).body(Map.of("error", evaluacion.mensajeError()));
         }
         // ─────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { registro } from '../api/auth'
+import { registro, googleLogin } from '../api/auth'
 import { getEstadoRegistro, validarToken } from '../api/invitaciones'
+import { useAuth } from '../context/AuthContext'
+import GoogleLoginButton from '../components/GoogleLoginButton'
 import type { EstadoRegistro, ValidacionInvitacion } from '../types'
 
 const initialForm = {
@@ -18,6 +20,7 @@ const initialForm = {
 
 export default function RegistroPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [searchParams] = useSearchParams()
   const tokenUrl = searchParams.get('invitacion') ?? ''
 
@@ -73,6 +76,31 @@ export default function RegistroPage() {
       setError(data?.error ?? data?.mensaje ?? 'Error al registrar. Intenta de nuevo.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGoogleCredential(idToken: string) {
+    setError('')
+    try {
+      const { data } = await googleLogin(idToken)
+      if (!data.needsCompletion) {
+        login(data.email!, data.role!)
+        if (data.role === 'ADMIN') navigate('/admin/dashboard')
+        else if (data.role === 'VENDEDOR') navigate('/vendedor')
+        else navigate('/')
+      } else {
+        navigate('/completar-registro-google', {
+          state: {
+            pendingToken: data.pendingToken,
+            email: data.email,
+            nombreSugerido: data.nombreSugerido,
+            requiereInvitacion: data.requiereInvitacion,
+          },
+        })
+      }
+    } catch (err: unknown) {
+      const response = (err as { response?: { data?: { error?: string } } })?.response
+      setError(response?.data?.error || 'No se pudo continuar con Google')
     }
   }
 
@@ -219,6 +247,14 @@ export default function RegistroPage() {
             {loading ? 'Registrando...' : 'Crear cuenta'}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">o</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        <GoogleLoginButton onCredential={handleGoogleCredential} />
 
         <p className="text-center text-sm text-gray-500 mt-4">
           ¿Ya tienes cuenta?{' '}

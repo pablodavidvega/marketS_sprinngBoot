@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegistroPage from './pages/RegistroPage'
+import CompletarRegistroGooglePage from './pages/CompletarRegistroGooglePage'
 import DetallePage from './pages/DetallePage'
 import CarritoPage from './pages/CarritoPage'
 import ConfirmacionPage from './pages/pedidos/ConfirmacionPage'
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<RegistroPage />} />
+          <Route path="/completar-registro-google" element={<CompletarRegistroGooglePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/productos/recientes" element={<UltimosProductosPage />} />

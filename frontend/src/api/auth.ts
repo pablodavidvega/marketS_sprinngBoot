@@ -1,8 +1,22 @@
 import api from './axios'
-import type { AuthResponse, PerfilUsuario } from '../types'
+import type { AuthResponse, GoogleLoginResponse, PerfilUsuario } from '../types'
 
 export const login = (email: string, password: string) =>
   api.post<AuthResponse>('/api/auth/login', { email, password })
+
+export const googleLogin = (idToken: string) =>
+  api.post<GoogleLoginResponse>('/api/auth/google', { idToken })
+
+export const googleCompletarRegistro = (data: {
+  pendingToken: string
+  username: string
+  tipoUsuario: string
+  phone: string
+  address: string
+  city?: string
+  invitacion?: string
+  aceptaTerminos: boolean
+}) => api.post<AuthResponse>('/api/auth/google/completar', data)
 
 export const logout = () =>
   api.post('/api/auth/logout')

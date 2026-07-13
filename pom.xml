@@ -149,6 +149,13 @@
 			<version>2.15.2</version>
 		</dependency>
 
+		<!-- Verificación de id_token de Google (Login con Google) -->
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+
 		<!-- JWT -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

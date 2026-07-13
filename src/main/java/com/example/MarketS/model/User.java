@@ -36,6 +36,12 @@ public class User {
     private String resetToken;
     private LocalDateTime resetTokenExpira;
 
+    // Identificador único de Google (claim "sub" del id_token) para usuarios que se
+    // loguean/registran con Google. Nullable: los usuarios sin Google vinculado quedan en
+    // null, y Postgres permite múltiples NULL en una columna UNIQUE sin problema.
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
     // columnDefinition con DEFAULT: permite que Hibernate agregue esta columna NOT NULL
     // sobre una tabla "users" que ya tiene filas (Postgres backfillea con el default en
     // vez de rechazar el ALTER TABLE por valores nulos existentes).

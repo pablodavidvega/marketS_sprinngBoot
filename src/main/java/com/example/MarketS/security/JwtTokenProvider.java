@@ -57,4 +57,44 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    // ── Pending signup token (login con Google) ──────────────────────────────
+    // Token de corta vida que certifica que un email/googleId ya fue verificado contra
+    // Google, mientras el usuario completa los datos que Google no provee (teléfono,
+    // dirección, rol). Lleva claim "purpose" para distinguirse de un JWT de sesión real —
+    // JwtAuthenticationFilter lo rechaza explícitamente si alguien lo presenta como cookie.
+    private static final String PENDING_SIGNUP_PURPOSE = "google_signup";
+
+    public String generatePendingSignupToken(String email, String googleId, String name, long ttlMillis) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("purpose", PENDING_SIGNUP_PURPOSE)
+                .claim("googleId", googleId)
+                .claim("name", name)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + ttlMillis))
+                .signWith(key())
+                .compact();
+    }
+
+    // Valida firma + expiración + que sea efectivamente un pending signup token; lanza
+    // JwtException/IllegalArgumentException si no. El caller decide cómo traducir eso a HTTP.
+    public Claims parsePendingSignupToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(key()).build().parseSignedClaims(token).getPayload();
+        if (!PENDING_SIGNUP_PURPOSE.equals(claims.get("purpose", String.class))) {
+            throw new JwtException("El token no es un pending signup token válido");
+        }
+        return claims;
+    }
+
+    // true si el token trae claim "purpose" (cualquiera) — un JWT de sesión normal
+    // (generateToken) nunca lo lleva, así que esto identifica tokens que NO deben autenticar.
+    public boolean hasPurposeClaim(String token) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(key()).build().parseSignedClaims(token).getPayload();
+            return claims.get("purpose", String.class) != null;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
 }

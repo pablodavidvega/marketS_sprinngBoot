@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { login as loginApi } from '../api/auth'
+import { login as loginApi, googleLogin } from '../api/auth'
+import GoogleLoginButton from '../components/GoogleLoginButton'
+
+function redirigirPorRol(navigate: ReturnType<typeof useNavigate>, role: string) {
+  if (role === 'ADMIN') navigate('/admin/dashboard')
+  else if (role === 'VENDEDOR') navigate('/vendedor')
+  else navigate('/')  // CLIENTE → home (tienda), no panel de cuenta
+}
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -19,15 +26,36 @@ export default function LoginPage() {
     try {
       const { data } = await loginApi(form.email, form.password)
       login(data.email, data.role)
-      if (data.role === 'ADMIN') navigate('/admin/dashboard')
-      else if (data.role === 'VENDEDOR') navigate('/vendedor')
-      else navigate('/')  // CLIENTE → home (tienda), no panel de cuenta
+      redirigirPorRol(navigate, data.role)
     } catch (err: unknown) {
       const response = (err as { response?: { data?: { mensaje?: string; error?: string } } })?.response
       const msg = response?.data?.mensaje || response?.data?.error || (err as Error).message
       setError(msg || 'Credenciales incorrectas')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGoogleCredential(idToken: string) {
+    setError('')
+    try {
+      const { data } = await googleLogin(idToken)
+      if (!data.needsCompletion) {
+        login(data.email!, data.role!)
+        redirigirPorRol(navigate, data.role!)
+      } else {
+        navigate('/completar-registro-google', {
+          state: {
+            pendingToken: data.pendingToken,
+            email: data.email,
+            nombreSugerido: data.nombreSugerido,
+            requiereInvitacion: data.requiereInvitacion,
+          },
+        })
+      }
+    } catch (err: unknown) {
+      const response = (err as { response?: { data?: { error?: string } } })?.response
+      setError(response?.data?.error || 'No se pudo iniciar sesión con Google')
     }
   }
 
@@ -77,6 +105,14 @@ export default function LoginPage() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">o</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        <GoogleLoginButton onCredential={handleGoogleCredential} />
 
         <p className="text-center text-sm text-gray-500 mt-4">
           ¿No tienes cuenta?{' '}

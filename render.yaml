@@ -29,5 +29,7 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
       - key: FRONTEND_URL
         sync: false

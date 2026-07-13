@@ -31,7 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
+        // Los "pending signup token" (login con Google, paso intermedio) firman con la misma
+        // clave que un JWT de sesión real pero llevan claim "purpose" — nunca deben poder
+        // autenticar una request, así que se descartan aquí antes de tocar el UserDetailsService.
+        if (StringUtils.hasText(token) && tokenProvider.validateToken(token) && !tokenProvider.hasPurposeClaim(token)) {
             String email = tokenProvider.getEmailFromToken(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             UsernamePasswordAuthenticationToken auth =

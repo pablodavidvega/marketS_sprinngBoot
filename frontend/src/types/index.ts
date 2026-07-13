@@ -3,6 +3,15 @@ export interface AuthResponse {
   role: string
 }
 
+export interface GoogleLoginResponse {
+  needsCompletion: boolean
+  email?: string
+  role?: string
+  nombreSugerido?: string
+  pendingToken?: string
+  requiereInvitacion?: boolean
+}
+
 export interface VendedorEstadisticas {
   id: number
   username: string
