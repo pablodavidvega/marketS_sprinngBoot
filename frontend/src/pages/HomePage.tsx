@@ -5,7 +5,7 @@ import ProductoCard from '../components/ProductoCard'
 import BuscadorAvanzado from '../components/BuscadorAvanzado'
 import ProductosRecientesSlider from '../components/ProductosRecientesSlider'
 
-const PRODUCTOS_POR_PAGINA = 40
+const PRODUCTOS_POR_PAGINA = 30
 
 export default function HomePage() {
   const [productos, setProductos] = useState<Producto[]>([])
@@ -113,7 +113,7 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {productos.slice(0, visibles).map(p => <ProductoCard key={p.id} producto={p} />)}
           </div>
           {visibles < productos.length && (

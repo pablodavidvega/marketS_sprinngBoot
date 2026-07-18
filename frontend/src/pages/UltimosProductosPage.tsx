@@ -37,7 +37,7 @@ export default function UltimosProductosPage() {
       ) : productos.length === 0 ? (
         <div className="text-center py-16 text-gray-400">No hay productos disponibles</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {productos.map(p => <ProductoCard key={p.id} producto={p} />)}
         </div>
       )}
