@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
@@ -15,6 +15,7 @@ export default function ProductoCard({ producto }: Props) {
   const { isAuthenticated } = useAuth()
   const { esFavorito, toggleFavorito } = useFavoritos()
   const navigate    = useNavigate()
+  const cardRef  = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoActivo,    setVideoActivo]    = useState(false)
   const [videoCargando,  setVideoCargando]  = useState(false)
@@ -37,6 +38,24 @@ export default function ProductoCard({ producto }: Props) {
     setVideoActivo(false)
     setVideoCargando(false)
   }
+
+  // ── Táctil: sin mouseenter/mouseleave, el video arranca solo al entrar en pantalla ──
+  useEffect(() => {
+    if (!videoUrl || !cardRef.current) return
+    const esTactil = window.matchMedia('(hover: none)').matches
+    if (!esTactil) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) handleMouseEnter()
+        else handleMouseLeave()
+      },
+      { threshold: 0.6 },
+    )
+    observer.observe(cardRef.current)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoUrl])
 
   function handleAgregar(e: React.MouseEvent) {
     e.preventDefault()
@@ -73,6 +92,7 @@ export default function ProductoCard({ producto }: Props) {
 
   return (
     <div
+      ref={cardRef}
       className="card producto-card group flex flex-col p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
