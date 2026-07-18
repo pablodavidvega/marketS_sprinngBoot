@@ -73,7 +73,7 @@ export default function ProductoCard({ producto }: Props) {
 
   return (
     <div
-      className="card group flex flex-col p-4"
+      className="card producto-card group flex flex-col p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

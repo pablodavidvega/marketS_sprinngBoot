@@ -79,4 +79,15 @@
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
+  .producto-card {
+    @apply cursor-pointer;
+    transform: translateY(0) scale(1);
+  }
+  .producto-card:hover {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 14px 14px 26px var(--clay-shadow-dark), -14px -14px 26px var(--clay-shadow-light);
+  }
+  .producto-card:active {
+    transform: translateY(-2px) scale(1.005);
+  }
 }
