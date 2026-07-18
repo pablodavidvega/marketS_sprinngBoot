@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  isActive ? 'text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'
+  `nav-tab-link ${isActive ? 'active-tab text-primary-600 font-medium' : 'text-gray-600 hover:text-primary-600'}`
 
 export default function NavbarTabs() {
   const { isAuthenticated, hasRole } = useAuth()

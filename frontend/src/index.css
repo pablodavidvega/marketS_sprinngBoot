@@ -90,4 +90,26 @@
   .producto-card:active {
     transform: translateY(-2px) scale(1.005);
   }
+  .nav-tab-link {
+    @apply relative inline-block transition-transform duration-200;
+  }
+  .nav-tab-link:hover {
+    transform: translateY(-2px);
+  }
+  .nav-tab-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transition: transform 0.25s ease;
+  }
+  .nav-tab-link:hover::after,
+  .nav-tab-link.active-tab::after {
+    transform: scaleX(1);
+  }
 }

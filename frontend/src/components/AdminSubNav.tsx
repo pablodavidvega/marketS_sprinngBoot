@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  isActive ? 'text-primary-700 font-semibold' : 'text-primary-900/70 hover:text-primary-700'
+  `nav-tab-link ${isActive ? 'active-tab text-primary-700 font-semibold' : 'text-primary-900/70 hover:text-primary-700'}`
 
 const ADMIN_LINKS: { to: string; label: string; end?: boolean }[] = [
   { to: '/admin/estadisticas-comunidad', label: 'Estadísticas' },
