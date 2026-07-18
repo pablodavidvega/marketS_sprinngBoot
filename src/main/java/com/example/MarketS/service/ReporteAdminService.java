@@ -63,17 +63,23 @@ public class ReporteAdminService {
         int totalProductos = productos.size();
         int totalCategorias = categorias.size();
         int totalMarcas = (int) productos.stream()
-                .map(p -> p.getMarca().getId()) // usamos el id de la marca
+                .map(Producto::getMarca)
+                .filter(java.util.Objects::nonNull)
+                .map(Marca::getId)
                 .distinct()
                 .count();
 
         double promedioPrecio = productos.stream()
-                .mapToDouble(Producto::getPrecio)
+                .map(Producto::getPrecio)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
                 .average()
                 .orElse(0.0);
 
         double promedioStock = productos.stream()
-                .mapToInt(Producto::getStock)
+                .map(Producto::getStock)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(Integer::intValue)
                 .average()
                 .orElse(0);
 

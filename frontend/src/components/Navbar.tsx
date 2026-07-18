@@ -129,7 +129,7 @@ export default function Navbar() {
                 <Link to="/admin/usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Usuarios</Link>
                 <Link to="/admin/categorias" onClick={() => setOpen(false)} className="text-gray-700 py-1">Categorías</Link>
                 <Link to="/admin/correos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Enviar correos</Link>
-                <Link to="/admin/soporte" onClick={() => setOpen(false)} className="text-gray-700 py-1">Soporte</Link>
+                <Link to="/admin/soporte" onClick={() => setOpen(false)} className="text-gray-700 py-1">Solicitudes de soporte</Link>
                 <Link to="/admin/reportes/vendedores" onClick={() => setOpen(false)} className="text-gray-700 py-1">Reportes de vendedores</Link>
                 <Link to="/admin/reportes/catalogo" onClick={() => setOpen(false)} className="text-gray-700 py-1">Reporte del catálogo</Link>
                 <Link to="/admin/carga-usuarios" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva</Link>

@@ -9,7 +9,7 @@ const ADMIN_LINKS: { to: string; label: string; end?: boolean }[] = [
   { to: '/admin/usuarios', label: 'Usuarios' },
   { to: '/admin/categorias', label: 'Categorías' },
   { to: '/admin/correos', label: 'Enviar correos' },
-  { to: '/admin/soporte', label: 'Soporte' },
+  { to: '/admin/soporte', label: 'Solicitudes de soporte' },
   { to: '/admin/reportes/vendedores', label: 'Reportes de vendedores' },
   { to: '/admin/reportes/catalogo', label: 'Reporte del catálogo' },
   { to: '/admin/carga-usuarios', label: 'Carga masiva' },

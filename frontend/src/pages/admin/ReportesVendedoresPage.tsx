@@ -258,6 +258,7 @@ export default function ReportesVendedoresPage() {
     name: v.username,
     value: Math.round(v.comisionTotal),
   }))
+  const totalPie = pieData.reduce((s, d) => s + d.value, 0)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -322,16 +323,23 @@ export default function ReportesVendedoresPage() {
           {/* Torta */}
           <div className="card">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribución de comisiones</h2>
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={190}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }: { name?: string; percent?: number }) =>
-                  `${(name ?? '').substring(0, 6)} ${((percent ?? 0) * 100).toFixed(0)}%`
-                } labelLine={false} fontSize={10}>
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} dataKey="value">
                   {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(v) => fmt(Number(v))} />
               </PieChart>
             </ResponsiveContainer>
+            <ul className="mt-2 space-y-1">
+              {pieData.map((d, i) => (
+                <li key={d.name} className="flex items-center gap-2 text-xs text-gray-600">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  <span className="truncate flex-1">{d.name}</span>
+                  <span className="text-gray-400 shrink-0">{totalPie > 0 ? Math.round((d.value / totalPie) * 100) : 0}%</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
