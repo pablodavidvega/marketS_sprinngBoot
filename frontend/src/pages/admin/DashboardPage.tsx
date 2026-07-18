@@ -287,6 +287,50 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
+        <Link to="/admin/carga-usuarios" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl group-hover:bg-purple-200 transition-colors">
+              📤
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Carga masiva de usuarios</h2>
+              <p className="text-sm text-gray-500">Importar usuarios desde CSV</p>
+            </div>
+          </div>
+        </Link>
+        <Link to="/admin/invitaciones" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl group-hover:bg-amber-200 transition-colors">
+              🎟️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Invitaciones</h2>
+              <p className="text-sm text-gray-500">Generar y gestionar códigos de invitación</p>
+            </div>
+          </div>
+        </Link>
+        <Link to="/admin/banners-slider" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 text-xl group-hover:bg-pink-200 transition-colors">
+              🖼️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Banners slider</h2>
+              <p className="text-sm text-gray-500">Administrar el carrusel de banners de la home</p>
+            </div>
+          </div>
+        </Link>
+        <Link to="/admin/configuracion" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 text-xl group-hover:bg-slate-200 transition-colors">
+              ⚙️
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Configuración</h2>
+              <p className="text-sm text-gray-500">Ajustes generales de la plataforma</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   )

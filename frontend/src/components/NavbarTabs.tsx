@@ -60,29 +60,9 @@ export default function NavbarTabs() {
           )}
 
           {isAuthenticated && hasRole('ADMIN') && (
-            <>
-              <NavLink to="/admin/dashboard" className={linkClass}>
-                Panel admin
-              </NavLink>
-              <NavLink to="/admin/usuarios" className={linkClass}>
-                Usuarios
-              </NavLink>
-              <NavLink to="/admin/categorias" className={linkClass}>
-                Categorías
-              </NavLink>
-              <NavLink to="/admin/carga-usuarios" className={linkClass}>
-                Carga masiva
-              </NavLink>
-              <NavLink to="/admin/invitaciones" className={linkClass}>
-                Invitaciones
-              </NavLink>
-              <NavLink to="/admin/configuracion" className={linkClass}>
-                Configuración
-              </NavLink>
-              <NavLink to="/admin/banners-slider" className={linkClass}>
-                Banners slider
-              </NavLink>
-            </>
+            <NavLink to="/admin/dashboard" end className={linkClass}>
+              Panel admin
+            </NavLink>
           )}
         </div>
       </div>
