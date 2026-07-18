@@ -112,4 +112,19 @@
   .nav-tab-link.active-tab::after {
     transform: scaleX(1);
   }
+  .fab-buscar {
+    @apply fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-primary-600 text-white flex items-center justify-center transition-all duration-300;
+    box-shadow: 6px 6px 14px rgba(37, 99, 235, 0.35), -4px -4px 10px var(--clay-shadow-light);
+  }
+  .fab-buscar:hover {
+    transform: translateY(-3px);
+    background-color: var(--color-primary-700);
+  }
+  .fab-buscar:active {
+    box-shadow: inset 3px 3px 6px rgba(29, 78, 216, 0.45);
+  }
+  .fab-buscar.oculto {
+    @apply opacity-0 pointer-events-none;
+    transform: translateY(12px);
+  }
 }

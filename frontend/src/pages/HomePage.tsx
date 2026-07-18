@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getProductos, getProductosPorCategoria, getCategorias } from '../api/productos'
 import type { Producto, Categoria } from '../types'
 import ProductoCard from '../components/ProductoCard'
 import BuscadorAvanzado from '../components/BuscadorAvanzado'
 import ProductosRecientesSlider from '../components/ProductosRecientesSlider'
+import BotonVolverABuscar from '../components/BotonVolverABuscar'
 
 const PRODUCTOS_POR_PAGINA = 30
 
@@ -16,6 +17,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [visibles, setVisibles] = useState(PRODUCTOS_POR_PAGINA)
+  const buscadorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     getCategorias()
@@ -54,7 +56,7 @@ export default function HomePage() {
 
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Buscador avanzado */}
-      <div className="mb-6">
+      <div className="mb-6 scroll-mt-24" ref={buscadorRef}>
         <BuscadorAvanzado onSearch={handleSearch} initialValue={filtro} />
       </div>
 
@@ -129,6 +131,7 @@ export default function HomePage() {
         </>
       )}
     </div>
+    <BotonVolverABuscar targetRef={buscadorRef} />
     </>
   )
 }
