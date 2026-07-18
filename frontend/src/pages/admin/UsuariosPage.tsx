@@ -188,8 +188,8 @@ export default function UsuariosPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Rol actual</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Cambiar rol</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Ciudad</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Registro</th>
+                <th className="hidden lg:table-cell text-left px-4 py-3 font-medium text-gray-600">Ciudad</th>
+                <th className="hidden lg:table-cell text-left px-4 py-3 font-medium text-gray-600">Registro</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
               </tr>
             </thead>
@@ -256,10 +256,10 @@ export default function UsuariosPage() {
                     </td>
 
                     {/* Ciudad */}
-                    <td className="px-4 py-3 text-gray-500">{u.city || '—'}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-gray-500">{u.city || '—'}</td>
 
                     {/* Fecha de registro */}
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="hidden lg:table-cell px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                       {u.createdAt
                         ? new Date(u.createdAt).toLocaleDateString('es-CO', {
                             day: '2-digit', month: 'short', year: 'numeric',

@@ -122,19 +122,19 @@ export default function PedidosVendedorPage() {
             <div key={pedido.pedidoId} ref={el => { cardRefs.current[pedido.pedidoId] = el }} className="card">
               {/* Cabecera */}
               <div
-                className="flex items-center justify-between cursor-pointer"
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 cursor-pointer"
                 onClick={() => toggleExpandido(pedido.pedidoId)}
               >
-                <div>
-                  <p className="font-semibold text-gray-800">Pedido #{pedido.pedidoId}</p>
-                  <p className="text-sm text-gray-500">
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">Pedido #{pedido.pedidoId}</p>
+                  <p className="text-sm text-gray-500 truncate">
                     {new Date(pedido.fecha).toLocaleDateString('es-CO', {
                       year: 'numeric', month: 'long', day: 'numeric',
                     })}
                     {' · '}{pedido.items.length} ítem(s)
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                   <span className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
                     {pedido.estado.replace(/_/g, ' ')}
                   </span>

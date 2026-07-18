@@ -510,7 +510,7 @@ export default function VendedorProductosPage() {
                     </span>
                   )}
                 </h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <MediaSlot
                     label="Imagen principal"
                     required={!editando}

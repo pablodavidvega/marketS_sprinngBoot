@@ -287,7 +287,7 @@ export default function CargaMasivaUsuariosPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
               <div className="text-center p-4 bg-gray-50 rounded-xl">
                 <p className="text-3xl font-bold text-gray-800">{resultado.total}</p>
                 <p className="text-sm text-gray-500 mt-1">Total procesados</p>

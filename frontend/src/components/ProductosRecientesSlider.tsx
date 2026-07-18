@@ -129,7 +129,7 @@ export default function ProductosRecientesSlider() {
           Ver todos →
         </Link>
       </div>
-      <div className="relative w-full h-[350px] overflow-hidden shadow-lg select-none" style={{ backgroundColor: '#000510' }}>
+      <div className="relative w-full h-[440px] sm:h-[350px] overflow-hidden shadow-lg select-none" style={{ backgroundColor: '#000510' }}>
       <div
         className="flex h-full"
         style={{
@@ -161,7 +161,7 @@ export default function ProductosRecientesSlider() {
                 </div>
 
                 <div className="relative flex-1 px-3 pb-3">
-                  <div className="grid grid-cols-5 grid-rows-2 gap-2 sm:gap-3 h-full">
+                  <div className="grid grid-cols-3 grid-rows-4 sm:grid-cols-5 sm:grid-rows-2 gap-1.5 sm:gap-3 h-full">
                     {item.productos.map(p => {
                       const imagenUrl = buildImageUrl(p.imagen)
                       return (

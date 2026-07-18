@@ -131,16 +131,16 @@ export default function ClienteDashboardPage() {
               {data.pedidosRecientes.map(pedido => (
                 <div key={pedido.pedidoId} className="p-3 bg-gray-50 rounded-lg">
                   <div
-                    className="flex items-center justify-between cursor-pointer"
+                    className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 cursor-pointer"
                     onClick={() => setExpandido(expandido === pedido.pedidoId ? null : pedido.pedidoId)}
                   >
-                    <div>
-                      <p className="font-medium text-gray-800">Pedido #{pedido.pedidoId}</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-800 truncate">Pedido #{pedido.pedidoId}</p>
+                      <p className="text-sm text-gray-500 truncate">
                         {new Date(pedido.fecha).toLocaleDateString('es-CO')} · {pedido.detalles.length} ítem(s)
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <span className={`badge ${estadoColor[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
                         {pedido.estado.replace(/_/g, ' ')}
                       </span>
