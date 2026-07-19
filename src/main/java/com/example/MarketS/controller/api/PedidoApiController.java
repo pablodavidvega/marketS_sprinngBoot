@@ -4,9 +4,11 @@ import com.example.MarketS.dto.CrearPedidoRequestDTO;
 import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.ResenaComprador;
+import com.example.MarketS.model.ResolucionVentaExterna;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ResenaCompradorRepository;
+import com.example.MarketS.repository.ResolucionVentaExternaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.MercadoPagoService;
@@ -48,6 +50,7 @@ public class PedidoApiController {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final ResenaCompradorRepository resenaCompradorRepository;
+    private final ResolucionVentaExternaRepository resolucionVentaExternaRepository;
 
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
@@ -56,7 +59,8 @@ public class PedidoApiController {
                                 NotificacionService notificacionService,
                                 EmailService emailService,
                                 UserRepository userRepository,
-                                ResenaCompradorRepository resenaCompradorRepository) {
+                                ResenaCompradorRepository resenaCompradorRepository,
+                                ResolucionVentaExternaRepository resolucionVentaExternaRepository) {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
@@ -65,6 +69,7 @@ public class PedidoApiController {
         this.emailService = emailService;
         this.userRepository = userRepository;
         this.resenaCompradorRepository = resenaCompradorRepository;
+        this.resolucionVentaExternaRepository = resolucionVentaExternaRepository;
     }
 
     // Resuelve en 1 sola query los usernames de todos los vendedores distintos presentes en
@@ -232,15 +237,27 @@ public class PedidoApiController {
         return resolverAcuerdoExterno(id, auth, false);
     }
 
+    // Un pedido puede tener productos de más de un vendedor (el carrito no se separa por
+    // vendedor antes de pagar), así que cada vendedor confirma/rechaza SU parte de forma
+    // independiente: la resolución se guarda por (pedido, vendedor) en ResolucionVentaExterna,
+    // no en el único campo Pedido.estado — antes, el primer vendedor en actuar sobreescribía
+    // ese campo compartido y dejaba a los demás bloqueados ("este pedido ya fue resuelto"),
+    // sin poder resolver su parte ni descontar su propio stock.
     private ResponseEntity<?> resolverAcuerdoExterno(Long id, Authentication auth, boolean completado) {
-        User vendedor = resolverUsuario(auth);
+        User usuarioActual = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
         if (pedido == null) return ResponseEntity.notFound().build();
 
-        boolean esAdmin = "ROLE_ADMIN".equals(vendedor.getRol().getRolname());
-        boolean esVendedorDelPedido = pedido.getDetalles().stream()
-                .anyMatch(d -> d.getProducto().getVendedor() != null
-                        && d.getProducto().getVendedor().getId().equals(vendedor.getId()));
+        boolean esAdmin = "ROLE_ADMIN".equals(usuarioActual.getRol().getRolname());
+
+        List<User> vendedoresDelPedido = pedido.getDetalles().stream()
+                .map(d -> d.getProducto().getVendedor())
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        List<Long> vendedorIds = vendedoresDelPedido.stream().map(User::getId).toList();
+
+        boolean esVendedorDelPedido = vendedorIds.contains(usuarioActual.getId());
         if (!esAdmin && !esVendedorDelPedido) {
             return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
         }
@@ -248,17 +265,31 @@ public class PedidoApiController {
         if (!METODOS_EXTERNOS.contains(pedido.getMetodoPago())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Este pedido no es un acuerdo externo"));
         }
-        if (!"ACORDADO_EXTERNO".equals(pedido.getEstado())) {
+
+        // El admin resuelve en nombre de TODOS los vendedores del pedido a la vez (no hay forma
+        // de que elija "a nombre de cuál"); un vendedor normal solo resuelve su propia parte,
+        // una sola vez.
+        List<User> aResolver = esAdmin ? vendedoresDelPedido : List.of(usuarioActual);
+
+        // Solo se resuelven (y descuentan stock de) los vendedores que TODAVÍA no habían
+        // resuelto su parte — evita doble descuento si el admin vuelve a llamar el endpoint
+        // sobre un pedido donde ya todos habían resuelto.
+        List<User> nuevasResoluciones = aResolver.stream()
+                .filter(v -> !resolucionVentaExternaRepository.existsByPedidoIdAndVendedorId(id, v.getId()))
+                .toList();
+
+        if (nuevasResoluciones.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Este pedido ya fue resuelto"));
         }
 
-        String nuevoEstado = completado ? "COMPLETADO_EXTERNO" : "RECHAZADO_EXTERNO";
-        pedido.setEstado(nuevoEstado);
-        pedidoRepository.save(pedido);
+        nuevasResoluciones.forEach(v ->
+                resolucionVentaExternaRepository.save(new ResolucionVentaExterna(pedido, v, completado)));
 
         if (completado) {
+            List<Long> idsConStockADescontar = nuevasResoluciones.stream().map(User::getId).toList();
             pedido.getDetalles().stream()
-                    .filter(d -> d.getProducto().getVendedor().getId().equals(vendedor.getId()))
+                    .filter(d -> d.getProducto().getVendedor() != null
+                            && idsConStockADescontar.contains(d.getProducto().getVendedor().getId()))
                     .forEach(d -> {
                         try {
                             productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
@@ -266,6 +297,20 @@ public class PedidoApiController {
                             System.err.println("Error reduciendo stock: " + e.getMessage());
                         }
                     });
+        }
+
+        // El estado global del pedido solo se fija como definitivo cuando TODOS los vendedores
+        // involucrados ya resolvieron su parte; mientras falte alguno, queda en ACORDADO_EXTERNO
+        // para no bloquearlo. Si al menos uno completó, se considera concretado (aunque otro haya
+        // rechazado la suya) porque el comprador sí recibió parte del pedido.
+        List<ResolucionVentaExterna> resoluciones = resolucionVentaExternaRepository.findByPedidoId(id);
+        Set<Long> yaResueltos = resoluciones.stream().map(r -> r.getVendedor().getId()).collect(Collectors.toSet());
+        String nuevoEstado = pedido.getEstado();
+        if (yaResueltos.containsAll(vendedorIds)) {
+            boolean algunoCompletado = resoluciones.stream().anyMatch(ResolucionVentaExterna::isCompletado);
+            nuevoEstado = algunoCompletado ? "COMPLETADO_EXTERNO" : "RECHAZADO_EXTERNO";
+            pedido.setEstado(nuevoEstado);
+            pedidoRepository.save(pedido);
         }
 
         User compradorRef = pedido.getUsuario(); // proxy LAZY: solo el id es seguro de leer aquí
@@ -303,7 +348,14 @@ public class PedidoApiController {
             return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
         }
 
-        if (!"RECIBIDO".equals(pedido.getEstado()) && !"COMPLETADO_EXTERNO".equals(pedido.getEstado())) {
+        // Para MercadoPago alcanza con el estado global (RECIBIDO no depende de otros
+        // vendedores). Para acuerdos externos con varios vendedores, Pedido.estado puede seguir
+        // en ACORDADO_EXTERNO mientras otro vendedor no resuelve la suya — lo que importa es si
+        // ESTE vendedor ya completó su propia parte (ver ResolucionVentaExterna).
+        boolean completoSuParte = resolucionVentaExternaRepository.findByPedidoIdAndVendedorId(id, vendedor.getId())
+                .map(ResolucionVentaExterna::isCompletado)
+                .orElse(false);
+        if (!"RECIBIDO".equals(pedido.getEstado()) && !completoSuParte) {
             return ResponseEntity.badRequest().body(Map.of("error", "Solo puedes calificar al comprador de un pedido completado"));
         }
 

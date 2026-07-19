@@ -64,7 +64,7 @@ export default function PedidosVendedorPage() {
     setResolviendo(pedidoId)
     try {
       const { data } = completado ? await marcarCompletado(pedidoId) : await marcarRechazado(pedidoId)
-      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: data.estado } : p))
+      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: data.estado, yaResolviMiParte: true } : p))
     } finally {
       setResolviendo(null)
     }
@@ -232,7 +232,7 @@ export default function PedidosVendedorPage() {
                   </div>
 
                   {/* Venta acordada por fuera de la app: el vendedor confirma si se concretó */}
-                  {pedido.estado === 'ACORDADO_EXTERNO' && (
+                  {pedido.estado === 'ACORDADO_EXTERNO' && !pedido.yaResolviMiParte && (
                     <div className="border-t border-gray-100 pt-4">
                       <p className="text-sm text-gray-500 mb-3">
                         Este pedido se acordó por fuera de la app ({pedido.metodoPago?.toLowerCase()}). Confirma si la venta se realizó.
@@ -253,6 +253,16 @@ export default function PedidosVendedorPage() {
                           {resolviendo === pedido.pedidoId ? 'Guardando...' : 'No se realizó'}
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Ya resolví mi parte, pero el pedido tiene otro vendedor que todavía no
+                      resolvió la suya — el pedido sigue en ACORDADO_EXTERNO hasta que todos actúen */}
+                  {pedido.estado === 'ACORDADO_EXTERNO' && pedido.yaResolviMiParte && (
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-sm text-gray-400">
+                        Ya enviaste tu confirmación para este pedido. Falta que otro vendedor de este mismo pedido resuelva su parte.
+                      </p>
                     </div>
                   )}
 

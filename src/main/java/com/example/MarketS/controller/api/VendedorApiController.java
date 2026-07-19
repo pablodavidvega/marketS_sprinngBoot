@@ -55,6 +55,7 @@ public class VendedorApiController {
     private final DetallePedidoRepository detallePedidoRepository;
     private final UserRepository userRepository;
     private final ResenaCompradorRepository resenaCompradorRepository;
+    private final ResolucionVentaExternaRepository resolucionVentaExternaRepository;
     private final ReputacionService reputacionService;
 
     public VendedorApiController(ProductoService productoService,
@@ -66,6 +67,7 @@ public class VendedorApiController {
                                   DetallePedidoRepository detallePedidoRepository,
                                   UserRepository userRepository,
                                   ResenaCompradorRepository resenaCompradorRepository,
+                                  ResolucionVentaExternaRepository resolucionVentaExternaRepository,
                                   ReputacionService reputacionService) {
         this.productoService = productoService;
         this.productoRepository = productoRepository;
@@ -76,6 +78,7 @@ public class VendedorApiController {
         this.detallePedidoRepository = detallePedidoRepository;
         this.userRepository = userRepository;
         this.resenaCompradorRepository = resenaCompradorRepository;
+        this.resolucionVentaExternaRepository = resolucionVentaExternaRepository;
         this.reputacionService = reputacionService;
     }
 
@@ -179,8 +182,12 @@ public class VendedorApiController {
                 ? java.util.Set.of()
                 : new java.util.HashSet<>(resenaCompradorRepository.findPedidoIdsCalificados(vendedor.getId(), pedidoIds));
 
+        java.util.Set<Long> pedidosResueltosPorMi = pedidoIds.isEmpty()
+                ? java.util.Set.of()
+                : new java.util.HashSet<>(resolucionVentaExternaRepository.findPedidoIdsResueltosPorVendedor(vendedor.getId(), pedidoIds));
+
         List<PedidoVendedorDTO> result = pedidos.stream()
-                .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores, reputaciones, pedidosCalificados))
+                .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores, reputaciones, pedidosCalificados, pedidosResueltosPorMi))
                 .toList();
         return ResponseEntity.ok(result);
     }

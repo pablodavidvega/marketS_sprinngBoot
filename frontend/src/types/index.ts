@@ -279,6 +279,10 @@ export interface PedidoVendedorResponse {
   compradorReputacion: Reputacion
   puedeCalificarComprador: boolean
   yaCalifiqueComprador: boolean
+  // Solo relevante si estado === 'ACORDADO_EXTERNO' y el pedido tiene productos de más de un
+  // vendedor: si YO ya resolví mi parte pero el pedido sigue en ACORDADO_EXTERNO porque otro
+  // vendedor del mismo pedido no resolvió la suya, no hay que mostrar de nuevo los botones.
+  yaResolviMiParte: boolean
   items: ItemPedidoVendedor[]
 }
 

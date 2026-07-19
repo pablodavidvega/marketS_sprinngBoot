@@ -28,6 +28,11 @@ public class PedidoVendedorDTO {
     private ReputacionDTO compradorReputacion;
     private boolean puedeCalificarComprador;
     private boolean yaCalifiqueComprador;
+    // Solo relevante cuando estado == ACORDADO_EXTERNO y el pedido tiene productos de más de un
+    // vendedor: si este vendedor ya resolvió su parte (ver ResolucionVentaExterna) pero otro
+    // vendedor del mismo pedido todavía no, el pedido sigue en ACORDADO_EXTERNO — este flag le
+    // dice al frontend que oculte los botones "compra realizada/no se realizó" en esta vista.
+    private boolean yaResolviMiParte;
     private List<ItemDTO> items;
 
     @Getter
@@ -48,7 +53,8 @@ public class PedidoVendedorDTO {
     public record CompradorInfo(String username, String email, String phone, String address) {}
 
     public static PedidoVendedorDTO from(Pedido pedido, User vendedor, Map<Long, CompradorInfo> compradores,
-                                          Map<Long, ReputacionDTO> reputaciones, Set<Long> pedidosCalificados) {
+                                          Map<Long, ReputacionDTO> reputaciones, Set<Long> pedidosCalificados,
+                                          Set<Long> pedidosResueltosPorMi) {
         Long compradorId = pedido.getUsuario().getId(); // seguro: id de un proxy LAZY, sin consulta
         CompradorInfo comprador = compradores.get(compradorId);
 
@@ -80,6 +86,7 @@ public class PedidoVendedorDTO {
                 .compradorReputacion(reputaciones.get(compradorId))
                 .puedeCalificarComprador(puedeCalificar)
                 .yaCalifiqueComprador(yaCalifique)
+                .yaResolviMiParte(pedidosResueltosPorMi.contains(pedido.getId()))
                 .items(items)
                 .build();
     }
