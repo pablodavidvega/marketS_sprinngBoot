@@ -99,20 +99,15 @@ function descargarPDF(data: ReporteData, periodo: string) {
 
   autoTable(doc, {
     startY: y1 + 4,
-    head: [['#', 'Producto', 'Unidades', 'Ingresos brutos', 'Ganancia neta', '% Margen']],
-    body: data.ventasPorProducto.map((p, i) => {
-      const margen = p.ingresos > 0 ? ((p.ganancia / p.ingresos) * 100).toFixed(1) + '%' : '—'
-      return [i + 1, p.nombre, p.unidades, fmt(p.ingresos), fmt(p.ganancia), margen]
-    }),
+    head: [['#', 'Producto', 'Unidades', 'Ingresos brutos']],
+    body: data.ventasPorProducto.map((p, i) => [i + 1, p.nombre, p.unidades, fmt(p.ingresos)]),
     theme: 'striped',
     headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
     styles: { fontSize: 9 },
     columnStyles: {
       0: { cellWidth: 10, halign: 'center' },
       2: { halign: 'right' },
-      3: { halign: 'right' },
-      4: { halign: 'right', fontStyle: 'bold' },
-      5: { halign: 'right' },
+      3: { halign: 'right', fontStyle: 'bold' },
     },
   })
 
@@ -151,9 +146,9 @@ function descargarPDF(data: ReporteData, periodo: string) {
 }
 
 function descargarCSV(data: VentaProducto[], periodo: string) {
-  const header = 'Producto,Unidades vendidas,Ingresos brutos,Ganancia neta\n'
+  const header = 'Producto,Unidades vendidas,Ingresos brutos\n'
   const rows = data.map(r =>
-    `"${r.nombre}",${r.unidades},${r.ingresos.toFixed(0)},${r.ganancia.toFixed(0)}`
+    `"${r.nombre}",${r.unidades},${r.ingresos.toFixed(0)}`
   ).join('\n')
   const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' })
   const url  = URL.createObjectURL(blob)
@@ -451,37 +446,22 @@ export default function ReportesPage() {
                           <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Producto</th>
                           <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Unidades</th>
                           <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Ingresos brutos</th>
-                          <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Ganancia neta</th>
-                          <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">% margen</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {data.ventasPorProducto.map((p, i) => {
-                          const margen = p.ingresos > 0 ? (p.ganancia / p.ingresos) * 100 : 0
-                          return (
-                            <tr key={i} className="hover:bg-gray-50/60 transition-colors">
-                              <td className="px-6 py-4">
-                                <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                                  style={{ background: COLORS[i % COLORS.length] }}>
-                                  {i + 1}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 font-medium text-gray-800 max-w-[200px] truncate">{p.nombre}</td>
-                              <td className="px-6 py-4 text-right text-gray-600">{p.unidades.toLocaleString('es-CO')}</td>
-                              <td className="px-6 py-4 text-right text-gray-600">{fmt(p.ingresos)}</td>
-                              <td className="px-6 py-4 text-right font-semibold text-emerald-600">{fmt(p.ganancia)}</td>
-                              <td className="px-6 py-4 text-right">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  margen >= 90 ? 'bg-emerald-100 text-emerald-700'
-                                  : margen >= 70 ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                  {margen.toFixed(1)}%
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        })}
+                        {data.ventasPorProducto.map((p, i) => (
+                          <tr key={i} className="hover:bg-gray-50/60 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                style={{ background: COLORS[i % COLORS.length] }}>
+                                {i + 1}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 font-medium text-gray-800 max-w-[200px] truncate">{p.nombre}</td>
+                            <td className="px-6 py-4 text-right text-gray-600">{p.unidades.toLocaleString('es-CO')}</td>
+                            <td className="px-6 py-4 text-right font-semibold text-emerald-600">{fmt(p.ingresos)}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
