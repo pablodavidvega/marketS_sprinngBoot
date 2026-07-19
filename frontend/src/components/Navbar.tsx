@@ -6,6 +6,8 @@ import { useAppConfig } from '../context/AppConfigContext'
 import NotificacionesBell from './NotificacionesBell'
 import NavbarTabs from './NavbarTabs'
 import AdminSubNav from './AdminSubNav'
+import VendedorSubNav from './VendedorSubNav'
+import { VENDEDOR_LINKS } from '../config/vendedorLinks'
 
 export default function Navbar() {
   const { isAuthenticated, hasRole, logout, user } = useAuth()
@@ -91,6 +93,7 @@ export default function Navbar() {
 
       {/* Desktop tabs row */}
       <NavbarTabs />
+      <VendedorSubNav />
       <AdminSubNav />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,12 +111,9 @@ export default function Navbar() {
             {isAuthenticated && hasRole('CLIENTE') && (
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
             )}
-            {isAuthenticated && hasRole('VENDEDOR') && (
-              <>
-                <Link to="/vendedor/productos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis productos</Link>
-                <Link to="/vendedor/carga-masiva" onClick={() => setOpen(false)} className="text-gray-700 py-1">Carga masiva de productos</Link>
-              </>
-            )}
+            {isAuthenticated && hasRole('VENDEDOR') && VENDEDOR_LINKS.map(({ to, label }) => (
+              <Link key={to} to={to} onClick={() => setOpen(false)} className="text-gray-700 py-1">{label}</Link>
+            ))}
             {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
               <>
                 <Link to="/moderador/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Panel mod</Link>

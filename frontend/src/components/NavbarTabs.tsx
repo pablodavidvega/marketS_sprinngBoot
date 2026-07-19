@@ -31,17 +31,6 @@ export default function NavbarTabs() {
             </NavLink>
           )}
 
-          {isAuthenticated && hasRole('VENDEDOR') && (
-            <>
-              <NavLink to="/vendedor/productos" className={linkClass}>
-                Mis productos
-              </NavLink>
-              <NavLink to="/vendedor/carga-masiva" className={linkClass}>
-                Carga masiva de productos
-              </NavLink>
-            </>
-          )}
-
           {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
             <>
               <NavLink to="/moderador/dashboard" className={linkClass}>

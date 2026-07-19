@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboardVendedor } from '../../api/usuario'
 import ReputacionBar from '../../components/ReputacionBar'
+import { VENDEDOR_LINKS } from '../../config/vendedorLinks'
 import type { DashboardVendedor } from '../../types'
 
 function StatCard({
@@ -86,39 +87,19 @@ export default function VendedorDashboardPage() {
       {/* Acciones */}
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <Link to="/vendedor/productos" className="card hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 text-xl group-hover:bg-primary-200 transition-colors">
-              📦
+        {VENDEDOR_LINKS.map(({ to, label, icon, description, iconClass }) => (
+          <Link key={to} to={to} className="card hover:shadow-md transition-shadow group">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl transition-colors ${iconClass}`}>
+                {icon}
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-800">{label}</h2>
+                <p className="text-sm text-gray-500">{description}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-gray-800">Mis productos</h2>
-              <p className="text-sm text-gray-500">Ver, crear y gestionar productos</p>
-            </div>
-          </div>
-        </Link>
-        <Link to="/vendedor/pedidos" className="card hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl group-hover:bg-green-200 transition-colors">
-              🛍️
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-800">Pedidos recibidos</h2>
-              <p className="text-sm text-gray-500">Ver compras de tus productos y datos del comprador</p>
-            </div>
-          </div>
-        </Link>
-        <Link to="/vendedor/reportes" className="card hover:shadow-md transition-shadow group">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl group-hover:bg-blue-200 transition-colors">
-              📈
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-800">Mis reportes</h2>
-              <p className="text-sm text-gray-500">Análisis de ventas con gráficas y descarga CSV</p>
-            </div>
-          </div>
-        </Link>
+          </Link>
+        ))}
       </div>
     </div>
   )
