@@ -203,7 +203,7 @@ export default function PedidosVendedorPage() {
                           <div className="text-right flex-shrink-0">
                             <p className="text-xs text-gray-400">Tu ganancia</p>
                             <p className="font-semibold text-green-600">
-                              ${item.gananciaVendedor.toLocaleString('es-CO')}
+                              ${(item.gananciaVendedor ?? item.precioUnitario * item.cantidad).toLocaleString('es-CO')}
                             </p>
                           </div>
                         </div>

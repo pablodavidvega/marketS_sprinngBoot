@@ -239,7 +239,9 @@ export interface ItemPedidoVendedor {
   productoImagen: string | null
   cantidad: number
   precioUnitario: number
-  gananciaVendedor: number
+  // Nula en pedidos de antes de que este campo existiera en la BD (columna agregada sin
+  // backfill) — el fallback en el render usa precioUnitario × cantidad (100%, comisión = 0).
+  gananciaVendedor: number | null
 }
 
 export interface ContactoResponse {
