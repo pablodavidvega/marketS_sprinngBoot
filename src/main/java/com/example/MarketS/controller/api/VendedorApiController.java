@@ -40,6 +40,12 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('ROLE_VENDEDOR', 'ROLE_ADMIN')")
 public class VendedorApiController {
 
+    // Estados que representan una venta concretada, sea por MercadoPago o por fuera de la app
+    // (mismo criterio que AdminApiController/VendedorPublicController): RECIBIDO siempre viene
+    // después de PAGADO —el estado se sobreescribe, no se acumula— así que incluir los tres no
+    // duplica ventas, solo evita perder de vista las que el cliente ya confirmó.
+    private static final List<String> ESTADOS_VENTA_CONCRETADA = List.of("PAGADO", "RECIBIDO", "COMPLETADO_EXTERNO");
+
     private final ProductoService productoService;
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
@@ -79,9 +85,9 @@ public class VendedorApiController {
         User usuario = resolverUsuario(auth);
         long totalProductos = productoRepository.countByVendedorId(usuario.getId());
         return ResponseEntity.ok(Map.of(
-                "gananciaTotal",  detallePedidoRepository.sumGananciaByVendedor(usuario),
-                "comisionTotal",  detallePedidoRepository.sumComisionByVendedor(usuario),
-                "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario),
+                "gananciaTotal",  detallePedidoRepository.sumGananciaByVendedor(usuario, ESTADOS_VENTA_CONCRETADA),
+                "comisionTotal",  detallePedidoRepository.sumComisionByVendedor(usuario, ESTADOS_VENTA_CONCRETADA),
+                "totalVentas",    detallePedidoRepository.countVentasByVendedor(usuario, ESTADOS_VENTA_CONCRETADA),
                 "totalProductos", totalProductos,
                 "reputacion",     reputacionService.calcularVendedor(usuario.getId())
         ));
@@ -96,7 +102,7 @@ public class VendedorApiController {
         User vendedor = resolverUsuario(auth);
         LocalDateTime desde = calcularDesde(periodo);
 
-        List<Object[]> rawProductos = detallePedidoRepository.findVentasPorProducto(vendedor, desde);
+        List<Object[]> rawProductos = detallePedidoRepository.findVentasPorProducto(vendedor, ESTADOS_VENTA_CONCRETADA, desde);
         List<Map<String, Object>> ventasPorProducto = rawProductos.stream().map(row -> {
             Map<String, Object> m = new java.util.HashMap<>();
             m.put("nombre",   row[0] != null ? (String) row[0] : "");
@@ -106,7 +112,7 @@ public class VendedorApiController {
             return m;
         }).toList();
 
-        List<Object[]> rawMes = detallePedidoRepository.findVentasPorMes(vendedor, desde);
+        List<Object[]> rawMes = detallePedidoRepository.findVentasPorMes(vendedor, ESTADOS_VENTA_CONCRETADA, desde);
         List<Map<String, Object>> ventasPorMes = rawMes.stream().map(row -> {
             Map<String, Object> m = new java.util.HashMap<>();
             m.put("periodo",  String.format("%d-%02d",
@@ -121,13 +127,18 @@ public class VendedorApiController {
         long   totalUnidades  = ventasPorProducto.stream().mapToLong(p -> (Long) p.get("unidades")).sum();
         double ingresosTotal  = ventasPorProducto.stream().mapToDouble(p -> (Double) p.get("ingresos")).sum();
         String productoTop    = ventasPorProducto.isEmpty() ? "—" : (String) ventasPorProducto.get(0).get("nombre");
-        double ticketPromedio = totalUnidades > 0 ? ingresosTotal / totalUnidades : 0;
+
+        // Valor real por pedido (no por unidad): un pedido con 3 unidades del mismo producto
+        // cuenta una sola vez, así que se divide entre pedidos DISTINTOS, no entre unidades.
+        long   totalPedidos          = detallePedidoRepository.countPedidosDistinctByVendedor(vendedor, ESTADOS_VENTA_CONCRETADA, desde);
+        double valorPromedioPedido   = totalPedidos > 0 ? ingresosTotal / totalPedidos : 0;
 
         Map<String, Object> resumen = new java.util.HashMap<>();
-        resumen.put("gananciaTotal",  gananciaTotal);
-        resumen.put("totalUnidades",  totalUnidades);
-        resumen.put("productoTop",    productoTop != null ? productoTop : "—");
-        resumen.put("ticketPromedio", ticketPromedio);
+        resumen.put("gananciaTotal",        gananciaTotal);
+        resumen.put("totalUnidades",         totalUnidades);
+        resumen.put("productoTop",           productoTop != null ? productoTop : "—");
+        resumen.put("totalPedidos",          totalPedidos);
+        resumen.put("valorPromedioPedido",   valorPromedioPedido);
 
         Map<String, Object> respuesta = new java.util.HashMap<>();
         respuesta.put("resumen",           resumen);

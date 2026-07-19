@@ -24,7 +24,8 @@ interface Resumen {
   gananciaTotal: number
   totalUnidades: number
   productoTop: string
-  ticketPromedio: number
+  totalPedidos: number
+  valorPromedioPedido: number
 }
 interface ReporteData {
   resumen: Resumen
@@ -79,7 +80,8 @@ function descargarPDF(data: ReporteData, periodo: string) {
     ['Ganancia neta', fmt(data.resumen.gananciaTotal)],
     ['Unidades vendidas', String(data.resumen.totalUnidades)],
     ['Producto estrella', data.resumen.productoTop],
-    ['Ticket promedio', fmt(data.resumen.ticketPromedio)],
+    ['Total pedidos', String(data.resumen.totalPedidos)],
+    ['Valor promedio por pedido', fmt(data.resumen.valorPromedioPedido)],
   ]
   autoTable(doc, {
     startY: 48,
@@ -256,7 +258,7 @@ export default function ReportesPage() {
         ) : (
           <>
             {/* KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <KpiCard
                 icon="💰" label="Ganancia neta"
                 value={fmt(data.resumen.gananciaTotal)}
@@ -273,8 +275,13 @@ export default function ReportesPage() {
                 color="bg-amber-500"
               />
               <KpiCard
-                icon="🎯" label="Ticket promedio"
-                value={fmt(data.resumen.ticketPromedio)}
+                icon="🧾" label="Total pedidos"
+                value={data.resumen.totalPedidos.toLocaleString('es-CO')}
+                color="bg-teal-500"
+              />
+              <KpiCard
+                icon="🎯" label="Valor promedio por pedido"
+                value={fmt(data.resumen.valorPromedioPedido)}
                 color="bg-purple-500"
               />
             </div>
