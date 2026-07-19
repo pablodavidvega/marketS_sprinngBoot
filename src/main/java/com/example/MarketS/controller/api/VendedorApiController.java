@@ -223,7 +223,7 @@ public class VendedorApiController {
             @RequestParam(required = false, defaultValue = "") String estadoProducto,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
             @RequestParam(required = false) Long categoriaId,
-            @RequestParam(required = false) Long marcaId,
+            @RequestParam(required = false) String marca,
             @RequestParam(required = false) Integer stock,
             @RequestParam(value = "imagen", required = false) MultipartFile img1,
             @RequestParam(value = "imagen2", required = false) MultipartFile img2,
@@ -243,7 +243,7 @@ public class VendedorApiController {
         producto.setActivo(true);
 
         aplicarCategoria(producto, categoriaId);
-        aplicarMarca(producto, marcaId);
+        aplicarMarca(producto, marca);
 
         if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
@@ -265,7 +265,7 @@ public class VendedorApiController {
             @RequestParam(required = false, defaultValue = "") String estadoProducto,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaAgregacion,
             @RequestParam(required = false) Long categoriaId,
-            @RequestParam(required = false) Long marcaId,
+            @RequestParam(required = false) String marca,
             @RequestParam(required = false) Integer stock,
             @RequestParam(value = "imagen", required = false) MultipartFile img1,
             @RequestParam(value = "imagen2", required = false) MultipartFile img2,
@@ -297,7 +297,7 @@ public class VendedorApiController {
         }
 
         aplicarCategoria(producto, categoriaId);
-        aplicarMarca(producto, marcaId);
+        aplicarMarca(producto, marca);
 
         if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
@@ -378,12 +378,19 @@ public class VendedorApiController {
         }
     }
 
-    private void aplicarMarca(Producto producto, Long marcaId) {
-        if (marcaId != null) {
-            marcaRepository.findById(marcaId).ifPresent(producto::setMarca);
-        } else {
+    // El vendedor escribe la marca en un input libre (con autocompletado de las ya existentes
+    // en el frontend): se busca sin distinguir mayúsculas/minúsculas para no duplicar
+    // "Nike"/"nike", y si no existe se crea al vuelo — evita que marca quede como catálogo
+    // cerrado que solo el admin puede ampliar (hoy no hay ningún endpoint para crear marcas).
+    private void aplicarMarca(Producto producto, String marcaNombre) {
+        if (marcaNombre == null || marcaNombre.isBlank()) {
             producto.setMarca(null);
+            return;
         }
+        String nombre = marcaNombre.trim();
+        Marca marca = marcaRepository.findByNombreMarcaIgnoreCase(nombre)
+                .orElseGet(() -> marcaRepository.save(new Marca(nombre)));
+        producto.setMarca(marca);
     }
 
     private String guardarArchivo(MultipartFile archivo, String prefijo) throws IOException {
