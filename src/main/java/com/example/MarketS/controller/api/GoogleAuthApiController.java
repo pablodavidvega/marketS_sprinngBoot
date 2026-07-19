@@ -202,7 +202,8 @@ public class GoogleAuthApiController {
         return ResponseEntity.ok(Map.of(
                 "email", user.getEmail(),
                 "role", role,
-                "needsCompletion", false
+                "needsCompletion", false,
+                "token", token
         ));
     }
 }

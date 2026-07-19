@@ -58,7 +58,7 @@ export default function CompletarRegistroGooglePage() {
         invitacion: form.invitacion || undefined,
         aceptaTerminos: form.aceptaTerminos,
       })
-      login(data.email, data.role)
+      login(data.email, data.role, data.token)
       if (data.role === 'ADMIN') navigate('/admin/dashboard')
       else if (data.role === 'VENDEDOR') navigate('/vendedor')
       else navigate('/')

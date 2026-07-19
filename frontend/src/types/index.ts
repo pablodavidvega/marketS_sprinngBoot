@@ -1,12 +1,14 @@
 export interface AuthResponse {
   email: string
   role: string
+  token: string
 }
 
 export interface GoogleLoginResponse {
   needsCompletion: boolean
   email?: string
   role?: string
+  token?: string
   nombreSugerido?: string
   pendingToken?: string
   requiereInvitacion?: boolean

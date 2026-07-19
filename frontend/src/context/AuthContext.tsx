@@ -8,7 +8,7 @@ interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (email: string, role: string) => void
+  login: (email: string, role: string, token: string) => void
   logout: () => void
   isAuthenticated: boolean
   hasRole: (...roles: string[]) => boolean
@@ -22,10 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored ? JSON.parse(stored) : null
   })
 
-  const login = (email: string, role: string) => {
-    // El JWT viaja en la cookie httpOnly que el backend ya configuró.
-    // Aquí solo guardamos la info no sensible para mostrar en la UI.
+  const login = (email: string, role: string, token: string) => {
+    // El JWT también viaja en una cookie httpOnly, pero al ser cross-site (frontend en
+    // Vercel, backend en Render) Safari/iOS la descarta por ITP. Por eso el transporte real
+    // es este token guardado en localStorage y mandado como Authorization: Bearer.
     localStorage.setItem('user', JSON.stringify({ email, role }))
+    localStorage.setItem('authToken', token)
     localStorage.setItem('lastActive', Date.now().toString())
     setUser({ email, role })
   }
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Si el backend no responde, igual limpiamos el estado local
     }
     localStorage.removeItem('user')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('lastActive')
     setUser(null)
   }

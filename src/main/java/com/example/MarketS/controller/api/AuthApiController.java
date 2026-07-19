@@ -68,7 +68,9 @@ public class AuthApiController {
         this.cookieService = cookieService;
     }
 
-    // POST /api/auth/login — devuelve JWT como cookie httpOnly (no en el body)
+    // POST /api/auth/login — devuelve el JWT tanto en cookie httpOnly (funciona same-site/dev)
+    // como en el body (para que el frontend lo mande como Authorization: Bearer cuando frontend
+    // y backend están en dominios distintos — Safari/iOS bloquea la cookie cross-site por ITP)
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
         try {
@@ -83,7 +85,7 @@ public class AuthApiController {
                     .replace("ROLE_", "");
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
-            return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role));
+            return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role, "token", token));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }

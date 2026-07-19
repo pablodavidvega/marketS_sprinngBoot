@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await loginApi(form.email, form.password)
-      login(data.email, data.role)
+      login(data.email, data.role, data.token)
       redirigirPorRol(navigate, data.role)
     } catch (err: unknown) {
       const response = (err as { response?: { data?: { mensaje?: string; error?: string } } })?.response
@@ -41,7 +41,7 @@ export default function LoginPage() {
     try {
       const { data } = await googleLogin(idToken)
       if (!data.needsCompletion) {
-        login(data.email!, data.role!)
+        login(data.email!, data.role!, data.token!)
         redirigirPorRol(navigate, data.role!)
       } else {
         navigate('/completar-registro-google', {

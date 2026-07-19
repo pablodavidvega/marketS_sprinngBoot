@@ -84,7 +84,7 @@ export default function RegistroPage() {
     try {
       const { data } = await googleLogin(idToken)
       if (!data.needsCompletion) {
-        login(data.email!, data.role!)
+        login(data.email!, data.role!, data.token!)
         if (data.role === 'ADMIN') navigate('/admin/dashboard')
         else if (data.role === 'VENDEDOR') navigate('/vendedor')
         else navigate('/')
