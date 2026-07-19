@@ -48,7 +48,7 @@ function destinoDe(n: Notificacion, esVendedor: boolean): string {
 }
 
 export default function NotificacionesBell() {
-  const { items, noLeidas, marcarLeida, marcarTodasLeidas } = useNotificaciones()
+  const { items, noLeidas, cargar, marcarLeida, marcarTodasLeidas } = useNotificaciones()
   const { hasRole } = useAuth()
   const esVendedor = hasRole('VENDEDOR') || hasRole('ADMIN')
   const [abierto, setAbierto] = useState(false)
@@ -76,7 +76,10 @@ export default function NotificacionesBell() {
     <div ref={ref} className="relative">
       {/* Botón campanita */}
       <button
-        onClick={() => setAbierto(v => !v)}
+        onClick={() => {
+          setAbierto(v => !v)
+          if (!abierto) cargar()
+        }}
         className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
         aria-label="Notificaciones"
       >
