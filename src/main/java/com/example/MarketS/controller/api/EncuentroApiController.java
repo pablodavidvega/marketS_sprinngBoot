@@ -7,6 +7,7 @@ import com.example.MarketS.repository.EncuentroRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -30,17 +31,20 @@ public class EncuentroApiController {
     private final UserService userService;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
+    private final FrontendLinkBuilder frontendLinkBuilder;
 
     public EncuentroApiController(EncuentroRepository encuentroRepository,
                                    PedidoRepository pedidoRepository,
                                    UserService userService,
                                    NotificacionService notificacionService,
-                                   EmailService emailService) {
+                                   EmailService emailService,
+                                   FrontendLinkBuilder frontendLinkBuilder) {
         this.encuentroRepository = encuentroRepository;
         this.pedidoRepository = pedidoRepository;
         this.userService = userService;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
+        this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
     // GET /api/pedidos/{pedidoId}/encuentro/{vendedorId} — encuentro acordado (mapa vacío si no hay ninguno)
@@ -151,7 +155,9 @@ public class EncuentroApiController {
 
         notificacionService.crear(destinatario, mensaje, tipo, pedidoId, null, vendedorId);
         if (destinatario.getEmail() != null && !destinatario.getEmail().isBlank()) {
-            emailService.enviarCorreo(destinatario.getEmail(), "Encuentro del pedido #" + pedidoId + " - MarketS", mensaje);
+            String link = frontendLinkBuilder.pedidoConFoco(!esParaComprador, pedidoId, vendedorId, "encuentro");
+            emailService.enviarCorreo(destinatario.getEmail(), "Encuentro del pedido #" + pedidoId + " - MarketS",
+                    mensaje + "\n\nVer en MarketS: " + link);
         }
     }
 

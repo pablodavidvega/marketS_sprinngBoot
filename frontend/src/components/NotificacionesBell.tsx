@@ -29,6 +29,11 @@ function destinoPedido(esVendedor: boolean, pedidoId: number, vendedorId: number
 function destinoDe(n: Notificacion, esVendedor: boolean): string {
   switch (n.tipo) {
     case 'NUEVO_PEDIDO':
+    case 'PEDIDO_CREADO':
+    case 'PEDIDO_PAGADO':
+    case 'PEDIDO_PAGO_PENDIENTE':
+    case 'PEDIDO_PAGO_RECHAZADO':
+    case 'PEDIDO_RECIBIDO':
     case 'PEDIDO_COMPLETADO_EXTERNO':
     case 'PEDIDO_RECHAZADO_EXTERNO':
     case 'CALIFICACION_COMPRADOR':

@@ -34,6 +34,9 @@ public class EmailService {
     @Value("${resend.api.key:}")
     private String resendApiKey;
 
+    @Autowired
+    private FrontendLinkBuilder frontendLinkBuilder;
+
     @Async
     public void enviarCorreo(String para, String asunto, String mensaje) {
         try {
@@ -76,6 +79,7 @@ public class EmailService {
 
             sb.append("─────────────────────────────\n");
             sb.append("TOTAL: $").append(String.format("%.2f", pedido.getTotal())).append("\n\n");
+            sb.append("Ver en MarketS: ").append(frontendLinkBuilder.pedido(false, pedido.getId())).append("\n\n");
             sb.append("Gracias por tu compra en MarketS\n");
 
             if (resendApiKey != null && !resendApiKey.isBlank()) {

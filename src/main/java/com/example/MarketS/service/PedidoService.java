@@ -27,15 +27,18 @@ public class PedidoService {
     private final ProductoRepository    productoRepository;
     private final EmailService          emailService;
     private final NotificacionService   notificacionService;
+    private final FrontendLinkBuilder   frontendLinkBuilder;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ProductoRepository productoRepository,
                          EmailService emailService,
-                         NotificacionService notificacionService) {
+                         NotificacionService notificacionService,
+                         FrontendLinkBuilder frontendLinkBuilder) {
         this.pedidoRepository     = pedidoRepository;
         this.productoRepository   = productoRepository;
         this.emailService         = emailService;
         this.notificacionService  = notificacionService;
+        this.frontendLinkBuilder  = frontendLinkBuilder;
     }
 
     public Pedido crearPedido(User usuario, Map<Integer, Integer> carrito) {
@@ -105,13 +108,20 @@ public class PedidoService {
             Pedido saved = pedidoRepository.save(pedido);
             System.out.println("✅ Pedido guardado ID: " + saved.getId());
 
-            // Enviar correo de confirmación
+            // Confirmación al comprador: correo + notificación in-app (antes solo mandaba correo)
             String emailUsuario = saved.getUsuario().getEmail();
             if (emailUsuario != null && !emailUsuario.isBlank()) {
                 emailService.enviarConfirmacionPedido(emailUsuario, saved);
             }
+            notificacionService.crear(
+                    saved.getUsuario(),
+                    "Tu pedido #" + saved.getId() + " fue creado. Total: $" + total,
+                    "PEDIDO_CREADO",
+                    saved.getId()
+            );
 
-            // Notificar a cada vendedor afectado
+            // Notificar a cada vendedor afectado: notificación in-app + correo (antes el correo
+            // solo se mandaba si el pago era externo, ver PedidoApiController.crearPedidoConAcuerdoExterno)
             String comprador = saved.getUsuario().getUsername();
             detalles.stream()
                 .filter(d -> d.getProducto().getVendedor() != null)
@@ -126,6 +136,14 @@ public class PedidoService {
                         "NUEVO_PEDIDO",
                         saved.getId()
                     );
+                    if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                        emailService.enviarCorreo(
+                                vendedor.getEmail(),
+                                "Nuevo pedido #" + saved.getId() + " - MarketS",
+                                comprador + " ordenó: " + productos
+                                        + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, saved.getId())
+                        );
+                    }
                 });
 
             return saved;

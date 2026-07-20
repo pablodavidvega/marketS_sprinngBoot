@@ -17,7 +17,16 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const mensajeExito = (location.state as { mensaje?: string } | null)?.mensaje
+  const estadoNav = location.state as { mensaje?: string; from?: string } | null
+  const mensajeExito = estadoNav?.mensaje
+  // Si ProtectedRoute nos mandó acá por entrar a un link sin sesión (ej. deep-link de un
+  // correo de notificación), volvemos ahí apenas el login sea exitoso, en vez del home por rol.
+  const destinoOriginal = estadoNav?.from
+
+  function irDespuesDeLogin(role: string) {
+    if (destinoOriginal) navigate(destinoOriginal, { replace: true })
+    else redirigirPorRol(navigate, role)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -26,7 +35,7 @@ export default function LoginPage() {
     try {
       const { data } = await loginApi(form.email, form.password)
       login(data.email, data.role, data.token)
-      redirigirPorRol(navigate, data.role)
+      irDespuesDeLogin(data.role)
     } catch (err: unknown) {
       const response = (err as { response?: { data?: { mensaje?: string; error?: string } } })?.response
       const msg = response?.data?.mensaje || response?.data?.error || (err as Error).message
@@ -42,7 +51,7 @@ export default function LoginPage() {
       const { data } = await googleLogin(idToken)
       if (!data.needsCompletion) {
         login(data.email!, data.role!, data.token!)
-        redirigirPorRol(navigate, data.role!)
+        irDespuesDeLogin(data.role!)
       } else {
         navigate('/completar-registro-google', {
           state: {

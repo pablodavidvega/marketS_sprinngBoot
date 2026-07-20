@@ -7,6 +7,7 @@ import com.example.MarketS.repository.ChatMensajeRepository;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -28,17 +29,20 @@ public class ChatApiController {
     private final UserService userService;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
+    private final FrontendLinkBuilder frontendLinkBuilder;
 
     public ChatApiController(ChatMensajeRepository chatMensajeRepository,
                               PedidoRepository pedidoRepository,
                               UserService userService,
                               NotificacionService notificacionService,
-                              EmailService emailService) {
+                              EmailService emailService,
+                              FrontendLinkBuilder frontendLinkBuilder) {
         this.chatMensajeRepository = chatMensajeRepository;
         this.pedidoRepository = pedidoRepository;
         this.userService = userService;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
+        this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
     // GET /api/pedidos/{pedidoId}/chat/{vendedorId} — mensajes del hilo, marca como leídos los del otro participante
@@ -111,10 +115,11 @@ public class ChatApiController {
                 vendedorId
         );
         if (destinatario.getEmail() != null && !destinatario.getEmail().isBlank()) {
+            String link = frontendLinkBuilder.pedidoConFoco(!esParaComprador, pedidoId, vendedorId, "chat");
             emailService.enviarCorreo(
                     destinatario.getEmail(),
                     "Nuevo mensaje sobre tu pedido #" + pedidoId + " - MarketS",
-                    usuario.getUsername() + " te escribió:\n\n" + contenido
+                    usuario.getUsername() + " te escribió:\n\n" + contenido + "\n\nVer en MarketS: " + link
             );
         }
 

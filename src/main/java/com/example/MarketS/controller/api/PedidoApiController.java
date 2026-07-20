@@ -11,6 +11,7 @@ import com.example.MarketS.repository.ResenaCompradorRepository;
 import com.example.MarketS.repository.ResolucionVentaExternaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.MercadoPagoService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.PedidoService;
@@ -51,6 +52,7 @@ public class PedidoApiController {
     private final UserRepository userRepository;
     private final ResenaCompradorRepository resenaCompradorRepository;
     private final ResolucionVentaExternaRepository resolucionVentaExternaRepository;
+    private final FrontendLinkBuilder frontendLinkBuilder;
 
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
@@ -60,7 +62,8 @@ public class PedidoApiController {
                                 EmailService emailService,
                                 UserRepository userRepository,
                                 ResenaCompradorRepository resenaCompradorRepository,
-                                ResolucionVentaExternaRepository resolucionVentaExternaRepository) {
+                                ResolucionVentaExternaRepository resolucionVentaExternaRepository,
+                                FrontendLinkBuilder frontendLinkBuilder) {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
@@ -70,6 +73,7 @@ public class PedidoApiController {
         this.userRepository = userRepository;
         this.resenaCompradorRepository = resenaCompradorRepository;
         this.resolucionVentaExternaRepository = resolucionVentaExternaRepository;
+        this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
     // Resuelve en 1 sola query los usernames de todos los vendedores distintos presentes en
@@ -148,9 +152,9 @@ public class PedidoApiController {
 
     // La venta se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.): no se genera
     // link de pago, el pedido queda a la espera de que el vendedor confirme si se concretó o no.
-    // pedidoService.crearPedido ya notificó (in-app) a cada vendedor con "NUEVO_PEDIDO"; aquí solo
-    // se avisa por correo, ya que ese flujo genérico no envía email al vendedor y este caso requiere
-    // una acción suya (confirmar o rechazar la venta).
+    // pedidoService.crearPedido ya notificó (in-app + correo genérico "nuevo pedido") a cada
+    // vendedor; este correo aparte es específico de que requiere una acción suya (confirmar o
+    // rechazar la venta desde su panel), no solo un aviso informativo.
     private ResponseEntity<?> crearPedidoConAcuerdoExterno(Pedido pedido, String metodoPago) {
         pedido.setMetodoPago(metodoPago);
         pedido.setEstado("ACORDADO_EXTERNO");
@@ -171,7 +175,8 @@ public class PedidoApiController {
                         vendedor.getEmail(),
                         "Nuevo pedido acordado por fuera de la app - MarketS",
                         "Tienes un pedido #" + pedido.getId() + " con pago acordado por fuera de la app (" + metodoPago + ").\n" +
-                                "Cuando se concrete o no la venta, márcalo desde tu panel de pedidos recibidos."
+                                "Cuando se concrete o no la venta, márcalo desde tu panel de pedidos recibidos." +
+                                "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, pedido.getId())
                 );
             }
         });
@@ -208,7 +213,7 @@ public class PedidoApiController {
     @PatchMapping("/{id}/confirmar-recepcion")
     public ResponseEntity<?> confirmarRecepcion(@PathVariable Long id, Authentication auth) {
         User usuario = resolverUsuario(auth);
-        Pedido pedido = pedidoRepository.findById(id).orElse(null);
+        Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
 
         if (pedido == null) return ResponseEntity.notFound().build();
         if (!pedido.getUsuario().getId().equals(usuario.getId()))
@@ -218,6 +223,27 @@ public class PedidoApiController {
 
         pedido.setEstado("RECIBIDO");
         pedidoRepository.save(pedido);
+
+        // Avisar a cada vendedor involucrado: antes nadie se enteraba de que el comprador
+        // confirmó la recepción.
+        List<Long> vendedorIds = pedido.getDetalles().stream()
+                .map(d -> d.getProducto().getVendedor())
+                .filter(java.util.Objects::nonNull)
+                .map(User::getId)
+                .distinct()
+                .toList();
+        userRepository.findAllById(vendedorIds).forEach(vendedor -> {
+            notificacionService.crear(vendedor,
+                    usuario.getUsername() + " confirmó la recepción del pedido #" + id + ".",
+                    "PEDIDO_RECIBIDO", id);
+            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                emailService.enviarCorreo(vendedor.getEmail(),
+                        "El comprador confirmó la recepción del pedido #" + id + " - MarketS",
+                        usuario.getUsername() + " confirmó que recibió su pedido #" + id + "."
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, id));
+            }
+        });
+
         return ResponseEntity.ok(Map.of("mensaje", "Recepción confirmada", "estado", "RECIBIDO"));
     }
 
@@ -320,7 +346,8 @@ public class PedidoApiController {
         notificacionService.crear(compradorRef, mensaje, completado ? "PEDIDO_COMPLETADO_EXTERNO" : "PEDIDO_RECHAZADO_EXTERNO", id);
         userRepository.findById(compradorRef.getId()).ifPresent(comprador -> {
             if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
-                emailService.enviarCorreo(comprador.getEmail(), "Actualización de tu pedido #" + id + " - MarketS", mensaje);
+                emailService.enviarCorreo(comprador.getEmail(), "Actualización de tu pedido #" + id + " - MarketS",
+                        mensaje + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, id));
             }
         });
 
@@ -384,11 +411,8 @@ public class PedidoApiController {
         resena.setFecha(LocalDateTime.now());
         resenaCompradorRepository.save(resena);
 
-        User compradorRef = pedido.getUsuario(); // proxy LAZY: solo el id es seguro de leer aquí
-        notificacionService.crear(compradorRef,
-                "El vendedor @" + vendedor.getUsername() + " te calificó con " + calificacion + " estrellas por el pedido #" + id + ".",
-                "CALIFICACION_COMPRADOR", id);
-
+        // A pedido del usuario: calificar (comprador o vendedor) no genera notificación ni
+        // correo, igual que las reseñas de producto.
         return ResponseEntity.ok(Map.of("mensaje", "Calificación registrada"));
     }
 
@@ -421,6 +445,7 @@ public class PedidoApiController {
                 System.err.println("Error reduciendo stock: " + e.getMessage());
             }
         });
+        notificarPagoAprobado(pedido);
 
         return ResponseEntity.ok(Map.of("mensaje", "Pago simulado correctamente", "estado", "PAGADO"));
     }
@@ -448,6 +473,7 @@ public class PedidoApiController {
             pedidoRepository.findById(id).ifPresent(p -> {
                 p.setEstado("PENDIENTE_PAGO");
                 pedidoRepository.save(p);
+                notificarPagoPendiente(p);
             });
         }
         return redirigirFrontend(id, "pending");
@@ -461,6 +487,7 @@ public class PedidoApiController {
             pedidoRepository.findById(id).ifPresent(p -> {
                 p.setEstado("RECHAZADO");
                 pedidoRepository.save(p);
+                notificarPagoRechazado(p);
             });
         }
         return redirigirFrontend(id, "rejected");
@@ -528,9 +555,68 @@ public class PedidoApiController {
                         System.err.println("Error reduciendo stock producto " + d.getProducto().getId() + ": " + e.getMessage());
                     }
                 });
+                notificarPagoAprobado(pedido);
             } else if ("pending".equals(mpStatus)) {
                 pedido.setEstado("PENDIENTE_PAGO");
                 pedidoRepository.save(pedido);
+                notificarPagoPendiente(pedido);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Notificaciones de cambio de estado de pago (MercadoPago real o simulado) — antes nadie se
+    // enteraba de que un pago se aprobó, quedó pendiente o fue rechazado; el comprador solo
+    // recibía el correo de "pedido creado" al armar el carrito, antes de pagar.
+    // -------------------------------------------------------------------------
+
+    private void notificarPagoAprobado(Pedido pedido) {
+        Long id = pedido.getId();
+        userRepository.findById(pedido.getUsuario().getId()).ifPresent(comprador -> {
+            notificacionService.crear(comprador, "Tu pago del pedido #" + id + " fue aprobado.", "PEDIDO_PAGADO", id);
+            if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+                emailService.enviarCorreo(comprador.getEmail(), "Pago aprobado - Pedido #" + id + " - MarketS",
+                        "Tu pago del pedido #" + id + " fue aprobado. El vendedor ya puede alistar tu compra."
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, id));
+            }
+        });
+
+        List<Long> vendedorIds = pedido.getDetalles().stream()
+                .map(d -> d.getProducto().getVendedor())
+                .filter(java.util.Objects::nonNull)
+                .map(User::getId)
+                .distinct()
+                .toList();
+        userRepository.findAllById(vendedorIds).forEach(vendedor -> {
+            notificacionService.crear(vendedor, "Se confirmó el pago de tu venta del pedido #" + id + ".", "PEDIDO_PAGADO", id);
+            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                emailService.enviarCorreo(vendedor.getEmail(), "Pago confirmado - Pedido #" + id + " - MarketS",
+                        "Se confirmó el pago de tu venta del pedido #" + id + ". Ya podés alistar el envío."
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, id));
+            }
+        });
+    }
+
+    private void notificarPagoPendiente(Pedido pedido) {
+        Long id = pedido.getId();
+        userRepository.findById(pedido.getUsuario().getId()).ifPresent(comprador -> {
+            notificacionService.crear(comprador, "Tu pago del pedido #" + id + " está pendiente de confirmación.", "PEDIDO_PAGO_PENDIENTE", id);
+            if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+                emailService.enviarCorreo(comprador.getEmail(), "Pago pendiente - Pedido #" + id + " - MarketS",
+                        "Tu pago del pedido #" + id + " está pendiente de confirmación por MercadoPago. Te avisaremos cuando se confirme."
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, id));
+            }
+        });
+    }
+
+    private void notificarPagoRechazado(Pedido pedido) {
+        Long id = pedido.getId();
+        userRepository.findById(pedido.getUsuario().getId()).ifPresent(comprador -> {
+            notificacionService.crear(comprador, "Tu pago del pedido #" + id + " fue rechazado.", "PEDIDO_PAGO_RECHAZADO", id);
+            if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+                emailService.enviarCorreo(comprador.getEmail(), "Pago rechazado - Pedido #" + id + " - MarketS",
+                        "Tu pago del pedido #" + id + " fue rechazado. Podés intentar de nuevo desde tu carrito."
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, id));
             }
         });
     }

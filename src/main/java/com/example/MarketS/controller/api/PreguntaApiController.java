@@ -8,6 +8,7 @@ import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.NotificacionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,17 +28,20 @@ public class PreguntaApiController {
     private final NotificacionService notificacionService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final FrontendLinkBuilder frontendLinkBuilder;
 
     public PreguntaApiController(PreguntaRepository preguntaRepository,
                                   ProductoRepository productoRepository,
                                   NotificacionService notificacionService,
                                   EmailService emailService,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  FrontendLinkBuilder frontendLinkBuilder) {
         this.preguntaRepository = preguntaRepository;
         this.productoRepository = productoRepository;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
         this.userRepository = userRepository;
+        this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
     // GET /api/productos/{productoId}/preguntas — público
@@ -112,6 +116,7 @@ public class PreguntaApiController {
                             vendedor.getEmail(),
                             "Nueva pregunta sobre " + producto.getNombre() + " - MarketS",
                             usuario.getUsername() + " preguntó:\n\n" + contenido
+                                    + "\n\nVer en MarketS: " + frontendLinkBuilder.producto(productoId)
                     );
                 }
             });
@@ -168,6 +173,7 @@ public class PreguntaApiController {
                     preguntador.getEmail(),
                     "Respondieron tu pregunta sobre " + producto.getNombre() + " - MarketS",
                     "Tu pregunta:\n" + pregunta.getContenido() + "\n\nRespuesta:\n" + respuesta
+                            + "\n\nVer en MarketS: " + frontendLinkBuilder.producto(productoId)
             );
         }
 
