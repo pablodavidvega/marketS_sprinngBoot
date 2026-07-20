@@ -22,6 +22,13 @@ import java.util.Map;
 @RequestMapping("/api")
 public class ProductoApiController {
 
+    // Estados que representan una venta concretada, sea por MercadoPago o por fuera de la app
+    // (mismo criterio que VendedorApiController/AdminApiController/VendedorPublicController):
+    // RECIBIDO siempre viene después de PAGADO —el estado se sobreescribe, no se acumula— así
+    // que filtrar solo por PAGADO subcontaba "unidades vendidas" apenas el comprador confirmaba
+    // recepción, y dejaba afuera del todo a las ventas concretadas por fuera de la app.
+    private static final List<String> ESTADOS_VENTA_CONCRETADA = List.of("PAGADO", "RECIBIDO", "COMPLETADO_EXTERNO");
+
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final MarcaRepository marcaRepository;
@@ -121,7 +128,7 @@ public class ProductoApiController {
                             p,
                             resenaRepository.avgCalificacionByProductoId(p.getId()),
                             resenaRepository.countByProductoId(p.getId()),
-                            detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId()),
+                            detallePedidoRepository.sumCantidadVendidaByProductoId(p.getId(), ESTADOS_VENTA_CONCRETADA),
                             vendedorUsername,
                             vendedorId != null ? reputacionService.calcularVendedor(vendedorId) : null);
                 })
@@ -178,7 +185,7 @@ public class ProductoApiController {
 
         // 1 query para total vendido
         Map<Long, Long> statsVentas = new HashMap<>();
-        detallePedidoRepository.findTotalVendidoByProductoIds(ids).forEach(row -> {
+        detallePedidoRepository.findTotalVendidoByProductoIds(ids, ESTADOS_VENTA_CONCRETADA).forEach(row -> {
             Long pid   = ((Number) row[0]).longValue();
             long total = ((Number) row[1]).longValue();
             statsVentas.put(pid, total);

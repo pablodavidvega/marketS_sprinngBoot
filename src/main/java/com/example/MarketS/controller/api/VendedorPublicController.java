@@ -78,7 +78,7 @@ public class VendedorPublicController {
         });
 
         Map<Long, Long> statsVentas = new HashMap<>();
-        detallePedidoRepository.findTotalVendidoByProductoIds(ids).forEach(row -> {
+        detallePedidoRepository.findTotalVendidoByProductoIds(ids, ESTADOS_VENTA_CONCRETADA).forEach(row -> {
             Long pid   = ((Number) row[0]).longValue();
             long total = ((Number) row[1]).longValue();
             statsVentas.put(pid, total);

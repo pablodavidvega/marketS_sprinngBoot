@@ -20,6 +20,13 @@ import java.util.Map;
 @RequestMapping("/api/productos/{productoId}/resenas")
 public class ResenaApiController {
 
+    // Estados que representan una venta concretada, sea por MercadoPago o por fuera de la app
+    // (mismo criterio que VendedorApiController/AdminApiController/VendedorPublicController):
+    // RECIBIDO siempre viene después de PAGADO —el estado se sobreescribe, no se acumula— así
+    // que filtrar solo por PAGADO le quitaba la posibilidad de reseñar a cualquier comprador que
+    // ya hubiera confirmado recepción, y dejaba afuera del todo a las compras externas.
+    private static final List<String> ESTADOS_VENTA_CONCRETADA = List.of("PAGADO", "RECIBIDO", "COMPLETADO_EXTERNO");
+
     private final ResenaRepository resenaRepository;
     private final ProductoRepository productoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
@@ -63,7 +70,7 @@ public class ResenaApiController {
             User usuario = UsuarioPrincipal.from(auth);
             if (usuario != null) {
                 yaReseno = resenaRepository.existsByProductoIdAndCompradorId(productoId, usuario.getId());
-                puedeResenar = !yaReseno && detallePedidoRepository.haCompradoProducto(productoId, usuario.getId());
+                puedeResenar = !yaReseno && detallePedidoRepository.haCompradoProducto(productoId, usuario.getId(), ESTADOS_VENTA_CONCRETADA);
             }
         }
 
@@ -90,7 +97,7 @@ public class ResenaApiController {
         Producto producto = productoRepository.findById(productoId).orElse(null);
         if (producto == null) return ResponseEntity.notFound().build();
 
-        if (!detallePedidoRepository.haCompradoProducto(productoId, usuario.getId())) {
+        if (!detallePedidoRepository.haCompradoProducto(productoId, usuario.getId(), ESTADOS_VENTA_CONCRETADA)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Solo puedes calificar productos que hayas comprado"));
         }
 

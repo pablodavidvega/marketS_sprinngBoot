@@ -25,15 +25,15 @@ public interface DetallePedidoRepository extends JpaRepository<DetallePedido, Lo
     @Query("SELECT COUNT(d) FROM DetallePedido d WHERE d.producto.vendedor = :vendedor AND d.pedido.estado IN :estados")
     Long countVentasByVendedor(@Param("vendedor") User vendedor, @Param("estados") List<String> estados);
 
-    @Query("SELECT COUNT(d) > 0 FROM DetallePedido d WHERE d.producto.id = :productoId AND d.pedido.usuario.id = :usuarioId AND d.pedido.estado = 'PAGADO'")
-    boolean haCompradoProducto(@Param("productoId") Long productoId, @Param("usuarioId") Long usuarioId);
+    @Query("SELECT COUNT(d) > 0 FROM DetallePedido d WHERE d.producto.id = :productoId AND d.pedido.usuario.id = :usuarioId AND d.pedido.estado IN :estados")
+    boolean haCompradoProducto(@Param("productoId") Long productoId, @Param("usuarioId") Long usuarioId, @Param("estados") List<String> estados);
 
-    @Query("SELECT COALESCE(SUM(d.cantidad), 0) FROM DetallePedido d WHERE d.producto.id = :productoId AND d.pedido.estado = 'PAGADO'")
-    Long sumCantidadVendidaByProductoId(@Param("productoId") Long productoId);
+    @Query("SELECT COALESCE(SUM(d.cantidad), 0) FROM DetallePedido d WHERE d.producto.id = :productoId AND d.pedido.estado IN :estados")
+    Long sumCantidadVendidaByProductoId(@Param("productoId") Long productoId, @Param("estados") List<String> estados);
 
     // Devuelve [productoId, totalVendido] para una lista de IDs — 1 sola query
-    @Query("SELECT d.producto.id, COALESCE(SUM(d.cantidad), 0) FROM DetallePedido d WHERE d.pedido.estado = 'PAGADO' AND d.producto.id IN :ids GROUP BY d.producto.id")
-    List<Object[]> findTotalVendidoByProductoIds(@Param("ids") List<Long> ids);
+    @Query("SELECT d.producto.id, COALESCE(SUM(d.cantidad), 0) FROM DetallePedido d WHERE d.pedido.estado IN :estados AND d.producto.id IN :ids GROUP BY d.producto.id")
+    List<Object[]> findTotalVendidoByProductoIds(@Param("ids") List<Long> ids, @Param("estados") List<String> estados);
 
     // Reporte vendedor: ventas agrupadas por producto desde una fecha
     @Query("SELECT d.producto.nombre, COALESCE(SUM(d.cantidad), 0), COALESCE(SUM(d.gananciaVendedor), 0), COALESCE(SUM(d.precioUnitario * d.cantidad), 0) " +
