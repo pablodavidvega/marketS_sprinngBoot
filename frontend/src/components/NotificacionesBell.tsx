@@ -39,6 +39,7 @@ function destinoDe(n: Notificacion, esVendedor: boolean): string {
     case 'CALIFICACION_COMPRADOR':
       return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, '') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVO_MENSAJE_CHAT':
+    case 'RECORDATORIO_CHAT_SIN_RESPONDER':
       return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, n.vendedorId, 'chat') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'ENCUENTRO_PROPUESTO':
     case 'ENCUENTRO_ACTUALIZADO':
@@ -46,6 +47,7 @@ function destinoDe(n: Notificacion, esVendedor: boolean): string {
       return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, n.vendedorId, 'encuentro') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVA_PREGUNTA':
     case 'PREGUNTA_RESPONDIDA':
+    case 'RECORDATORIO_PREGUNTA_SIN_RESPONDER':
       return n.productoId !== '' ? `/productos/${n.productoId}?foco=preguntas` : '/'
     default:
       return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'

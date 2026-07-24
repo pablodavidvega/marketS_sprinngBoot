@@ -16,4 +16,14 @@ public interface ChatMensajeRepository extends JpaRepository<ChatMensaje, Long> 
     @Modifying
     @Query("UPDATE ChatMensaje m SET m.leido = true WHERE m.pedido.id = :pedidoId AND m.vendedor.id = :vendedorId AND m.autor.id <> :lectorId AND m.leido = false")
     void marcarLeidosParaLector(@Param("pedidoId") Long pedidoId, @Param("vendedorId") Long vendedorId, @Param("lectorId") Long lectorId);
+
+    // Último mensaje de cada hilo (pedido+vendedor) — para RecordatorioPendienteService, que
+    // necesita saber quién escribió último en cada chat para recordarle a la contraparte que
+    // no respondió. No se hace JOIN FETCH de m.vendedor (mismo motivo que en PedidoRepository:
+    // cargar el User completo dispara una consulta extra a "vendedores"); su id se lee del
+    // proxy LAZY sin costo.
+    @Query("SELECT m FROM ChatMensaje m JOIN FETCH m.autor JOIN FETCH m.pedido p JOIN FETCH p.usuario " +
+            "WHERE m.fechaEnvio = (SELECT MAX(m2.fechaEnvio) FROM ChatMensaje m2 " +
+            "WHERE m2.pedido.id = m.pedido.id AND m2.vendedor.id = m.vendedor.id)")
+    List<ChatMensaje> findUltimoMensajePorHilo();
 }
