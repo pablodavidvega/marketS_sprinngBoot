@@ -73,6 +73,11 @@ public class UsuarioApiController {
                     .body(Map.of("error", "Las contraseñas nuevas no coinciden"));
         }
 
+        if (userService.verificarPassword(request.getNewPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "La nueva contraseña no puede ser igual a la actual"));
+        }
+
         user.setPassword(userService.codificarPassword(request.getNewPassword()));
         userService.guardar(user);
 

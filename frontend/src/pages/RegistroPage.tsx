@@ -194,11 +194,12 @@ export default function RegistroPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-              <input type="password" className="input" value={form.password} onChange={e => set('password', e.target.value)} required />
+              <input type="password" className="input" value={form.password} onChange={e => set('password', e.target.value)} minLength={8} required />
+              <p className="text-xs text-gray-400 mt-1">Debe tener al menos 8 caracteres.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
-              <input type="password" className="input" value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)} required />
+              <input type="password" className="input" value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)} minLength={8} required />
             </div>
           </div>
 

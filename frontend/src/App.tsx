@@ -19,7 +19,7 @@ import VendedorPedidosPage from './pages/vendedor/PedidosPage'
 import VendedorReportesPage from './pages/vendedor/ReportesPage'
 import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
-import EditarPerfilPage from './pages/cliente/EditarPerfilPage'
+import EditarPerfilPage from './pages/EditarPerfilPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import EstadisticasComunidadPage from './pages/admin/EstadisticasComunidadPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
@@ -94,6 +94,14 @@ export default function App() {
             path="/cliente/editar-perfil"
             element={
               <ProtectedRoute roles={['CLIENTE']}>
+                <EditarPerfilPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mi-perfil"
+            element={
+              <ProtectedRoute>
                 <EditarPerfilPage />
               </ProtectedRoute>
             }

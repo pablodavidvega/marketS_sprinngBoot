@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getMiPerfil, actualizarPerfil, cambiarPassword } from '../../api/usuario'
-import type { PerfilUsuario } from '../../types'
+import { useAuth } from '../context/AuthContext'
+import { getMiPerfil, actualizarPerfil, cambiarPassword } from '../api/usuario'
+import type { PerfilUsuario } from '../types'
+
+const VOLVER_POR_ROL: Record<string, { to: string; label: string }> = {
+  CLIENTE: { to: '/cliente/dashboard', label: 'Mi cuenta' },
+  VENDEDOR: { to: '/vendedor', label: 'Panel de vendedor' },
+  ADMIN: { to: '/admin/dashboard', label: 'Panel de administración' },
+  MODERADOR: { to: '/moderador/dashboard', label: 'Panel de moderador' },
+}
 
 export default function EditarPerfilPage() {
+  const { user } = useAuth()
+  const volver = (user && VOLVER_POR_ROL[user.role]) || { to: '/', label: 'Inicio' }
+
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -80,8 +91,8 @@ export default function EditarPerfilPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/cliente/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
-          ← Mi cuenta
+        <Link to={volver.to} className="text-gray-400 hover:text-gray-600 text-sm">
+          ← {volver.label}
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">Editar perfil</h1>
       </div>
@@ -184,9 +195,10 @@ export default function EditarPerfilPage() {
               className="input w-full"
               value={pass.newPassword}
               onChange={e => setPass(p => ({ ...p, newPassword: e.target.value }))}
-              minLength={6}
+              minLength={8}
               required
             />
+            <p className="text-xs text-gray-400 mt-1">Debe tener al menos 8 caracteres.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
@@ -195,7 +207,7 @@ export default function EditarPerfilPage() {
               className="input w-full"
               value={pass.confirmPassword}
               onChange={e => setPass(p => ({ ...p, confirmPassword: e.target.value }))}
-              minLength={6}
+              minLength={8}
               required
             />
           </div>
