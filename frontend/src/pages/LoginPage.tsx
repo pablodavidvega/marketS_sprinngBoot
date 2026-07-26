@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { login as loginApi, googleLogin } from '../api/auth'
 import GoogleLoginButton from '../components/GoogleLoginButton'
+import PasswordInput from '../components/PasswordInput'
 
 function redirigirPorRol(navigate: ReturnType<typeof useNavigate>, role: string) {
   if (role === 'ADMIN') navigate('/admin/dashboard')
@@ -100,11 +101,9 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-            <input
-              type="password"
-              className="input"
+            <PasswordInput
               value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
+              onChange={v => setForm({ ...form, password: v })}
               required
               autoComplete="current-password"
             />

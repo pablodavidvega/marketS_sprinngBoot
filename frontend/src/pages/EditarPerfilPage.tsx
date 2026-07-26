@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMiPerfil, actualizarPerfil, cambiarPassword } from '../api/usuario'
+import PasswordInput from '../components/PasswordInput'
 import type { PerfilUsuario } from '../types'
 
 const VOLVER_POR_ROL: Record<string, { to: string; label: string }> = {
@@ -180,21 +181,17 @@ export default function EditarPerfilPage() {
         <form onSubmit={handlePassword} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
-            <input
-              type="password"
-              className="input w-full"
+            <PasswordInput
               value={pass.currentPassword}
-              onChange={e => setPass(p => ({ ...p, currentPassword: e.target.value }))}
+              onChange={v => setPass(p => ({ ...p, currentPassword: v }))}
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
-            <input
-              type="password"
-              className="input w-full"
+            <PasswordInput
               value={pass.newPassword}
-              onChange={e => setPass(p => ({ ...p, newPassword: e.target.value }))}
+              onChange={v => setPass(p => ({ ...p, newPassword: v }))}
               minLength={8}
               required
             />
@@ -202,11 +199,9 @@ export default function EditarPerfilPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
-            <input
-              type="password"
-              className="input w-full"
+            <PasswordInput
               value={pass.confirmPassword}
-              onChange={e => setPass(p => ({ ...p, confirmPassword: e.target.value }))}
+              onChange={v => setPass(p => ({ ...p, confirmPassword: v }))}
               minLength={8}
               required
             />
