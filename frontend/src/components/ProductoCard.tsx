@@ -176,7 +176,7 @@ export default function ProductoCard({ producto }: Props) {
           <Link
             to={`/vendedores/${producto.vendedorId}`}
             onClick={e => e.stopPropagation()}
-            className="text-xs text-gray-400 hover:text-primary-600 transition-colors mb-0.5 inline-block"
+            className="text-xs text-primary-600 hover:text-primary-700 hover:underline transition-colors mb-0.5 inline-block"
           >
             @{producto.vendedorUsername}
           </Link>

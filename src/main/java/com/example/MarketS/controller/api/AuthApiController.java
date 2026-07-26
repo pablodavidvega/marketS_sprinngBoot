@@ -113,6 +113,10 @@ public class AuthApiController {
         }
         // ─────────────────────────────────────────────────────────────────────
 
+        if (userService.buscarPorEmail(dto.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El correo ya está registrado"));
+        }
+
         String tipoRol = (dto.getTipoUsuario() == null || dto.getTipoUsuario().isBlank())
                 ? "CLIENTE"
                 : dto.getTipoUsuario().toUpperCase();

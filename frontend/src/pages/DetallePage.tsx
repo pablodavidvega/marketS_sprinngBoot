@@ -286,7 +286,7 @@ export default function DetallePage() {
             <div className="flex items-center gap-3 flex-wrap">
               <Link
                 to={`/vendedores/${producto.vendedorId}`}
-                className="text-sm text-gray-400 hover:text-primary-600 transition-colors"
+                className="text-sm text-primary-600 hover:text-primary-700 hover:underline transition-colors"
               >
                 @{producto.vendedorUsername}
               </Link>

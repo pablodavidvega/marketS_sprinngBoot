@@ -70,7 +70,7 @@ export default function RegistroPage() {
     setLoading(true)
     try {
       await registro({ ...form, invitacion: tokenUrl || undefined })
-      navigate('/login')
+      navigate('/login', { state: { mensaje: 'Cuenta creada con éxito. Ya puedes iniciar sesión.' } })
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { error?: string; mensaje?: string } } })?.response?.data
       setError(data?.error ?? data?.mensaje ?? 'Error al registrar. Intenta de nuevo.')
