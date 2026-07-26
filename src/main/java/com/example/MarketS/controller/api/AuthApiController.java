@@ -38,7 +38,7 @@ public class AuthApiController {
 
     private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
 
-    @Value("${frontend.url:http://localhost:5173}")
+    @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
     private final AuthenticationManager authenticationManager;
