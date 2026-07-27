@@ -36,7 +36,6 @@ function destinoDe(n: Notificacion, esVendedor: boolean): string {
     case 'PEDIDO_RECIBIDO':
     case 'PEDIDO_COMPLETADO_EXTERNO':
     case 'PEDIDO_RECHAZADO_EXTERNO':
-    case 'CALIFICACION_COMPRADOR':
       return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, '') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVO_MENSAJE_CHAT':
     case 'RECORDATORIO_CHAT_SIN_RESPONDER':
