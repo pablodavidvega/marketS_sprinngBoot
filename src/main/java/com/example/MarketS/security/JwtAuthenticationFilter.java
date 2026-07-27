@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -36,11 +37,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // autenticar una request, así que se descartan aquí antes de tocar el UserDetailsService.
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token) && !tokenProvider.hasPurposeClaim(token)) {
             String email = tokenProvider.getEmailFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            try {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (UsernameNotFoundException e) {
+                // El token es válido y no expiró, pero el email que lleva ya no existe (ej. el
+                // usuario lo cambió desde otra sesión/pestaña): se ignora el token en vez de
+                // tirar la excepción sin atrapar y romper el filtro con un 500 — la request
+                // sigue como anónima, y el endpoint protegido responderá 401/403 normalmente.
+            }
         }
 
         filterChain.doFilter(request, response);
