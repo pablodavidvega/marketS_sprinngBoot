@@ -32,7 +32,10 @@ export default function PedidosVendedorPage() {
   const [enviandoCalificacion, setEnviandoCalificacion] = useState<number | null>(null)
   const [errorCalificacion, setErrorCalificacion] = useState('')
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({})
-  const deepLinkAplicado = useRef(false)
+  // Guarda el último query string ya aplicado (no un simple booleano) para poder reaccionar
+  // de nuevo cuando se hace clic en otra notificación estando ya en esta vista: como la ruta
+  // no cambia, React Router no remonta el componente, solo actualiza los searchParams.
+  const deepLinkAplicado = useRef<string | null>(null)
 
   useEffect(() => {
     getPedidosVendedor()
@@ -43,13 +46,15 @@ export default function PedidosVendedorPage() {
   // Deep-link desde la campanita de notificaciones: ?pedido=123&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el chat (cada fila ya es por-vendedor).
   useEffect(() => {
-    if (loading || deepLinkAplicado.current) return
+    if (loading) return
     const pedidoParam = searchParams.get('pedido')
     if (!pedidoParam) return
+    const key = searchParams.toString()
+    if (deepLinkAplicado.current === key) return
     const pedidoId = Number(pedidoParam)
     if (!pedidos.some(p => p.pedidoId === pedidoId)) return
 
-    deepLinkAplicado.current = true
+    deepLinkAplicado.current = key
     setExpandido(pedidoId)
     if (searchParams.get('foco') === 'chat') {
       setChatAbierto(pedidoId)

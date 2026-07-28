@@ -26,7 +26,10 @@ export default function MisPedidosPage() {
   const [confirmando, setConfirmando] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<string | null>(null)
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({})
-  const deepLinkAplicado = useRef(false)
+  // Guarda el último query string ya aplicado (no un simple booleano) para poder reaccionar
+  // de nuevo cuando se hace clic en otra notificación estando ya en esta vista: como la ruta
+  // no cambia, React Router no remonta el componente, solo actualiza los searchParams.
+  const deepLinkAplicado = useRef<string | null>(null)
 
   useEffect(() => {
     getMisPedidos()
@@ -37,13 +40,15 @@ export default function MisPedidosPage() {
   // Deep-link desde la campanita de notificaciones: ?pedido=123&vendedor=45&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el hilo de chat correcto.
   useEffect(() => {
-    if (loading || deepLinkAplicado.current) return
+    if (loading) return
     const pedidoParam = searchParams.get('pedido')
     if (!pedidoParam) return
+    const key = searchParams.toString()
+    if (deepLinkAplicado.current === key) return
     const pedidoId = Number(pedidoParam)
     if (!pedidos.some(p => p.pedidoId === pedidoId)) return
 
-    deepLinkAplicado.current = true
+    deepLinkAplicado.current = key
     setExpandido(pedidoId)
 
     const vendedorParam = searchParams.get('vendedor')
