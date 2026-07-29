@@ -12,3 +12,6 @@ export const guardarEncuentro = (
 
 export const cancelarEncuentro = (pedidoId: number, vendedorId: number) =>
   api.delete(`/api/pedidos/${pedidoId}/encuentro/${vendedorId}`)
+
+export const confirmarEncuentro = (pedidoId: number, vendedorId: number) =>
+  api.post<Encuentro>(`/api/pedidos/${pedidoId}/encuentro/${vendedorId}/confirmar`)

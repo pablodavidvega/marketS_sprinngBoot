@@ -352,8 +352,11 @@ export interface Encuentro {
   lugar: string
   fechaHora: string
   nota: string | null
+  estado: 'PENDIENTE' | 'CONFIRMADO'
   propuestoPorId: number
   propuestoPorUsername: string
+  puedeConfirmar: boolean
+  ventaExternaConfirmada: boolean
 }
 
 export interface Pregunta {

@@ -43,6 +43,13 @@ public class Encuentro {
     @Column(columnDefinition = "TEXT")
     private String nota;
 
+    // columnDefinition con DEFAULT: permite que Hibernate agregue esta columna NOT NULL sobre
+    // una tabla "encuentros" que ya tiene filas (ver mismo patrón en User.aceptoTerminos).
+    // PENDIENTE hasta que la contraparte confirma; cualquier edición de lugar/hora/nota vuelve
+    // a poner el encuentro en PENDIENTE porque cambiaron los términos acordados.
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'PENDIENTE'")
+    private String estado = "PENDIENTE";
+
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 

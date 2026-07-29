@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getEncuentro, guardarEncuentro, cancelarEncuentro } from '../api/encuentro'
+import { getEncuentro, guardarEncuentro, cancelarEncuentro, confirmarEncuentro } from '../api/encuentro'
 import type { Encuentro } from '../types'
 
 export default function EncuentroPedido({ pedidoId, vendedorId }: { pedidoId: number; vendedorId: number }) {
@@ -11,6 +11,7 @@ export default function EncuentroPedido({ pedidoId, vendedorId }: { pedidoId: nu
   const [nota, setNota] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [cancelando, setCancelando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -60,6 +61,16 @@ export default function EncuentroPedido({ pedidoId, vendedorId }: { pedidoId: nu
       setEditando(false)
     } finally {
       setCancelando(false)
+    }
+  }
+
+  async function handleConfirmar() {
+    setConfirmando(true)
+    try {
+      const { data } = await confirmarEncuentro(pedidoId, vendedorId)
+      setEncuentro(data)
+    } finally {
+      setConfirmando(false)
     }
   }
 
@@ -119,10 +130,30 @@ export default function EncuentroPedido({ pedidoId, vendedorId }: { pedidoId: nu
   }
 
   const fecha = encuentro.fechaHora ? new Date(encuentro.fechaHora) : null
+  const caducado = fecha ? fecha.getTime() < Date.now() : false
 
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-      <p className="text-sm font-medium text-gray-800">📍 {encuentro.lugar}</p>
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-medium text-gray-800">📍 {encuentro.lugar}</p>
+        {encuentro.ventaExternaConfirmada ? (
+          <span className="text-[10px] font-medium text-green-700 bg-green-100 rounded-full px-2 py-0.5">
+            Venta realizada
+          </span>
+        ) : caducado ? (
+          <span className="text-[10px] font-medium text-gray-600 bg-gray-200 rounded-full px-2 py-0.5">
+            Fecha caducada
+          </span>
+        ) : encuentro.estado === 'CONFIRMADO' ? (
+          <span className="text-[10px] font-medium text-green-700 bg-green-100 rounded-full px-2 py-0.5">
+            Confirmado
+          </span>
+        ) : (
+          <span className="text-[10px] font-medium text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">
+            Pendiente de confirmación
+          </span>
+        )}
+      </div>
       {fecha && (
         <p className="text-sm text-gray-600">
           {fecha.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -132,7 +163,17 @@ export default function EncuentroPedido({ pedidoId, vendedorId }: { pedidoId: nu
       )}
       {encuentro.nota && <p className="text-xs text-gray-500 mt-1">{encuentro.nota}</p>}
       <p className="text-xs text-gray-400 mt-1">Propuesto por {encuentro.propuestoPorUsername}</p>
-      <div className="flex gap-3 mt-2">
+      {caducado && !encuentro.ventaExternaConfirmada && (
+        <p className="text-xs text-gray-500 mt-1">
+          La fecha de este encuentro ya pasó. Si necesitás coordinar uno nuevo, editalo con otra fecha.
+        </p>
+      )}
+      <div className="flex gap-3 mt-2 items-center">
+        {encuentro.puedeConfirmar && !caducado && (
+          <button onClick={handleConfirmar} disabled={confirmando} className="text-xs font-medium text-green-700 hover:underline">
+            {confirmando ? 'Confirmando...' : '✓ Aceptar encuentro'}
+          </button>
+        )}
         <button onClick={abrirEdicion} className="text-xs text-primary-600 hover:underline">
           Editar
         </button>

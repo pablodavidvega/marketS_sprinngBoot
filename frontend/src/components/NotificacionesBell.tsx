@@ -43,6 +43,7 @@ function destinoDe(n: Notificacion, esVendedor: boolean): string {
     case 'ENCUENTRO_PROPUESTO':
     case 'ENCUENTRO_ACTUALIZADO':
     case 'ENCUENTRO_CANCELADO':
+    case 'ENCUENTRO_CONFIRMADO':
       return n.pedidoId !== '' ? destinoPedido(esVendedor, n.pedidoId, n.vendedorId, 'encuentro') : (esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
     case 'NUEVA_PREGUNTA':
     case 'PREGUNTA_RESPONDIDA':
