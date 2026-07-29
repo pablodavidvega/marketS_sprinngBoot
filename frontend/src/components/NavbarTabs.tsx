@@ -25,7 +25,7 @@ export default function NavbarTabs() {
             Soporte
           </NavLink>
 
-          {isAuthenticated && hasRole('CLIENTE') && (
+          {isAuthenticated && (hasRole('CLIENTE') || hasRole('VENDEDOR')) && (
             <NavLink to="/cliente/dashboard" className={linkClass}>
               Mi cuenta
             </NavLink>

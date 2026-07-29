@@ -77,7 +77,7 @@ export default function App() {
           <Route
             path="/cliente/dashboard"
             element={
-              <ProtectedRoute roles={['CLIENTE']}>
+              <ProtectedRoute roles={['CLIENTE', 'VENDEDOR']}>
                 <ClienteDashboardPage />
               </ProtectedRoute>
             }
@@ -85,7 +85,7 @@ export default function App() {
           <Route
             path="/cliente/mis-pedidos"
             element={
-              <ProtectedRoute roles={['CLIENTE']}>
+              <ProtectedRoute roles={['CLIENTE', 'VENDEDOR']}>
                 <MisPedidosPage />
               </ProtectedRoute>
             }
@@ -93,7 +93,7 @@ export default function App() {
           <Route
             path="/cliente/editar-perfil"
             element={
-              <ProtectedRoute roles={['CLIENTE']}>
+              <ProtectedRoute roles={['CLIENTE', 'VENDEDOR']}>
                 <EditarPerfilPage />
               </ProtectedRoute>
             }

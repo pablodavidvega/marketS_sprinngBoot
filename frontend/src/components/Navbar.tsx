@@ -114,7 +114,7 @@ export default function Navbar() {
             {isAuthenticated && (
               <Link to="/favoritos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis favoritos</Link>
             )}
-            {isAuthenticated && hasRole('CLIENTE') && (
+            {isAuthenticated && (hasRole('CLIENTE') || hasRole('VENDEDOR')) && (
               <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
             )}
             {isAuthenticated && hasRole('VENDEDOR') && VENDEDOR_LINKS.map(({ to, label }) => (
