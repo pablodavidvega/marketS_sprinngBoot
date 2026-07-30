@@ -31,6 +31,12 @@ public class EmailService {
     @Value("${app.mail.from}")
     private String mailFrom;
 
+    // Remitente con nombre visible ("MarketS <correo>") en vez de solo la dirección: ayuda al
+    // puntaje de spam de Gmail/Outlook, junto con el Reply-To explícito de abajo.
+    private String fromConNombre() {
+        return "MarketS <" + mailFrom + ">";
+    }
+
     @Value("${resend.api.key:}")
     private String resendApiKey;
 
@@ -44,7 +50,8 @@ public class EmailService {
                 enviarViaResend(para, asunto, mensaje);
             } else {
                 SimpleMailMessage mail = new SimpleMailMessage();
-                mail.setFrom(mailFrom);
+                mail.setFrom(fromConNombre());
+                mail.setReplyTo(mailFrom);
                 mail.setTo(para);
                 mail.setSubject(asunto);
                 mail.setText(mensaje);
@@ -86,7 +93,8 @@ public class EmailService {
                 enviarViaResend(para, asunto, sb.toString());
             } else {
                 SimpleMailMessage mail = new SimpleMailMessage();
-                mail.setFrom(mailFrom);
+                mail.setFrom(fromConNombre());
+                mail.setReplyTo(mailFrom);
                 mail.setTo(para);
                 mail.setSubject(asunto);
                 mail.setText(sb.toString());
@@ -104,8 +112,9 @@ public class EmailService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> body = Map.of(
-            "from", mailFrom,
+            "from", fromConNombre(),
             "to", List.of(to),
+            "reply_to", List.of(mailFrom),
             "subject", subject,
             "text", text
         );

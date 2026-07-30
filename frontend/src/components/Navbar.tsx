@@ -68,7 +68,7 @@ export default function Navbar() {
                     Vender
                   </Link>
                 )}
-                <span className="text-sm text-gray-500 max-w-[120px] truncate">{user?.email}</span>
+                <span className="text-sm text-gray-500 whitespace-nowrap">{user?.email}</span>
                 <Link to="/mi-perfil" className="text-sm text-gray-500 hover:text-primary-600 py-1.5">
                   Mi perfil
                 </Link>
