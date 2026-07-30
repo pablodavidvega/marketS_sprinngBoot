@@ -331,6 +331,7 @@ export interface Notificacion {
   pedidoId: number | ''
   productoId: number | ''
   vendedorId: number | ''
+  rolDestino: 'COMPRADOR' | 'VENDEDOR' | ''
 }
 
 export interface NotificacionesResponse {

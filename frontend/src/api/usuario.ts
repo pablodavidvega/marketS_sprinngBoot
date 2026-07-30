@@ -1,8 +1,11 @@
 import api from './axios'
-import type { PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga, ReporteCatalogo, EmbudoAdmin, EstadisticasComunidad } from '../types'
+import type { AuthResponse, PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga, ReporteCatalogo, EmbudoAdmin, EstadisticasComunidad } from '../types'
 
 export const getMiPerfil = () =>
   api.get<PerfilUsuario>('/api/me')
+
+export const convertirseEnVendedor = (city: string) =>
+  api.post<AuthResponse>('/api/cliente/convertir-vendedor', { city })
 
 export const actualizarPerfil = (data: {
   username: string

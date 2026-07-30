@@ -28,6 +28,14 @@ public class NotificacionService {
     // vendedorId: solo para notificaciones de chat/encuentro, permite al frontend abrir
     // directamente el hilo correcto cuando un pedido tiene varios vendedores.
     public void crear(User usuario, String mensaje, String tipo, Long pedidoId, Long productoId, Long vendedorId) {
+        crear(usuario, mensaje, tipo, pedidoId, productoId, vendedorId, null);
+    }
+
+    // rolDestino ("COMPRADOR"/"VENDEDOR"): usar cuando el mismo tipo de notificación se manda
+    // indistintamente a cualquiera de las dos partes de un pedido (chat, encuentro) — ver
+    // comentario en Notificacion.rolDestino. Para el resto de los tipos, que ya son
+    // inequívocos, no hace falta pasarlo (queda null y el frontend deduce el rol del tipo).
+    public void crear(User usuario, String mensaje, String tipo, Long pedidoId, Long productoId, Long vendedorId, String rolDestino) {
         Notificacion n = new Notificacion();
         n.setUsuario(usuario);
         n.setMensaje(mensaje);
@@ -35,6 +43,7 @@ public class NotificacionService {
         n.setPedidoId(pedidoId);
         n.setProductoId(productoId);
         n.setVendedorId(vendedorId);
+        n.setRolDestino(rolDestino);
         n.setFechaCreacion(LocalDateTime.now());
         repo.save(n);
     }

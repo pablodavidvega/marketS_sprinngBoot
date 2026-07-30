@@ -20,6 +20,7 @@ import VendedorReportesPage from './pages/vendedor/ReportesPage'
 import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import EditarPerfilPage from './pages/EditarPerfilPage'
+import VenderPage from './pages/VenderPage'
 import AdminDashboardPage from './pages/admin/DashboardPage'
 import EstadisticasComunidadPage from './pages/admin/EstadisticasComunidadPage'
 import UsuariosPage from './pages/admin/UsuariosPage'
@@ -103,6 +104,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <EditarPerfilPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/vender"
+            element={
+              <ProtectedRoute roles={['CLIENTE']}>
+                <VenderPage />
               </ProtectedRoute>
             }
           />

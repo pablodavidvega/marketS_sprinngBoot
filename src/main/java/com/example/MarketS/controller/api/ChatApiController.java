@@ -112,7 +112,8 @@ public class ChatApiController {
                 "NUEVO_MENSAJE_CHAT",
                 pedidoId,
                 null,
-                vendedorId
+                vendedorId,
+                esParaComprador ? "COMPRADOR" : "VENDEDOR"
         );
         if (destinatario.getEmail() != null && !destinatario.getEmail().isBlank()) {
             String link = frontendLinkBuilder.pedidoConFoco(!esParaComprador, pedidoId, vendedorId, "chat");

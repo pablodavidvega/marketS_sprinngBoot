@@ -63,6 +63,11 @@ export default function Navbar() {
 
             {isAuthenticated ? (
               <div className="hidden md:flex items-center gap-2">
+                {hasRole('CLIENTE') && (
+                  <Link to="/vender" className="btn-primary text-sm py-1.5">
+                    Vender
+                  </Link>
+                )}
                 <span className="text-sm text-gray-500 max-w-[120px] truncate">{user?.email}</span>
                 <Link to="/mi-perfil" className="text-sm text-gray-500 hover:text-primary-600 py-1.5">
                   Mi perfil
@@ -109,6 +114,9 @@ export default function Navbar() {
             )}
             {isAuthenticated && hasRole('VENDEDOR') && (
               <Link to="/vendedor" onClick={() => setOpen(false)} className="text-gray-700 py-1">Dashboard</Link>
+            )}
+            {isAuthenticated && hasRole('CLIENTE') && (
+              <Link to="/vender" onClick={() => setOpen(false)} className="text-primary-600 font-medium py-1">Vender</Link>
             )}
             <Link to="/soporte" onClick={() => setOpen(false)} className="text-gray-700 py-1">Soporte</Link>
             {isAuthenticated && (

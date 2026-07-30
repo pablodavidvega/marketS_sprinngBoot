@@ -21,6 +21,12 @@ export default function NavbarTabs() {
             </NavLink>
           )}
 
+          {isAuthenticated && hasRole('CLIENTE') && (
+            <NavLink to="/vender" className="nav-tab-link text-primary-600 font-medium hover:text-primary-700">
+              Vender
+            </NavLink>
+          )}
+
           <NavLink to="/soporte" className={linkClass}>
             Soporte
           </NavLink>

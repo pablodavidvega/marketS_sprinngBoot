@@ -47,4 +47,14 @@ public class Notificacion {
     // así el frontend sabe cuál hilo abrir. Null para el resto de tipos de notificación.
     @Column(name = "vendedor_id")
     private Long vendedorId;
+
+    // "COMPRADOR" o "VENDEDOR": en qué rol actúa el destinatario para ESTA notificación
+    // puntual. Necesario porque un mismo usuario puede ser vendedor y a la vez comprador de
+    // otro pedido, y tipos como NUEVO_MENSAJE_CHAT/ENCUENTRO_* se mandan indistintamente a
+    // cualquiera de las dos partes de un mismo hilo — el tipo solo no alcanza para que el
+    // frontend sepa a qué panel (/cliente/mis-pedidos vs /vendedor/pedidos) llevar al usuario.
+    // Null para tipos que ya son inequívocos por sí mismos (p.ej. PEDIDO_CREADO siempre es al
+    // comprador, NUEVO_PEDIDO siempre al vendedor) o para notificaciones previas a este campo.
+    @Column(name = "rol_destino")
+    private String rolDestino;
 }

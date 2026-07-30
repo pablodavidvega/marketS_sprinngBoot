@@ -89,7 +89,8 @@ public class RecordatorioPendienteService {
 
             notificacionService.crear(destinatario,
                     "Tenés un mensaje sin responder en el pedido #" + pedidoId,
-                    "RECORDATORIO_CHAT_SIN_RESPONDER", pedidoId, null, vendedorId);
+                    "RECORDATORIO_CHAT_SIN_RESPONDER", pedidoId, null, vendedorId,
+                    autorEsVendedor ? "COMPRADOR" : "VENDEDOR");
         }
     }
 

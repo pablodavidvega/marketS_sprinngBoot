@@ -588,7 +588,7 @@ public class PedidoApiController {
                 .distinct()
                 .toList();
         userRepository.findAllById(vendedorIds).forEach(vendedor -> {
-            notificacionService.crear(vendedor, "Se confirmó el pago de tu venta del pedido #" + id + ".", "PEDIDO_PAGADO", id);
+            notificacionService.crear(vendedor, "Se confirmó el pago de tu venta del pedido #" + id + ".", "VENTA_PAGO_CONFIRMADO", id);
             if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
                 emailService.enviarCorreo(vendedor.getEmail(), "Pago confirmado - Pedido #" + id + " - MarketS",
                         "Se confirmó el pago de tu venta del pedido #" + id + ". Ya podés alistar el envío."

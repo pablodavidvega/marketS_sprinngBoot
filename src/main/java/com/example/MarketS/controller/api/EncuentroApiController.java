@@ -217,7 +217,8 @@ public class EncuentroApiController {
         User destinatario = userService.buscarPorId(destinatarioId).orElse(null);
         if (destinatario == null) return;
 
-        notificacionService.crear(destinatario, mensaje, tipo, pedidoId, null, vendedorId);
+        notificacionService.crear(destinatario, mensaje, tipo, pedidoId, null, vendedorId,
+                esParaComprador ? "COMPRADOR" : "VENDEDOR");
         if (destinatario.getEmail() != null && !destinatario.getEmail().isBlank()) {
             String link = frontendLinkBuilder.pedidoConFoco(!esParaComprador, pedidoId, vendedorId, "encuentro");
             emailService.enviarCorreo(destinatario.getEmail(), "Encuentro del pedido #" + pedidoId + " - MarketS",

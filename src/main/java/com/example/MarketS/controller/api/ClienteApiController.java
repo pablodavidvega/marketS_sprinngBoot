@@ -3,18 +3,31 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.model.Pedido;
+import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
+import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.security.AuthCookieService;
+import com.example.MarketS.security.JwtTokenProvider;
 import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
+import com.example.MarketS.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,15 +37,27 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('ROLE_CLIENTE', 'ROLE_VENDEDOR', 'ROLE_ADMIN')")
 public class ClienteApiController {
 
+    private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
+
     private final PedidoRepository pedidoRepository;
     private final UserRepository userRepository;
     private final ReputacionService reputacionService;
+    private final RolRepository rolRepository;
+    private final UserService userService;
+    private final JwtTokenProvider tokenProvider;
+    private final AuthCookieService cookieService;
 
     public ClienteApiController(PedidoRepository pedidoRepository, UserRepository userRepository,
-                                 ReputacionService reputacionService) {
+                                 ReputacionService reputacionService, RolRepository rolRepository,
+                                 UserService userService, JwtTokenProvider tokenProvider,
+                                 AuthCookieService cookieService) {
         this.pedidoRepository = pedidoRepository;
         this.userRepository = userRepository;
         this.reputacionService = reputacionService;
+        this.rolRepository = rolRepository;
+        this.userService = userService;
+        this.tokenProvider = tokenProvider;
+        this.cookieService = cookieService;
     }
 
     // GET /api/cliente/dashboard
@@ -84,5 +109,39 @@ public class ClienteApiController {
                 "gastoTotal", gastoTotal,
                 "reputacion", reputacionService.calcularComprador(usuario.getId())
         ));
+    }
+
+    // POST /api/cliente/convertir-vendedor — self-service "Vender" (al estilo MercadoLibre):
+    // un CLIENTE se convierte en VENDEDOR sin pasar por el admin. Reemite el JWT con el rol
+    // nuevo para que el frontend actualice la sesión sin forzar un logout/login.
+    @PostMapping("/convertir-vendedor")
+    @PreAuthorize("hasAuthority('ROLE_CLIENTE')")
+    public ResponseEntity<?> convertirVendedor(@RequestBody Map<String, String> body,
+                                                Authentication auth,
+                                                HttpServletResponse response) {
+        String city = body.get("city");
+        if (city == null || city.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La ciudad es obligatoria para vender"));
+        }
+
+        User usuario = UsuarioPrincipal.from(auth);
+        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+
+        Rol rolVendedor = rolRepository.findByRolname("ROLE_VENDEDOR")
+                .orElseThrow(() -> new IllegalStateException("Rol VENDEDOR no configurado"));
+
+        Vendedor vendedor = new Vendedor();
+        vendedor.setCity(city.trim());
+        vendedor.setUser(usuario);
+        usuario.setVendedor(vendedor);
+        usuario.setRol(rolVendedor);
+        userService.guardar(usuario);
+
+        Authentication authStub = new UsernamePasswordAuthenticationToken(
+                usuario.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_VENDEDOR")));
+        String token = tokenProvider.generateToken(authStub);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
+
+        return ResponseEntity.ok(Map.of("email", usuario.getEmail(), "role", "VENDEDOR", "token", token));
     }
 }
