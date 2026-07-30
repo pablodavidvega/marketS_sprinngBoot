@@ -151,6 +151,7 @@ public class ChatApiController {
         map.put("esVendedor", m.getAutor().getId().equals(m.getVendedor().getId()));
         map.put("contenido", m.getContenido());
         map.put("fechaEnvio", m.getFechaEnvio().toString());
+        map.put("leido", m.isLeido());
         return map;
     }
 }

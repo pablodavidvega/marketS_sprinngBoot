@@ -188,19 +188,23 @@ export default function PedidosVendedorPage() {
                     <div className="flex flex-col gap-3">
                       {pedido.items.map((item, i) => (
                         <div key={i} className="flex items-center gap-3">
-                          {item.productoImagen ? (
-                            <img
-                              src={item.productoImagen}
-                              alt={item.productoNombre}
-                              className="w-14 h-14 object-cover rounded-lg flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-xl">
-                              📦
-                            </div>
-                          )}
+                          <Link to={`/productos/${item.productoId}`} className="flex-shrink-0">
+                            {item.productoImagen ? (
+                              <img
+                                src={item.productoImagen}
+                                alt={item.productoNombre}
+                                className="w-14 h-14 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xl">
+                                📦
+                              </div>
+                            )}
+                          </Link>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-800 truncate">{item.productoNombre}</p>
+                            <Link to={`/productos/${item.productoId}`} className="font-medium text-gray-800 truncate hover:text-primary-600 hover:underline block">
+                              {item.productoNombre}
+                            </Link>
                             <p className="text-sm text-gray-500">
                               {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
                             </p>

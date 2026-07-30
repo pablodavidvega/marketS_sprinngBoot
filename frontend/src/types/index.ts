@@ -346,6 +346,7 @@ export interface ChatMensaje {
   esVendedor: boolean
   contenido: string
   fechaEnvio: string
+  leido: boolean
 }
 
 export interface Encuentro {

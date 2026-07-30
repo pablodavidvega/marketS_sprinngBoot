@@ -68,8 +68,9 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
                 >
                   {!esMio && <p className="text-xs font-medium opacity-70 mb-0.5">{m.autorUsername}</p>}
                   <p className="whitespace-pre-wrap break-words">{m.contenido}</p>
-                  <p className={`text-[10px] mt-1 ${esMio ? 'text-white/70' : 'text-gray-400'}`}>
+                  <p className={`text-[10px] mt-1 flex items-center gap-1 ${esMio ? 'text-white/70 justify-end' : 'text-gray-400'}`}>
                     {new Date(m.fechaEnvio).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {esMio && <span>{m.leido ? '✓✓ Visto' : '✓ Enviado'}</span>}
                   </p>
                 </div>
               </div>
