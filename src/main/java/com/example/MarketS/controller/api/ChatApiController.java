@@ -64,7 +64,7 @@ public class ChatApiController {
         List<Map<String, Object>> mensajes = chatMensajeRepository
                 .findByPedidoIdAndVendedorIdOrderByFechaEnvioAsc(pedidoId, vendedorId)
                 .stream()
-                .map(this::toMap)
+                .map(m -> toMap(m, usuario.getId()))
                 .toList();
 
         return ResponseEntity.ok(mensajes);
@@ -124,7 +124,7 @@ public class ChatApiController {
             );
         }
 
-        return ResponseEntity.ok(toMap(mensaje));
+        return ResponseEntity.ok(toMap(mensaje, usuario.getId()));
     }
 
     private boolean autorizado(Pedido pedido, Long vendedorId, User usuario) {
@@ -143,12 +143,16 @@ public class ChatApiController {
         return usuario;
     }
 
-    private Map<String, Object> toMap(ChatMensaje m) {
+    // "propio" se calcula contra el usuario autenticado que hace la petición (lectorId), no
+    // contra su rol global — un vendedor también puede comprar, así que el rol solo no basta
+    // para saber si un mensaje del hilo es suyo.
+    private Map<String, Object> toMap(ChatMensaje m, Long lectorId) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", m.getId());
         map.put("autorId", m.getAutor().getId());
         map.put("autorUsername", m.getAutor().getUsername());
         map.put("esVendedor", m.getAutor().getId().equals(m.getVendedor().getId()));
+        map.put("propio", m.getAutor().getId().equals(lectorId));
         map.put("contenido", m.getContenido());
         map.put("fechaEnvio", m.getFechaEnvio().toString());
         map.put("leido", m.isLeido());

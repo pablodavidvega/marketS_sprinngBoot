@@ -344,6 +344,7 @@ export interface ChatMensaje {
   autorId: number
   autorUsername: string
   esVendedor: boolean
+  propio: boolean
   contenido: string
   fechaEnvio: string
   leido: boolean

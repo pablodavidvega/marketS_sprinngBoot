@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getChat, enviarMensajeChat } from '../api/chat'
-import { useAuth } from '../context/AuthContext'
 import type { ChatMensaje } from '../types'
 
 const INTERVALO_MS = 10_000
 
 export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number; vendedorId: number }) {
-  const { hasRole } = useAuth()
-  const soyVendedor = hasRole('VENDEDOR') || hasRole('ADMIN')
   const [mensajes, setMensajes] = useState<ChatMensaje[]>([])
   const [texto, setTexto] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -58,17 +55,17 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
           </p>
         ) : (
           mensajes.map(m => {
-            const esMio = soyVendedor ? m.esVendedor : !m.esVendedor
+            const esMio = m.propio
             return (
               <div key={m.id} className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                    esMio ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-700'
+                    esMio ? 'bg-primary-600 text-white' : 'bg-emerald-50 border border-emerald-100 text-emerald-950'
                   }`}
                 >
                   {!esMio && <p className="text-xs font-medium opacity-70 mb-0.5">{m.autorUsername}</p>}
                   <p className="whitespace-pre-wrap break-words">{m.contenido}</p>
-                  <p className={`text-[10px] mt-1 flex items-center gap-1 ${esMio ? 'text-white/70 justify-end' : 'text-gray-400'}`}>
+                  <p className={`text-[10px] mt-1 flex items-center gap-1 ${esMio ? 'text-white/70 justify-end' : 'text-emerald-700/70'}`}>
                     {new Date(m.fechaEnvio).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     {esMio && <span>{m.leido ? '✓✓ Visto' : '✓ Enviado'}</span>}
                   </p>
