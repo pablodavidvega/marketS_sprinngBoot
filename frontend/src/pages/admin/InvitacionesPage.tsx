@@ -79,8 +79,8 @@ function ModalGenerarInvitacion({ onClose, onCreada }: ModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Generar link de invitación</h2>
         <div className="space-y-4">
           <div>

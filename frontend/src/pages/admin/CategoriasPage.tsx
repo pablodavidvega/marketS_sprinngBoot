@@ -119,8 +119,11 @@ export default function CategoriasPage() {
 
       {/* ── MODAL ──────────────────────────────────────────────────────────── */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setModalOpen(false)}
+        >
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b">
               <h2 className="text-lg font-semibold text-gray-800">
                 {editando ? 'Editar categoría' : 'Nueva categoría'}

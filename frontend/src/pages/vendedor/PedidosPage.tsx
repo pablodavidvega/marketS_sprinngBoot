@@ -115,17 +115,17 @@ export default function PedidosVendedorPage() {
       </button>
 
       {mostrarLeyenda && (
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 text-sm text-gray-700">
-          <ul className="space-y-2">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-x-4 gap-y-3">
             {Object.entries(ESTADO_INFO).map(([estado, info]) => (
-              <li key={estado} className="flex flex-wrap items-baseline gap-x-2">
-                <span className={`badge ${ESTADO_COLOR[estado] ?? 'bg-gray-100 text-gray-700'} flex-shrink-0`}>
+              <div key={estado} className="contents">
+                <span className={`badge ${ESTADO_COLOR[estado] ?? 'bg-gray-100 text-gray-700'} self-start w-fit`}>
                   {estado.replace(/_/g, ' ')}
                 </span>
-                <span>{info}</span>
-              </li>
+                <span className="text-xs text-gray-600 leading-relaxed">{info}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

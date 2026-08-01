@@ -300,21 +300,21 @@ export default function CargaMasivaPage() {
       )}
 
       <div className="card p-0 overflow-x-auto">
-        <table className="text-sm border-collapse">
-          <thead className="bg-gray-50 border-b border-gray-200">
+        <table className="w-full text-sm border-collapse">
+          <thead className="bg-primary-50 border-b border-primary-100">
             <tr>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Nombre *</th>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Precio *</th>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Stock *</th>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Categoría *</th>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Marca *</th>
-              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Descripción *</th>
-              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 1 *</th>
-              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 2 *</th>
-              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 3 *</th>
-              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Video *</th>
-              <th className="text-center px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Estado</th>
-              <th className="text-right px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Acciones</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Nombre *</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Precio *</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Stock *</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Categoría *</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Marca *</th>
+              <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Descripción *</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 1 *</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 2 *</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 3 *</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Video *</th>
+              <th className="text-center px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Estado</th>
+              <th className="text-right px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -322,9 +322,9 @@ export default function CargaMasivaPage() {
               const bloqueada = fila.estado === 'ok' || fila.estado === 'guardando'
               return (
                 <tr key={fila.id} className={fila.estado === 'ok' ? 'bg-green-50/50' : fila.estado === 'error' ? 'bg-red-50/40' : ''}>
-                  <td className="px-2 py-1.5 align-top">
+                  <td className="px-2 py-1.5 align-top min-w-[9rem]">
                     <input
-                      className={`${inputCelda} w-36`}
+                      className={`${inputCelda} w-full`}
                       value={fila.nombre}
                       disabled={bloqueada}
                       onChange={e => actualizarFila(fila.id, { nombre: e.target.value })}
@@ -365,7 +365,7 @@ export default function CargaMasivaPage() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-2 py-1.5 align-top w-36">
+                  <td className="px-2 py-1.5 align-top min-w-[9rem]">
                     <fieldset disabled={bloqueada} className="border-0 p-0 m-0 min-w-0">
                       <MarcaAutocomplete
                         value={fila.marca}
@@ -374,9 +374,9 @@ export default function CargaMasivaPage() {
                       />
                     </fieldset>
                   </td>
-                  <td className="px-2 py-1.5 align-top">
+                  <td className="px-2 py-1.5 align-top min-w-[10rem]">
                     <input
-                      className={`${inputCelda} w-40`}
+                      className={`${inputCelda} w-full`}
                       value={fila.descripcion}
                       disabled={bloqueada}
                       onChange={e => actualizarFila(fila.id, { descripcion: e.target.value })}
