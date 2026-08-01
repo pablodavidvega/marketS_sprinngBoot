@@ -10,6 +10,15 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
   const [cargando, setCargando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const listaRef = useRef<HTMLDivElement>(null)
+  // Solo autoscrolleamos si el usuario ya estaba cerca del final; si scrolleó hacia
+  // arriba a leer mensajes viejos, el polling (cada 10s) no debe interrumpirlo.
+  const pegadoAlFinalRef = useRef(true)
+
+  const handleScroll = useCallback(() => {
+    const el = listaRef.current
+    if (!el) return
+    pegadoAlFinalRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60
+  }, [])
 
   const cargar = useCallback(async () => {
     try {
@@ -27,6 +36,7 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
   }, [cargar])
 
   useEffect(() => {
+    if (!pegadoAlFinalRef.current) return
     listaRef.current?.scrollTo({ top: listaRef.current.scrollHeight })
   }, [mensajes])
 
@@ -38,6 +48,7 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
     try {
       await enviarMensajeChat(pedidoId, vendedorId, contenido)
       setTexto('')
+      pegadoAlFinalRef.current = true
       await cargar()
     } finally {
       setEnviando(false)
@@ -46,7 +57,7 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <div ref={listaRef} className="max-h-64 overflow-y-auto bg-gray-50 p-3 flex flex-col gap-2">
+      <div ref={listaRef} onScroll={handleScroll} className="max-h-64 overflow-y-auto bg-gray-50 p-3 flex flex-col gap-2">
         {cargando ? (
           <p className="text-center text-sm text-gray-400 py-4">Cargando...</p>
         ) : mensajes.length === 0 ? (
