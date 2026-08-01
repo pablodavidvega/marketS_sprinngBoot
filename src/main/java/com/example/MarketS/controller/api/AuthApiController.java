@@ -36,10 +36,16 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthApiController {
 
-    private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
-
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
+
+    // Misma vida útil que el JWT (jwt.expiration) — así la cookie nunca vence antes que el token.
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
+
+    private Duration cookieMaxAge() {
+        return Duration.ofMillis(jwtExpirationMs);
+    }
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
@@ -84,11 +90,22 @@ public class AuthApiController {
                     .orElse("")
                     .replace("ROLE_", "");
 
-            response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, cookieMaxAge()).toString());
             return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role, "token", token));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }
+    }
+
+    // POST /api/auth/refresh — renueva el JWT del usuario autenticado (sliding session).
+    // Requiere un token todavía válido (no está en la lista de permitAll de SecurityConfig,
+    // así que anyRequest().authenticated() lo protege); el frontend lo llama periódicamente
+    // mientras detecta actividad para que la sesión no expire estando en uso.
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(Authentication authentication, HttpServletResponse response) {
+        String token = tokenProvider.generateToken(authentication);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, cookieMaxAge()).toString());
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     // POST /api/auth/logout — limpia la cookie

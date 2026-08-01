@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { logout as logoutApi } from '../api/auth'
+import { logout as logoutApi, refresh as refreshApi } from '../api/auth'
 
 interface AuthUser {
   email: string
@@ -44,11 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  // Controlar inactividad global (15 minutos)
+  // Controlar inactividad global (30 minutos) con sesión deslizante: mientras el usuario
+  // esté activo, el JWT (jwt.expiration en el backend) se renueva antes de vencer. Antes el
+  // token vencía a los 15 min desde el login sin importar la actividad — esto es lo que
+  // cerraba la sesión de golpe aunque el usuario siguiera usando la app (ej. subiendo un video).
   useEffect(() => {
     if (!user) return
 
-    const TIMEOUT_DURATION = 15 * 60 * 1000
+    const TIMEOUT_DURATION = 30 * 60 * 1000
+    // Debe ser bien menor al jwt.expiration del backend (30 min) para que el token
+    // siempre se renueve con margen, incluso si el intervalo se retrasa en background.
+    const REFRESH_INTERVAL = 10 * 60 * 1000
 
     const now = Date.now()
     const storedLastActive = localStorage.getItem('lastActive')
@@ -73,10 +79,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
     events.forEach((event) => window.addEventListener(event, updateActivity))
 
+    let lastRefreshed = Date.now()
+    const renewSession = async () => {
+      const currentTime = Date.now()
+      if (currentTime - lastRefreshed < REFRESH_INTERVAL) return
+      lastRefreshed = currentTime
+      try {
+        const { data } = await refreshApi()
+        localStorage.setItem('authToken', data.token)
+      } catch {
+        // Si el token ya no es válido, el interceptor de axios se encarga del logout
+      }
+    }
+
     const checkInactivity = () => {
       const stored = localStorage.getItem('lastActive')
       if (stored && Date.now() - Number(stored) > TIMEOUT_DURATION) {
         logout()
+      } else {
+        renewSession()
       }
     }
     const intervalId = setInterval(checkInactivity, 10000)

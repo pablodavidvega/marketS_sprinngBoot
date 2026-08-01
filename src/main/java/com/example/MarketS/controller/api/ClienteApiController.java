@@ -15,6 +15,7 @@ import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +38,13 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('ROLE_CLIENTE', 'ROLE_VENDEDOR', 'ROLE_ADMIN')")
 public class ClienteApiController {
 
-    private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
+    // Misma vida útil que el JWT (jwt.expiration) — así la cookie nunca vence antes que el token.
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
+
+    private Duration cookieMaxAge() {
+        return Duration.ofMillis(jwtExpirationMs);
+    }
 
     private final PedidoRepository pedidoRepository;
     private final UserRepository userRepository;
@@ -140,7 +147,7 @@ public class ClienteApiController {
         Authentication authStub = new UsernamePasswordAuthenticationToken(
                 usuario.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_VENDEDOR")));
         String token = tokenProvider.generateToken(authStub);
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, cookieMaxAge()).toString());
 
         return ResponseEntity.ok(Map.of("email", usuario.getEmail(), "role", "VENDEDOR", "token", token));
     }

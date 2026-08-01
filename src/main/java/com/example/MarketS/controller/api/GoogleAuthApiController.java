@@ -45,7 +45,13 @@ import java.util.UUID;
 @RequestMapping("/api/auth/google")
 public class GoogleAuthApiController {
 
-    private static final Duration COOKIE_MAX_AGE = Duration.ofMinutes(15);
+    // Misma vida útil que el JWT (jwt.expiration) — así la cookie nunca vence antes que el token.
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
+
+    private Duration cookieMaxAge() {
+        return Duration.ofMillis(jwtExpirationMs);
+    }
 
     @Value("${google.oauth.pending-token.expiration:600000}")
     private long pendingTokenTtlMillis;
@@ -198,7 +204,7 @@ public class GoogleAuthApiController {
         String token = tokenProvider.generateToken(authStub);
         String role = user.getRol().getRolname().replace("ROLE_", "");
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, COOKIE_MAX_AGE).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, cookieMaxAge()).toString());
         return ResponseEntity.ok(Map.of(
                 "email", user.getEmail(),
                 "role", role,

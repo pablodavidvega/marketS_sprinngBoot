@@ -21,6 +21,9 @@ export const googleCompletarRegistro = (data: {
 export const logout = () =>
   api.post('/api/auth/logout')
 
+export const refresh = () =>
+  api.post<{ token: string }>('/api/auth/refresh')
+
 export const registro = (data: {
   username: string
   email: string
