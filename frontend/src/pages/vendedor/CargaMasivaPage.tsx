@@ -1,397 +1,482 @@
-import { useState, useRef, useCallback } from 'react'
-import { cargarProductosMasivo } from '../../api/productos'
-import type { ResultadoCarga } from '../../types'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { crearProducto, getCategorias, getMarcas } from '../../api/productos'
+import type { Categoria } from '../../types'
+import MarcaAutocomplete from '../../components/MarcaAutocomplete'
 
-const COLUMNAS = [
-  { nombre: 'nombre',      tipo: 'texto',   requerido: true,  ejemplo: 'Camisa Polo Blanca' },
-  { nombre: 'precio',      tipo: 'número',  requerido: true,  ejemplo: '49900' },
-  { nombre: 'descripcion', tipo: 'texto',   requerido: false, ejemplo: 'Tela 100% algodón' },
-  { nombre: 'stock',       tipo: 'entero',  requerido: true,  ejemplo: '50' },
-  { nombre: 'categoria',   tipo: 'texto',   requerido: false, ejemplo: 'Ropa' },
-  { nombre: 'marca',       tipo: 'texto',   requerido: false, ejemplo: 'Nike' },
-  { nombre: 'imagen',      tipo: 'archivo', requerido: false, ejemplo: 'camisa.jpg' },
-  { nombre: 'imagen2',     tipo: 'archivo', requerido: false, ejemplo: 'camisa2.jpg' },
-  { nombre: 'imagen3',     tipo: 'archivo', requerido: false, ejemplo: 'camisa3.jpg' },
-  { nombre: 'video',       tipo: 'archivo', requerido: false, ejemplo: 'camisa.mp4' },
-]
+type EstadoFila = 'pendiente' | 'guardando' | 'ok' | 'error'
 
-function descargarPlantillaCSV() {
-  const headers = COLUMNAS.map(c => c.nombre).join(',')
-  const ejemplo = COLUMNAS.map(c => c.ejemplo).join(',')
-  const csv = `${headers}\n${ejemplo}\n`
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'plantilla_productos.csv'
-  a.click()
-  URL.revokeObjectURL(url)
+interface FilaGrilla {
+  id: number
+  nombre: string
+  descripcion: string
+  precio: string
+  stock: string
+  categoriaId: string
+  marca: string
+  imagen: File | null
+  imagen2: File | null
+  imagen3: File | null
+  video: File | null
+  estado: EstadoFila
+  error: string | null
 }
 
-interface DropZoneProps {
-  id: string
-  label: string
-  accept: string
-  nota: string
+function filaVacia(id: number): FilaGrilla {
+  return {
+    id,
+    nombre: '', descripcion: '', precio: '', stock: '', categoriaId: '', marca: '',
+    imagen: null, imagen2: null, imagen3: null, video: null,
+    estado: 'pendiente', error: null,
+  }
+}
+
+function filaEstaVacia(f: FilaGrilla) {
+  return !f.nombre.trim() && !f.descripcion.trim() && !f.precio.trim() && !f.stock.trim()
+    && !f.categoriaId && !f.marca.trim() && !f.imagen && !f.imagen2 && !f.imagen3 && !f.video
+}
+
+function validarFila(f: FilaGrilla): string | null {
+  const faltantes: string[] = []
+  if (!f.nombre.trim())      faltantes.push('nombre')
+  if (!f.descripcion.trim()) faltantes.push('descripción')
+  if (!f.precio.trim())      faltantes.push('precio')
+  if (!f.stock.trim())       faltantes.push('stock')
+  if (!f.categoriaId)        faltantes.push('categoría')
+  if (!f.marca.trim())       faltantes.push('marca')
+  if (!f.imagen)             faltantes.push('imagen principal')
+  if (!f.imagen2)            faltantes.push('imagen secundaria')
+  if (!f.imagen3)            faltantes.push('imagen adicional')
+  if (!f.video)              faltantes.push('video')
+  if (faltantes.length > 0) return `Faltan campos obligatorios: ${faltantes.join(', ')}`
+
+  const precioNum = Number(f.precio)
+  if (!Number.isFinite(precioNum) || precioNum <= 0) return 'El precio debe ser un número mayor a 0'
+
+  const stockNum = Number(f.stock)
+  if (!Number.isInteger(stockNum) || stockNum < 0) return 'El stock debe ser un número entero mayor o igual a 0'
+
+  return null
+}
+
+function parsePasteTSV(text: string): string[][] {
+  return text
+    .replace(/\r/g, '')
+    .split('\n')
+    .filter(linea => linea.length > 0)
+    .map(linea => linea.split('\t'))
+}
+
+// ─── Celda de imagen/video: dropzone compacta para caber en una fila ───────
+function CeldaMedia({ tipo, file, onChange, disabled }: {
+  tipo: 'image' | 'video'
   file: File | null
-  onFile: (f: File | null) => void
-  opcional?: boolean
-}
-
-function DropZone({ id, label, accept, nota, file, onFile, opcional }: DropZoneProps) {
+  onChange: (f: File | null) => void
+  disabled?: boolean
+}) {
   const [dragging, setDragging] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!file || tipo !== 'image') { setPreview(null); return }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file, tipo])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragging(false)
+    if (disabled) return
     const f = e.dataTransfer.files[0]
-    if (f) onFile(f)
-  }, [onFile])
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
+    if (f) onChange(f)
+  }, [onChange, disabled])
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-1.5">
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
-        {opcional && (
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Opcional</span>
-        )}
-      </div>
-      <div
-        onClick={() => inputRef.current?.click()}
-        onDragOver={e => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors
-          ${dragging ? 'border-primary-400 bg-primary-50' : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'}
-          ${file ? 'border-green-400 bg-green-50' : ''}`}
-      >
-        <input
-          ref={inputRef}
-          id={id}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={e => onFile(e.target.files?.[0] ?? null)}
-        />
-
-        {file ? (
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="text-left min-w-0">
-              <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
-              <p className="text-xs text-gray-500">{formatSize(file.size)}</p>
-            </div>
-            <button
-              onClick={e => { e.stopPropagation(); onFile(null); if (inputRef.current) inputRef.current.value = '' }}
-              className="ml-auto text-gray-400 hover:text-red-500 p-1 rounded"
-              title="Quitar archivo"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        ) : (
-          <div>
-            <svg className="mx-auto w-10 h-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p className="text-sm text-gray-600">
-              Arrastra aquí o <span className="text-primary-600 font-medium">selecciona el archivo</span>
-            </p>
-            <p className="text-xs text-gray-400 mt-1">{nota}</p>
-          </div>
-        )}
-      </div>
+    <div
+      onClick={() => !disabled && inputRef.current?.click()}
+      onDragOver={e => { e.preventDefault(); if (!disabled) setDragging(true) }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+      title={file ? file.name : tipo === 'image' ? 'Arrastra o haz clic para subir una imagen' : 'Arrastra o haz clic para subir un video'}
+      className={`relative w-11 h-11 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden flex-shrink-0
+        ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+        ${dragging ? 'border-primary-400 bg-primary-50' : file ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-primary-400 bg-gray-50'}`}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={tipo === 'image' ? 'image/*' : 'video/mp4,video/*'}
+        className="hidden"
+        disabled={disabled}
+        onChange={e => onChange(e.target.files?.[0] ?? null)}
+      />
+      {tipo === 'image' && preview && <img src={preview} alt="" className="w-full h-full object-cover" />}
+      {tipo === 'video' && file && <span className="text-base">🎬</span>}
+      {!file && <span className="text-gray-300 text-lg leading-none">+</span>}
+      {file && !disabled && (
+        <button
+          onClick={e => { e.stopPropagation(); onChange(null); if (inputRef.current) inputRef.current.value = '' }}
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-300 text-gray-500 hover:text-red-500 hover:border-red-300 flex items-center justify-center text-[10px] leading-none"
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }
 
 export default function CargaMasivaPage() {
-  const [archivoData, setArchivoData]   = useState<File | null>(null)
-  const [archivoZip,  setArchivoZip]    = useState<File | null>(null)
-  const [progreso,    setProgreso]       = useState(0)
-  const [cargando,    setCargando]       = useState(false)
-  const [resultado,   setResultado]      = useState<ResultadoCarga | null>(null)
-  const [error,       setError]          = useState('')
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [marcas, setMarcas] = useState<{ id: number; nombre: string }[]>([])
+  const nextIdRef = useRef(3)
+  const [filas, setFilas] = useState<FilaGrilla[]>([filaVacia(0), filaVacia(1), filaVacia(2)])
+  const [enviando, setEnviando] = useState(false)
+  const [progreso, setProgreso] = useState({ procesadas: 0, total: 0 })
 
-  async function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    Promise.all([getCategorias(), getMarcas()]).then(([c, m]) => {
+      setCategorias(c.data)
+      setMarcas(m.data)
+    })
+  }, [])
+
+  function actualizarFila(id: number, cambios: Partial<FilaGrilla>) {
+    setFilas(prev => prev.map(f =>
+      f.id === id ? { ...f, ...cambios, estado: f.estado === 'ok' ? f.estado : 'pendiente', error: null } : f
+    ))
+  }
+
+  function agregarFila() {
+    const id = nextIdRef.current++
+    setFilas(prev => [...prev, filaVacia(id)])
+  }
+
+  function duplicarFila(id: number) {
+    setFilas(prev => {
+      const idx = prev.findIndex(f => f.id === id)
+      if (idx === -1) return prev
+      const nuevoId = nextIdRef.current++
+      const copia: FilaGrilla = { ...prev[idx], id: nuevoId, estado: 'pendiente', error: null }
+      const next = [...prev]
+      next.splice(idx + 1, 0, copia)
+      return next
+    })
+  }
+
+  function eliminarFila(id: number) {
+    setFilas(prev => prev.length <= 1 ? prev : prev.filter(f => f.id !== id))
+  }
+
+  // ── Pegar varias filas copiadas de una hoja de cálculo ─────────────────────
+  function handlePasteNombre(e: React.ClipboardEvent<HTMLInputElement>, filaId: number) {
+    const texto = e.clipboardData.getData('text/plain')
+    if (!texto.includes('\t') && !texto.includes('\n')) return // pegado de una sola celda: comportamiento normal
     e.preventDefault()
-    if (!archivoData) { setError('Debes seleccionar el archivo CSV o Excel'); return }
+    const filas2D = parsePasteTSV(texto)
+    if (filas2D.length === 0) return
 
-    setCargando(true)
-    setError('')
-    setResultado(null)
-    setProgreso(0)
+    setFilas(prev => {
+      const idx = prev.findIndex(f => f.id === filaId)
+      if (idx === -1) return prev
+      const next = [...prev]
+      filas2D.forEach((cols, i) => {
+        const [nombre = '', precio = '', stock = '', categoria = '', marca = '', descripcion = ''] = cols
+        const categoriaMatch = categorias.find(c => c.nombre.toLowerCase() === categoria.trim().toLowerCase())
+        const valores = {
+          nombre: nombre.trim(),
+          precio: precio.trim(),
+          descripcion: descripcion.trim(),
+          stock: stock.trim(),
+          categoriaId: categoriaMatch ? String(categoriaMatch.id) : '',
+          marca: marca.trim(),
+          estado: 'pendiente' as EstadoFila,
+          error: null,
+        }
+        const rowIdx = idx + i
+        if (rowIdx < next.length) {
+          next[rowIdx] = { ...next[rowIdx], ...valores }
+        } else {
+          const nuevoId = nextIdRef.current++
+          next.push({ ...filaVacia(nuevoId), ...valores })
+        }
+      })
+      return next
+    })
+  }
 
-    try {
-      const res = await cargarProductosMasivo(archivoData, archivoZip, pct => setProgreso(pct))
-      setResultado(res.data)
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.message ??
-        (err as { response?: { data?: { message?: string; error?: string } } })
-          ?.response?.data?.error ??
-        'Error al procesar el archivo'
-      setError(msg)
-    } finally {
-      setCargando(false)
-      setProgreso(0)
+  // ── Guardar (o reintentar) ──────────────────────────────────────────────────
+  async function guardarTodo() {
+    if (enviando) return
+
+    const filasValidadas = filas.map(f => {
+      if (f.estado === 'ok' || filaEstaVacia(f)) return f
+      const err = validarFila(f)
+      return err
+        ? { ...f, estado: 'error' as EstadoFila, error: err }
+        : { ...f, estado: 'pendiente' as EstadoFila, error: null }
+    })
+    setFilas(filasValidadas)
+
+    const aEnviar = filasValidadas.filter(f => f.estado === 'pendiente' && !filaEstaVacia(f))
+    if (aEnviar.length === 0) return
+
+    setEnviando(true)
+    setProgreso({ procesadas: 0, total: aEnviar.length })
+
+    for (const fila of aEnviar) {
+      setFilas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'guardando', error: null } : f))
+      try {
+        const fd = new FormData()
+        fd.append('nombre', fila.nombre.trim())
+        fd.append('precio', fila.precio.trim())
+        fd.append('stock', fila.stock.trim())
+        fd.append('descripcion', fila.descripcion.trim())
+        fd.append('categoriaId', fila.categoriaId)
+        fd.append('marca', fila.marca.trim())
+        if (fila.imagen)  fd.append('imagen', fila.imagen)
+        if (fila.imagen2) fd.append('imagen2', fila.imagen2)
+        if (fila.imagen3) fd.append('imagen3', fila.imagen3)
+        if (fila.video)   fd.append('video', fila.video)
+
+        await crearProducto(fd)
+        setFilas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'ok', error: null } : f))
+      } catch (err: unknown) {
+        const d = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
+        const status = (err as { response?: { status?: number } })?.response?.status
+        const msg = status === 403
+          ? 'No tienes permiso para crear productos'
+          : d?.mensaje || d?.message || d?.error || 'Error al crear el producto'
+        setFilas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', error: msg } : f))
+      } finally {
+        setProgreso(p => ({ ...p, procesadas: p.procesadas + 1 }))
+      }
     }
+
+    setEnviando(false)
   }
 
-  function reiniciar() {
-    setArchivoData(null)
-    setArchivoZip(null)
-    setResultado(null)
-    setError('')
-  }
+  const totalIntentadas = filas.filter(f => f.estado === 'ok' || f.estado === 'error').length
+  const correctas = filas.filter(f => f.estado === 'ok').length
+  const fallidas = filas.filter(f => f.estado === 'error').length
+
+  const inputCelda = 'input py-1 px-2 text-xs'
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/vendedor" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel vendedor
+        </Link>
+      </div>
 
-      {/* Encabezado */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Carga masiva de productos</h1>
         <p className="text-gray-500 mt-1">
-          Sube un archivo CSV o Excel para crear múltiples productos de una vez.
+          Agrega varios productos a la vez en la tabla de abajo. Escribe directo, o arrastra las imágenes y el video
+          sobre cada fila. También puedes pegar varias filas copiadas de una hoja de cálculo pegando sobre la
+          columna "Nombre", siempre que las columnas estén en este orden: <strong>Nombre, Precio, Stock, Categoría, Marca, Descripción</strong>.
+          Todos los campos son obligatorios.
         </p>
       </div>
 
-      {/* Instrucciones */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-700">Formato del archivo</h2>
-          <button
-            onClick={descargarPlantillaCSV}
-            className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Descargar plantilla CSV
-          </button>
+      {/* Resumen tras guardar */}
+      {totalIntentadas > 0 && (
+        <div className="grid grid-cols-3 gap-4 mb-5 max-w-xl">
+          <div className="text-center p-3 bg-gray-50 rounded-xl">
+            <p className="text-2xl font-bold text-gray-800">{totalIntentadas}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Procesados</p>
+          </div>
+          <div className="text-center p-3 bg-green-50 rounded-xl">
+            <p className="text-2xl font-bold text-green-600">{correctas}</p>
+            <p className="text-xs text-green-600 mt-0.5">Creados</p>
+          </div>
+          <div className="text-center p-3 bg-red-50 rounded-xl">
+            <p className="text-2xl font-bold text-red-600">{fallidas}</p>
+            <p className="text-xs text-red-600 mt-0.5">Con errores</p>
+          </div>
         </div>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-3 py-2 font-medium text-gray-600">Columna</th>
-                <th className="text-left px-3 py-2 font-medium text-gray-600">Tipo</th>
-                <th className="text-left px-3 py-2 font-medium text-gray-600">Requerido</th>
-                <th className="text-left px-3 py-2 font-medium text-gray-600">Ejemplo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {COLUMNAS.map(col => (
-                <tr key={col.nombre} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 font-mono text-xs text-gray-800 font-medium">{col.nombre}</td>
-                  <td className="px-3 py-2 text-gray-500">{col.tipo}</td>
-                  <td className="px-3 py-2">
-                    {col.requerido
-                      ? <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Sí</span>
-                      : <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">No</span>
-                    }
+      <div className="card p-0 overflow-x-auto">
+        <table className="text-sm border-collapse">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Nombre *</th>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Precio *</th>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Stock *</th>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Categoría *</th>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Marca *</th>
+              <th className="text-left px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Descripción *</th>
+              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 1 *</th>
+              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 2 *</th>
+              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Img 3 *</th>
+              <th className="text-center px-1 py-2 font-medium text-gray-600 whitespace-nowrap">Video *</th>
+              <th className="text-center px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Estado</th>
+              <th className="text-right px-2 py-2 font-medium text-gray-600 whitespace-nowrap">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filas.map(fila => {
+              const bloqueada = fila.estado === 'ok' || fila.estado === 'guardando'
+              return (
+                <tr key={fila.id} className={fila.estado === 'ok' ? 'bg-green-50/50' : fila.estado === 'error' ? 'bg-red-50/40' : ''}>
+                  <td className="px-2 py-1.5 align-top">
+                    <input
+                      className={`${inputCelda} w-36`}
+                      value={fila.nombre}
+                      disabled={bloqueada}
+                      onChange={e => actualizarFila(fila.id, { nombre: e.target.value })}
+                      onPaste={e => handlePasteNombre(e, fila.id)}
+                      placeholder="Nombre del producto"
+                    />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-gray-500">{col.ejemplo}</td>
+                  <td className="px-2 py-1.5 align-top">
+                    <input
+                      type="number" min="0" step="0.01"
+                      className={`${inputCelda} w-24`}
+                      value={fila.precio}
+                      disabled={bloqueada}
+                      onChange={e => actualizarFila(fila.id, { precio: e.target.value })}
+                      placeholder="0"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 align-top">
+                    <input
+                      type="number" min="0"
+                      className={`${inputCelda} w-16`}
+                      value={fila.stock}
+                      disabled={bloqueada}
+                      onChange={e => actualizarFila(fila.id, { stock: e.target.value })}
+                      placeholder="0"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 align-top">
+                    <select
+                      className={`${inputCelda} w-28`}
+                      value={fila.categoriaId}
+                      disabled={bloqueada}
+                      onChange={e => actualizarFila(fila.id, { categoriaId: e.target.value })}
+                    >
+                      <option value="">Selecciona...</option>
+                      {categorias.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5 align-top w-36">
+                    <fieldset disabled={bloqueada} className="border-0 p-0 m-0 min-w-0">
+                      <MarcaAutocomplete
+                        value={fila.marca}
+                        marcas={marcas}
+                        onChange={v => actualizarFila(fila.id, { marca: v })}
+                      />
+                    </fieldset>
+                  </td>
+                  <td className="px-2 py-1.5 align-top">
+                    <input
+                      className={`${inputCelda} w-40`}
+                      value={fila.descripcion}
+                      disabled={bloqueada}
+                      onChange={e => actualizarFila(fila.id, { descripcion: e.target.value })}
+                      placeholder="Descripción"
+                    />
+                  </td>
+                  <td className="px-1 py-1.5 align-top">
+                    <CeldaMedia tipo="image" file={fila.imagen} disabled={bloqueada} onChange={f => actualizarFila(fila.id, { imagen: f })} />
+                  </td>
+                  <td className="px-1 py-1.5 align-top">
+                    <CeldaMedia tipo="image" file={fila.imagen2} disabled={bloqueada} onChange={f => actualizarFila(fila.id, { imagen2: f })} />
+                  </td>
+                  <td className="px-1 py-1.5 align-top">
+                    <CeldaMedia tipo="image" file={fila.imagen3} disabled={bloqueada} onChange={f => actualizarFila(fila.id, { imagen3: f })} />
+                  </td>
+                  <td className="px-1 py-1.5 align-top">
+                    <CeldaMedia tipo="video" file={fila.video} disabled={bloqueada} onChange={f => actualizarFila(fila.id, { video: f })} />
+                  </td>
+                  <td className="px-2 py-1.5 align-top text-center">
+                    {fila.estado === 'pendiente' && <span className="text-gray-300 text-lg leading-none">•</span>}
+                    {fila.estado === 'guardando' && (
+                      <div className="w-4 h-4 mx-auto border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {fila.estado === 'ok' && <span className="text-green-500" title="Producto creado">✓</span>}
+                    {fila.estado === 'error' && <span className="text-red-500 cursor-help" title={fila.error ?? ''}>✗</span>}
+                  </td>
+                  <td className="px-2 py-1.5 align-top text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => duplicarFila(fila.id)}
+                      title="Duplicar fila"
+                      className="text-gray-400 hover:text-primary-600 px-1"
+                    >
+                      ⧉
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminarFila(fila.id)}
+                      disabled={fila.estado === 'guardando'}
+                      title="Eliminar fila"
+                      className="text-gray-400 hover:text-red-500 px-1 disabled:opacity-30"
+                    >
+                      🗑
+                    </button>
+                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Notas sobre imágenes y video */}
-        <div className="mt-4 space-y-2">
-          <div className="flex gap-2 text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg p-3">
-            <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>
-              Los campos <strong>imagen, imagen2, imagen3 y video</strong> deben contener el <strong>nombre del archivo</strong> tal como aparece dentro del ZIP
-              (ej: <code className="bg-blue-100 px-1 rounded">camisa.jpg</code>).
-              Si no subes un ZIP, estos campos se ignoran y los productos se crean sin multimedia.
-            </span>
-          </div>
-          <div className="flex gap-2 text-sm text-gray-600 bg-amber-50 border border-amber-100 rounded-lg p-3">
-            <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>
-              Los valores de <strong>categoria</strong> y <strong>marca</strong> deben coincidir exactamente con los nombres registrados en el sistema.
-            </span>
-          </div>
-        </div>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* Formulario de carga */}
-      {!resultado ? (
-        <form onSubmit={handleSubmit} className="card space-y-5">
-          <h2 className="text-base font-semibold text-gray-700">Subir archivos</h2>
-
-          <DropZone
-            id="archivo-data"
-            label="Archivo de productos"
-            accept=".csv,.xlsx,.xls"
-            nota="CSV, XLSX o XLS · máx. 10 MB"
-            file={archivoData}
-            onFile={setArchivoData}
-          />
-
-          <DropZone
-            id="archivo-zip"
-            label="Imágenes y videos (ZIP)"
-            accept=".zip"
-            nota="ZIP con las imágenes (.jpg, .png, .webp) y videos (.mp4, .mov) · máx. 100 MB"
-            file={archivoZip}
-            onFile={setArchivoZip}
-            opcional
-          />
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 flex items-start gap-2">
-              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{error}</span>
+      {/* Fila con el error visible en texto, para las filas que fallaron */}
+      {fallidas > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {filas.filter(f => f.estado === 'error').map(f => (
+            <div key={f.id} className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <span className="flex-shrink-0 font-mono text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded mt-0.5">
+                {f.nombre.trim() || 'Fila sin nombre'}
+              </span>
+              {f.error}
             </div>
-          )}
+          ))}
+        </div>
+      )}
 
-          {cargando && (
-            <div>
+      <div className="flex items-center justify-between mt-4">
+        <button type="button" onClick={agregarFila} className="btn-secondary text-sm py-1.5 flex items-center gap-1.5">
+          + Agregar fila
+        </button>
+
+        <div className="flex items-center gap-4">
+          {enviando && (
+            <div className="w-48">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Subiendo y procesando...</span>
-                <span>{progreso}%</span>
+                <span>Guardando...</span>
+                <span>{progreso.procesadas}/{progreso.total}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progreso}%` }}
+                  className="h-full bg-primary-600 rounded-full transition-all duration-300"
+                  style={{ width: `${progreso.total ? Math.round((progreso.procesadas / progreso.total) * 100) : 0}%` }}
                 />
               </div>
             </div>
           )}
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={cargando || !archivoData}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {cargando ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Procesar carga
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      ) : (
-        /* Panel de resultados */
-        <div className="space-y-4">
-          <div className="card">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-gray-700">Resultado de la carga</h2>
-              <button onClick={reiniciar} className="btn-secondary text-sm py-1.5">
-                Nueva carga
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <p className="text-3xl font-bold text-gray-800">{resultado.total}</p>
-                <p className="text-sm text-gray-500 mt-1">Total procesados</p>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-xl">
-                <p className="text-3xl font-bold text-green-600">{resultado.correctos}</p>
-                <p className="text-sm text-green-600 mt-1">Creados con éxito</p>
-              </div>
-              <div className="text-center p-4 bg-red-50 rounded-xl">
-                <p className="text-3xl font-bold text-red-600">{resultado.fallidos}</p>
-                <p className="text-sm text-red-600 mt-1">Con errores</p>
-              </div>
-            </div>
-
-            {/* Barra de progreso resultado */}
-            {resultado.total > 0 && (
-              <div className="mb-2">
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-green-500 h-2.5 rounded-full transition-all"
-                    style={{ width: `${Math.round((resultado.correctos / resultado.total) * 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1 text-right">
-                  {Math.round((resultado.correctos / resultado.total) * 100)}% de éxito
-                </p>
-              </div>
-            )}
-
-            {resultado.fallidos === 0 && (
-              <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Todos los productos fueron creados correctamente.
-              </div>
-            )}
-          </div>
-
-          {/* Lista de errores */}
-          {resultado.errores.length > 0 && (
-            <div className="card">
-              <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Detalle de errores ({resultado.errores.length})
-              </h3>
-              <ul className="space-y-1.5">
-                {resultado.errores.map((e, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2"
-                  >
-                    <span className="flex-shrink-0 font-mono text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded mt-0.5">
-                      #{i + 1}
-                    </span>
-                    {e}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={guardarTodo}
+            disabled={enviando}
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {enviando
+              ? 'Guardando...'
+              : fallidas > 0
+                ? `Reintentar fallidos y guardar (${fallidas})`
+                : 'Guardar productos'}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   )
 }

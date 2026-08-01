@@ -21,7 +21,7 @@ export const VENDEDOR_LINKS: VendedorLink[] = [
     to: '/vendedor/carga-masiva',
     label: 'Carga masiva de productos',
     icon: '📤',
-    description: 'Importar productos desde CSV en lote',
+    description: 'Agrega varios productos a la vez en una tabla editable',
     iconClass: 'bg-orange-100 text-orange-600 group-hover:bg-orange-200',
   },
   {
