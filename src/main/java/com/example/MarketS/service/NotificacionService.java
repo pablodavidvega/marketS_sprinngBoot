@@ -4,7 +4,9 @@ import com.example.MarketS.model.Notificacion;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +56,12 @@ public class NotificacionService {
 
     public long contarNoLeidas(Long usuarioId) {
         return repo.countByUsuarioIdAndLeidaFalse(usuarioId);
+    }
+
+    public Page<Notificacion> listarPaginado(Long usuarioId, boolean soloNoLeidas, Pageable pageable) {
+        return soloNoLeidas
+                ? repo.findByUsuarioIdAndLeida(usuarioId, false, pageable)
+                : repo.findByUsuarioId(usuarioId, pageable);
     }
 
     @Transactional

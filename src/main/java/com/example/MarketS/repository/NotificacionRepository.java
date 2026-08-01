@@ -1,6 +1,7 @@
 package com.example.MarketS.repository;
 
 import com.example.MarketS.model.Notificacion;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,6 +14,12 @@ import java.util.List;
 public interface NotificacionRepository extends JpaRepository<Notificacion, Long> {
 
     List<Notificacion> findByUsuarioIdOrderByFechaCreacionDesc(Long usuarioId, Pageable pageable);
+
+    // Para la página "Todas las notificaciones" (el orden lo aporta el Pageable/Sort que arma
+    // el controller, a diferencia del método de arriba que es solo para la bandeja del dropdown).
+    Page<Notificacion> findByUsuarioId(Long usuarioId, Pageable pageable);
+
+    Page<Notificacion> findByUsuarioIdAndLeida(Long usuarioId, boolean leida, Pageable pageable);
 
     long countByUsuarioIdAndLeidaFalse(Long usuarioId);
 

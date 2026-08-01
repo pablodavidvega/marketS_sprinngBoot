@@ -339,6 +339,13 @@ export interface NotificacionesResponse {
   noLeidas: number
 }
 
+export interface NotificacionesTodasResponse {
+  contenido: Notificacion[]
+  paginaActual: number
+  totalPaginas: number
+  totalElementos: number
+}
+
 export interface ChatMensaje {
   id: number
   autorId: number

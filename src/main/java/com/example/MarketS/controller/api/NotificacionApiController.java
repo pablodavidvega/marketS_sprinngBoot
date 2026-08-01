@@ -5,10 +5,14 @@ import com.example.MarketS.model.User;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.NotificacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +31,26 @@ public class NotificacionApiController {
                 .stream().map(this::toMap).toList();
         long noLeidas = notificacionService.contarNoLeidas(user.getId());
         return ResponseEntity.ok(Map.of("items", items, "noLeidas", noLeidas));
+    }
+
+    // GET /api/notificaciones/todas — historial completo paginado, para la página dedicada
+    // (a diferencia de /api/notificaciones, que solo trae las últimas 20 para el dropdown)
+    @GetMapping("/todas")
+    public ResponseEntity<Map<String, Object>> listarTodas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "false") boolean soloNoLeidas,
+            Authentication auth) {
+        User user = resolverUsuario(auth);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fechaCreacion"));
+        Page<Notificacion> pagina = notificacionService.listarPaginado(user.getId(), soloNoLeidas, pageable);
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("contenido", pagina.getContent().stream().map(this::toMap).toList());
+        body.put("paginaActual", pagina.getNumber());
+        body.put("totalPaginas", pagina.getTotalPages());
+        body.put("totalElementos", pagina.getTotalElements());
+        return ResponseEntity.ok(body);
     }
 
     // PATCH /api/notificaciones/{id}/leer

@@ -43,6 +43,7 @@ import MisFavoritosPage from './pages/MisFavoritosPage'
 import VendedorPerfilPage from './pages/VendedorPerfilPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import NotificacionesPage from './pages/NotificacionesPage'
 
 export default function App() {
   return (
@@ -70,6 +71,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MisFavoritosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notificaciones"
+            element={
+              <ProtectedRoute>
+                <NotificacionesPage />
               </ProtectedRoute>
             }
           />
