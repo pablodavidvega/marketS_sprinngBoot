@@ -6,6 +6,7 @@ import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardCliente } from '../../types'
+import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 
 export default function ClienteDashboardPage() {
   const [data, setData] = useState<DashboardCliente | null>(null)
@@ -44,19 +45,6 @@ export default function ClienteDashboardPage() {
   }
 
   if (!data) return <div className="text-center py-16 text-gray-500">Error al cargar datos</div>
-
-  const estadoColor: Record<string, string> = {
-    PAGADO: 'bg-green-100 text-green-700',
-    RECIBIDO: 'bg-emerald-100 text-emerald-700',
-    PENDIENTE: 'bg-yellow-100 text-yellow-700',
-    PENDIENTE_PAGO: 'bg-yellow-100 text-yellow-700',
-    CANCELADO: 'bg-red-100 text-red-700',
-    RECHAZADO: 'bg-red-100 text-red-700',
-    PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
-    ACORDADO_EXTERNO: 'bg-blue-100 text-blue-700',
-    COMPLETADO_EXTERNO: 'bg-green-100 text-green-700',
-    RECHAZADO_EXTERNO: 'bg-red-100 text-red-700',
-  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -141,7 +129,10 @@ export default function ClienteDashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className={`badge ${estadoColor[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
+                      <span
+                        className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'} cursor-help`}
+                        title={ESTADO_INFO[pedido.estado] ?? ''}
+                      >
                         {pedido.estado.replace(/_/g, ' ')}
                       </span>
                       <span className="font-semibold text-gray-800">

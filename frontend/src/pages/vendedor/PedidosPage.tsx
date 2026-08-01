@@ -6,24 +6,13 @@ import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
 import type { PedidoVendedorResponse } from '../../types'
-
-const ESTADO_COLOR: Record<string, string> = {
-  PAGADO: 'bg-green-100 text-green-700',
-  RECIBIDO: 'bg-emerald-100 text-emerald-700',
-  PENDIENTE: 'bg-yellow-100 text-yellow-700',
-  PENDIENTE_PAGO: 'bg-yellow-100 text-yellow-700',
-  RECHAZADO: 'bg-red-100 text-red-700',
-  CANCELADO: 'bg-red-100 text-red-700',
-  PROCESANDO_PAGO: 'bg-blue-100 text-blue-700',
-  ACORDADO_EXTERNO: 'bg-blue-100 text-blue-700',
-  COMPLETADO_EXTERNO: 'bg-green-100 text-green-700',
-  RECHAZADO_EXTERNO: 'bg-red-100 text-red-700',
-}
+import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 
 export default function PedidosVendedorPage() {
   const [searchParams] = useSearchParams()
   const [pedidos, setPedidos] = useState<PedidoVendedorResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<number | null>(null)
   const [resolviendo, setResolviendo] = useState<number | null>(null)
@@ -110,12 +99,35 @@ export default function PedidosVendedorPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-2">
         <Link to="/vendedor" className="text-gray-400 hover:text-gray-600 text-sm">
           ← Panel vendedor
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">Pedidos recibidos</h1>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setMostrarLeyenda(v => !v)}
+        className="text-sm text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 mb-6"
+      >
+        <span>ℹ️</span> ¿Qué significa cada estado? {mostrarLeyenda ? '▲' : '▼'}
+      </button>
+
+      {mostrarLeyenda && (
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 text-sm text-gray-700">
+          <ul className="space-y-2">
+            {Object.entries(ESTADO_INFO).map(([estado, info]) => (
+              <li key={estado} className="flex flex-wrap items-baseline gap-x-2">
+                <span className={`badge ${ESTADO_COLOR[estado] ?? 'bg-gray-100 text-gray-700'} flex-shrink-0`}>
+                  {estado.replace(/_/g, ' ')}
+                </span>
+                <span>{info}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {pedidos.length === 0 ? (
         <div className="card text-center py-12">
@@ -140,7 +152,10 @@ export default function PedidosVendedorPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'}`}>
+                  <span
+                    className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'} cursor-help`}
+                    title={ESTADO_INFO[pedido.estado] ?? ''}
+                  >
                     {pedido.estado.replace(/_/g, ' ')}
                   </span>
                   <span className="text-gray-400 text-sm">
