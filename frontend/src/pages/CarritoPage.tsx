@@ -39,13 +39,13 @@ export default function CarritoPage() {
         state: { paymentUrl: data.paymentUrl },
       })
     } catch (err: unknown) {
-      const errData = (err as { response?: { data?: { mensaje?: string; pedidoId?: number } } })?.response?.data
+      const errData = (err as { response?: { data?: { mensaje?: string; error?: string; pedidoId?: number } } })?.response?.data
       // El pedido se creó pero MercadoPago falló — navegar igual para poder simular pago
       if (errData?.pedidoId) {
         navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${errData.pedidoId}`)
         return
       }
-      setError(errData?.mensaje || 'Error al procesar el pedido. Intenta de nuevo.')
+      setError(errData?.mensaje || errData?.error || 'Error al procesar el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -91,9 +91,13 @@ export default function CarritoPage() {
                     <span className="px-3 py-1 text-sm">{item.cantidad}</span>
                     <button
                       onClick={() => actualizar(item.productoId, item.cantidad + 1)}
-                      className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+                      disabled={item.cantidad >= item.stock}
+                      className="px-2 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
                     >+</button>
                   </div>
+                  {item.cantidad >= item.stock && (
+                    <span className="text-xs text-gray-400">Máximo disponible</span>
+                  )}
                   <button
                     onClick={() => quitar(item.productoId)}
                     className="text-red-500 hover:text-red-700 text-sm ml-2"

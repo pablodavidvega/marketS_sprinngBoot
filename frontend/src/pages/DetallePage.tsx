@@ -112,6 +112,7 @@ export default function DetallePage() {
       precio:     producto.precio,
       imagen:     primeraImagen,
       cantidad,
+      stock:      producto.stock,
     })
     setAgregado(true)
     setTimeout(() => setAgregado(false), 2000)
@@ -189,6 +190,7 @@ export default function DetallePage() {
       precio:     producto.precio,
       imagen:     primeraImagen,
       cantidad,
+      stock:      producto.stock,
     })
     navigate('/carrito')
   }

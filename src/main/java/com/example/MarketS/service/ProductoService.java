@@ -2,6 +2,7 @@ package com.example.MarketS.service;
 
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.TallaStock;
+import com.example.MarketS.model.User;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.TallaStockRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +14,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProductoService {
 
+    // Umbral de "stock bajo": por debajo de esto se avisa al vendedor. Se avisa solo al
+    // cruzar el umbral hacia abajo (no en cada venta subsiguiente) para no saturarlo de avisos.
+    private static final int UMBRAL_STOCK_BAJO = 10;
+
     @Autowired
     private ProductoRepository productoRepository;
 
     @Autowired
     private TallaStockRepository tallaStockRepository;
+
+    @Autowired
+    private NotificacionService notificacionService;
+
+    @Autowired
+    private EmailService emailService;
 
     // ==================== MÉTODOS EXISTENTES ====================
 
@@ -49,6 +60,8 @@ public class ProductoService {
                     + ". Stock disponible: " + producto.getStock() + ", solicitado: " + cantidad);
         }
 
+        int stockAnterior = producto.getStock();
+
         // Reducir el stock
         producto.setStock(producto.getStock() - cantidad);
 
@@ -58,6 +71,7 @@ public class ProductoService {
         }
 
         productoRepository.save(producto);
+        avisarStockBajoSiCorresponde(producto, stockAnterior, producto.getStock());
 
         System.out.println("✅ Stock reducido. Producto: " + producto.getNombre()
                 + ", Nuevo stock: " + producto.getStock());
@@ -86,6 +100,8 @@ public class ProductoService {
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
+        int stockAnterior = producto.getStock() != null ? producto.getStock() : 0;
+
         // Calcular nuevo stock general sumando todas las tallas
         Integer stockGeneral = tallaStockRepository.sumStockByProductoId(productoId);
         producto.setStock(stockGeneral);
@@ -96,6 +112,7 @@ public class ProductoService {
         }
 
         productoRepository.save(producto);
+        avisarStockBajoSiCorresponde(producto, stockAnterior, stockGeneral);
 
         System.out.println("✅ Stock reducido por talla. Producto: " + producto.getNombre()
                 + ", Talla: " + talla + ", Nuevo stock: " + tallaStock.getStock()
@@ -148,5 +165,24 @@ public class ProductoService {
         }
 
         productoRepository.save(producto);
+    }
+
+    // Avisa al vendedor (notificación in-app + correo) solo al CRUZAR el umbral hacia abajo
+    // (stockAnterior >= umbral && stockNuevo < umbral) — evita mandar un aviso por cada venta
+    // mientras el producto se mantenga por debajo del umbral.
+    private void avisarStockBajoSiCorresponde(Producto producto, int stockAnterior, int stockNuevo) {
+        if (stockAnterior < UMBRAL_STOCK_BAJO || stockNuevo >= UMBRAL_STOCK_BAJO) return;
+
+        User vendedor = producto.getVendedor();
+        if (vendedor == null) return;
+
+        String mensaje = stockNuevo == 0
+                ? "Tu producto \"" + producto.getNombre() + "\" se quedó sin stock."
+                : "Tu producto \"" + producto.getNombre() + "\" tiene poco stock: quedan " + stockNuevo + " unidades.";
+
+        notificacionService.crear(vendedor, mensaje, "STOCK_BAJO", null, producto.getId());
+        if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+            emailService.enviarCorreo(vendedor.getEmail(), "Stock bajo: " + producto.getNombre() + " - MarketS", mensaje);
+        }
     }
 }

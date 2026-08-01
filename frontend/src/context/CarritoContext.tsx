@@ -33,12 +33,14 @@ function reducer(state: CarritoState, action: CarritoAction): CarritoState {
         return {
           items: state.items.map(i =>
             i.productoId === action.payload.productoId
-              ? { ...i, cantidad: i.cantidad + action.payload.cantidad }
+              // stock se actualiza al valor más reciente (el que trae el payload) por si cambió
+              // desde que se agregó por primera vez; cantidad nunca puede superarlo.
+              ? { ...i, stock: action.payload.stock, cantidad: Math.min(i.cantidad + action.payload.cantidad, action.payload.stock) }
               : i
           ),
         }
       }
-      return { items: [...state.items, action.payload] }
+      return { items: [...state.items, { ...action.payload, cantidad: Math.min(action.payload.cantidad, action.payload.stock) }] }
     }
     case 'QUITAR':
       return { items: state.items.filter(i => i.productoId !== action.payload.productoId) }
@@ -46,7 +48,7 @@ function reducer(state: CarritoState, action: CarritoAction): CarritoState {
       return {
         items: state.items.map(i =>
           i.productoId === action.payload.productoId
-            ? { ...i, cantidad: action.payload.cantidad }
+            ? { ...i, cantidad: Math.min(Math.max(action.payload.cantidad, 1), i.stock) }
             : i
         ),
       }

@@ -78,6 +78,12 @@ public class PedidoService {
                 int cantidad = item.getValue();
                 double precio = producto.getPrecio();
 
+                int stockDisponible = producto.getStock() != null ? producto.getStock() : 0;
+                if (cantidad > stockDisponible) {
+                    throw new RuntimeException("Stock insuficiente para \"" + producto.getNombre()
+                            + "\". Disponible: " + stockDisponible + ", solicitado: " + cantidad);
+                }
+
                 System.out.println("   - " + producto.getNombre() + ": " + cantidad + " x $" + precio);
 
                 double subtotal = cantidad * precio;

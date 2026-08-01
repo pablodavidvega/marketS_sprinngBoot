@@ -50,6 +50,9 @@ export function destinoDeNotificacion(n: Notificacion, esVendedor: boolean): str
     case 'PREGUNTA_RESPONDIDA':
     case 'RECORDATORIO_PREGUNTA_SIN_RESPONDER':
       return n.productoId !== '' ? `/productos/${n.productoId}?foco=preguntas` : '/'
+    case 'STOCK_BAJO':
+    case 'STOCK_DESCUENTO_FALLIDO':
+      return '/vendedor/productos'
     default:
       return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
   }

@@ -3,6 +3,7 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.CrearPedidoRequestDTO;
 import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.model.Pedido;
+import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.ResenaComprador;
 import com.example.MarketS.model.ResolucionVentaExterna;
 import com.example.MarketS.model.User;
@@ -320,7 +321,7 @@ public class PedidoApiController {
                         try {
                             productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
                         } catch (Exception e) {
-                            System.err.println("Error reduciendo stock: " + e.getMessage());
+                            avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
                         }
                     });
         }
@@ -442,7 +443,7 @@ public class PedidoApiController {
             try {
                 productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
             } catch (Exception e) {
-                System.err.println("Error reduciendo stock: " + e.getMessage());
+                avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
             }
         });
         notificarPagoAprobado(pedido);
@@ -551,8 +552,8 @@ public class PedidoApiController {
                     try {
                         productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
                     } catch (Exception e) {
-                        // Log pero no interrumpir el flujo de pago
-                        System.err.println("Error reduciendo stock producto " + d.getProducto().getId() + ": " + e.getMessage());
+                        // No interrumpe el flujo de pago (ya se cobró) pero avisa al vendedor
+                        avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
                     }
                 });
                 notificarPagoAprobado(pedido);
@@ -605,6 +606,28 @@ public class PedidoApiController {
                 emailService.enviarCorreo(comprador.getEmail(), "Pago pendiente - Pedido #" + id + " - MarketS",
                         "Tu pago del pedido #" + id + " está pendiente de confirmación por MercadoPago. Te avisaremos cuando se confirme."
                                 + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, id));
+            }
+        });
+    }
+
+    // Se llama cuando reducirStock() falla al confirmar un pago/acuerdo ya cerrado (venta
+    // duplicada por una carrera entre dos compradores comprando la última unidad al mismo
+    // tiempo — pedidoService.crearPedido ya valida el stock al crear el pedido, así que esto
+    // solo puede pasar en esa ventana de carrera). No se revierte el pago: el dinero ya cambió
+    // de manos, así que en vez de solo loguearlo en consola (como antes) se avisa al vendedor
+    // para que revise el inventario manualmente.
+    private void avisarFalloDescuentoStock(Producto producto, Long pedidoId, Exception causa) {
+        System.err.println("Error reduciendo stock producto " + producto.getId() + " (pedido " + pedidoId + "): " + causa.getMessage());
+
+        Long vendedorId = producto.getVendedor() != null ? producto.getVendedor().getId() : null;
+        if (vendedorId == null) return;
+
+        userRepository.findById(vendedorId).ifPresent(vendedor -> {
+            String mensaje = "No se pudo descontar el stock de \"" + producto.getNombre() + "\" para el pedido #" + pedidoId
+                    + " (posible venta duplicada por stock insuficiente). Revisa el inventario manualmente.";
+            notificacionService.crear(vendedor, mensaje, "STOCK_DESCUENTO_FALLIDO", pedidoId, producto.getId());
+            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                emailService.enviarCorreo(vendedor.getEmail(), "Revisa el stock de tu producto - MarketS", mensaje);
             }
         });
     }

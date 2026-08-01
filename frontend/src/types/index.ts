@@ -139,6 +139,7 @@ export interface CarritoItem {
   precio: number
   imagen: string | null
   cantidad: number
+  stock: number
 }
 
 export interface DetallePedido {
