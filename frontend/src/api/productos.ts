@@ -7,14 +7,19 @@ export const getProductos = (q?: string, limit = 30) =>
 export const getProductosRecientes = (limit = 10) =>
   api.get<Producto[]>('/api/productos/recientes', { params: { limit } })
 
+// limit=0 activa el modo paginado real en el backend (usado por la vista "Ver todos los
+// últimos productos" con su botón "Ver más").
+export const getProductosRecientesPaginado = (page = 0, size = 30) =>
+  api.get<VendedorProductosResponse>('/api/productos/recientes', { params: { limit: 0, page, size } })
+
 export const getSugerencias = (q: string) =>
   api.get<SugerenciaProducto[]>('/api/productos/sugerencias', { params: { q } })
 
 export const getProducto = (id: number) =>
   api.get<Producto>(`/api/productos/${id}`)
 
-export const getProductosPorCategoria = (categoriaId: number) =>
-  api.get<Producto[]>(`/api/productos/categoria/${categoriaId}`)
+export const getProductosPorCategoria = (categoriaId: number, page = 0, size = 30) =>
+  api.get<VendedorProductosResponse>(`/api/productos/categoria/${categoriaId}`, { params: { page, size } })
 
 export const getCategorias = () =>
   api.get<Categoria[]>('/api/categorias')
@@ -54,8 +59,8 @@ export const actualizarProducto = (
   })
 
 // Reseñas
-export const getResenas = (productoId: number) =>
-  api.get<ResenasResponse>(`/api/productos/${productoId}/resenas`)
+export const getResenas = (productoId: number, page = 0, size = 30) =>
+  api.get<ResenasResponse>(`/api/productos/${productoId}/resenas`, { params: { page, size } })
 
 export const crearResena = (productoId: number, data: { calificacion: number; comentario?: string }) =>
   api.post<Resena>(`/api/productos/${productoId}/resenas`, data)

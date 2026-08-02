@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getMisPedidos, confirmarRecepcion } from '../../api/pedidos'
+import { getMisPedidos, confirmarRecepcion, type MisPedidosResponse } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
-import type { PedidoResponse } from '../../types'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 
 export default function MisPedidosPage() {
   const [searchParams] = useSearchParams()
-  const [pedidos, setPedidos] = useState<PedidoResponse[]>([])
+  const [data, setData] = useState<MisPedidosResponse | null>(null)
+  const [pagina, setPagina] = useState(0)
   const [loading, setLoading] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [confirmando, setConfirmando] = useState<number | null>(null)
@@ -20,11 +20,14 @@ export default function MisPedidosPage() {
   // no cambia, React Router no remonta el componente, solo actualiza los searchParams.
   const deepLinkAplicado = useRef<string | null>(null)
 
+  const pedidos = data?.contenido ?? []
+
   useEffect(() => {
-    getMisPedidos()
-      .then(r => setPedidos(r.data))
+    setLoading(true)
+    getMisPedidos(pagina)
+      .then(r => setData(r.data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   // Deep-link desde la campanita de notificaciones: ?pedido=123&vendedor=45&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el hilo de chat correcto.
@@ -54,9 +57,10 @@ export default function MisPedidosPage() {
     setConfirmando(pedidoId)
     try {
       await confirmarRecepcion(pedidoId)
-      setPedidos(prev =>
-        prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: 'RECIBIDO' } : p)
-      )
+      setData(prev => prev ? {
+        ...prev,
+        contenido: prev.contenido.map(p => p.pedidoId === pedidoId ? { ...p, estado: 'RECIBIDO' } : p),
+      } : prev)
     } finally {
       setConfirmando(null)
     }
@@ -245,6 +249,33 @@ export default function MisPedidosPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {data && data.totalPaginas > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-gray-500">
+            {data.totalElementos} pedido(s) en total
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPagina(p => p - 1)}
+              disabled={pagina === 0}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-500">
+              Página {data.paginaActual + 1} de {data.totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina(p => p + 1)}
+              disabled={pagina >= data.totalPaginas - 1}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Validated
 @RestController
@@ -151,11 +152,33 @@ public class VendedorApiController {
         return ResponseEntity.ok(respuesta);
     }
 
-    // GET /api/vendedor/pedidos
+    // GET /api/vendedor/pedidos?page=0&size=30 — pedidos recibidos, paginados. Antes traía TODOS
+    // los pedidos del vendedor en una sola llamada (mismo problema que
+    // ModeradorApiController.pedidos, ver comentario en
+    // PedidoRepository.findAllWithUsuarioFiltrado). Se pagina primero solo sobre IDs (sin tocar
+    // pedido.detalles, FetchType.EAGER) y el detalle completo se resuelve aparte solo para los
+    // pedidos de esta página — ver PedidoRepository.findIdsByVendedor/findByIdsWithDetalles.
     @GetMapping("/pedidos")
-    public ResponseEntity<List<PedidoVendedorDTO>> pedidosRecibidos(Authentication auth) {
+    public ResponseEntity<Map<String, Object>> pedidosRecibidos(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
         User vendedor = resolverUsuario(auth);
-        List<Pedido> pedidos = pedidoRepository.findByVendedorWithDetails(vendedor);
+
+        Page<Long> paginaIds = pedidoRepository.findIdsByVendedor(vendedor, PageRequest.of(page, size));
+        List<Long> idsPagina = paginaIds.getContent();
+
+        // findByIdsWithDetalles no garantiza el orden de la cláusula IN, así que se reordena
+        // según idsPagina (ya ordenado por fecha DESC desde findIdsByVendedor).
+        List<Pedido> pedidosConDetalles = idsPagina.isEmpty()
+                ? List.of()
+                : pedidoRepository.findByIdsWithDetalles(idsPagina);
+        Map<Long, Pedido> pedidosPorId = pedidosConDetalles.stream()
+                .collect(Collectors.toMap(Pedido::getId, p -> p));
+        List<Pedido> pedidos = idsPagina.stream()
+                .map(pedidosPorId::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
 
         // Resuelve en 1 sola query los datos de contacto de todos los compradores distintos
         // (evita cargar el User completo de cada uno, ver Pedido.usuario).
@@ -186,10 +209,16 @@ public class VendedorApiController {
                 ? java.util.Set.of()
                 : new java.util.HashSet<>(resolucionVentaExternaRepository.findPedidoIdsResueltosPorVendedor(vendedor.getId(), pedidoIds));
 
-        List<PedidoVendedorDTO> result = pedidos.stream()
+        List<PedidoVendedorDTO> contenido = pedidos.stream()
                 .map(p -> PedidoVendedorDTO.from(p, vendedor, compradores, reputaciones, pedidosCalificados, pedidosResueltosPorMi))
                 .toList();
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(Map.of(
+                "contenido", contenido,
+                "paginaActual", paginaIds.getNumber(),
+                "totalPaginas", paginaIds.getTotalPages(),
+                "totalElementos", paginaIds.getTotalElements()
+        ));
     }
 
     // GET /api/vendedor/productos?page=0&size=20&keyword=x

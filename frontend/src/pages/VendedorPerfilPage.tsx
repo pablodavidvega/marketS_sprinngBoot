@@ -19,12 +19,17 @@ function formatFecha(s: string) {
   return new Date(s).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
 }
 
+const PRODUCTOS_POR_PAGINA = 30
+
 export default function VendedorPerfilPage() {
   const { id } = useParams<{ id: string }>()
   const vendedorId = Number(id)
 
   const [perfil,    setPerfil]    = useState<PerfilVendedor | null>(null)
   const [productos, setProductos] = useState<Producto[]>([])
+  const [pagina,       setPagina]       = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(0)
+  const [cargandoMas,  setCargandoMas]  = useState(false)
   const [loading,   setLoading]   = useState(true)
   const [noEncontrado, setNoEncontrado] = useState(false)
   const [busqueda,  setBusqueda]  = useState('')
@@ -34,15 +39,29 @@ export default function VendedorPerfilPage() {
     setLoading(true)
     Promise.all([
       getPerfilVendedor(vendedorId),
-      getProductosVendedor(vendedorId),
+      getProductosVendedor(vendedorId, 0, PRODUCTOS_POR_PAGINA),
     ])
       .then(([perfilRes, prodRes]) => {
         setPerfil(perfilRes.data)
-        setProductos(prodRes.data)
+        setProductos(prodRes.data.contenido)
+        setPagina(prodRes.data.paginaActual)
+        setTotalPaginas(prodRes.data.totalPaginas)
       })
       .catch(() => setNoEncontrado(true))
       .finally(() => setLoading(false))
   }, [vendedorId])
+
+  function handleVerMas() {
+    if (cargandoMas) return
+    setCargandoMas(true)
+    getProductosVendedor(vendedorId, pagina + 1, PRODUCTOS_POR_PAGINA)
+      .then(r => {
+        setProductos(prev => [...prev, ...r.data.contenido])
+        setPagina(r.data.paginaActual)
+        setTotalPaginas(r.data.totalPaginas)
+      })
+      .finally(() => setCargandoMas(false))
+  }
 
   const productosFiltrados = busqueda.trim()
     ? productos.filter(p =>
@@ -157,11 +176,24 @@ export default function VendedorPerfilPage() {
           }
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {productosFiltrados.map(p => (
-            <ProductoCard key={p.id} producto={p} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {productosFiltrados.map(p => (
+              <ProductoCard key={p.id} producto={p} />
+            ))}
+          </div>
+          {!busqueda.trim() && pagina < totalPaginas - 1 && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleVerMas}
+                disabled={cargandoMas}
+                className="btn-secondary px-6"
+              >
+                {cargandoMas ? 'Cargando...' : 'Ver más'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

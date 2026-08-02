@@ -1,6 +1,8 @@
 package com.example.MarketS.repository;
 
 import com.example.MarketS.model.Rol;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,6 +49,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // materializa el User, así que ese disparo automático no ocurre (ver AdminApiController.listarUsuarios).
     @Query("SELECT u.id, u.username, u.email, u.phone, u.address, u.rol.rolname, u.createdAt FROM User u")
     List<Object[]> findAllPerfilProjection();
+
+    // Igual que arriba pero paginado, con filtro opcional exacto de rol y búsqueda de texto
+    // libre en username/email (la "búsqueda inteligente" del panel admin). Antes
+    // AdminApiController.listarUsuarios traía TODOS los usuarios en una sola llamada — con el
+    // mismo problema de fondo que PedidoRepository.findAllWithUsuarioFiltrado (ver comentario ahí).
+    @Query(
+        value = """
+            SELECT u.id, u.username, u.email, u.phone, u.address, u.rol.rolname, u.createdAt
+            FROM User u
+            WHERE (:rol IS NULL OR u.rol.rolname = :rol)
+              AND (:q IS NULL
+                   OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            """,
+        countQuery = """
+            SELECT COUNT(u) FROM User u
+            WHERE (:rol IS NULL OR u.rol.rolname = :rol)
+              AND (:q IS NULL
+                   OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            """
+    )
+    Page<Object[]> findAllPerfilProjectionFiltrado(@Param("rol") String rol, @Param("q") String q, Pageable pageable);
 
     // Igual que arriba pero con los datos de contacto que necesita el vendedor para coordinar
     // la entrega (ver PedidoVendedorDTO / PedidoRepository.findByVendedorWithDetails).

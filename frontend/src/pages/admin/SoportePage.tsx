@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getAdminSolicitudes, responderSolicitud, cambiarEstadoSolicitud } from '../../api/contacto'
-import type { AdminContactoData, ContactoResponse } from '../../types'
+import type { AdminContactoPaginado } from '../../api/contacto'
+import type { ContactoResponse } from '../../types'
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:  'bg-yellow-100 text-yellow-700',
@@ -16,41 +17,53 @@ const ESTADO_LABEL: Record<string, string> = {
 }
 
 export default function SoporteAdminPage() {
-  const [data, setData] = useState<AdminContactoData | null>(null)
+  const [data, setData] = useState<AdminContactoPaginado | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pagina, setPagina] = useState(0)
   const [filtro, setFiltro] = useState<'TODOS' | 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO'>('TODOS')
   const [expandida, setExpandida] = useState<number | null>(null)
   const [respuestaTexto, setRespuestaTexto] = useState<Record<number, string>>({})
   const [procesando, setProcesando] = useState<number | null>(null)
 
-  useEffect(() => { cargar() }, [])
-
   function cargar() {
     setLoading(true)
-    getAdminSolicitudes()
+    getAdminSolicitudes(filtro === 'TODOS' ? undefined : filtro, pagina, 30)
       .then(r => setData(r.data))
       .finally(() => setLoading(false))
   }
 
-  function actualizarSolicitud(actualizada: ContactoResponse) {
+  useEffect(() => { cargar() }, [pagina, filtro]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function cambiarFiltro(f: 'TODOS' | 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO') {
+    setFiltro(f)
+    if (pagina !== 0) setPagina(0)
+  }
+
+  // Actualiza la solicitud en la página actual y ajusta los contadores globales (que reflejan
+  // el total de la plataforma, no solo esta página) según el cambio de estado.
+  function actualizarSolicitud(actualizada: ContactoResponse, anterior: ContactoResponse) {
     setData(prev => {
       if (!prev) return prev
-      const solicitudes = prev.solicitudes.map(s => s.id === actualizada.id ? actualizada : s)
+      const contenido = prev.contenido.map(s => s.id === actualizada.id ? actualizada : s)
+      const delta = (estado: string) =>
+        (anterior.estado === estado ? -1 : 0) + (actualizada.estado === estado ? 1 : 0)
       return {
         ...prev,
-        solicitudes,
-        pendientes: solicitudes.filter(s => s.estado === 'PENDIENTE').length,
-        enProceso:  solicitudes.filter(s => s.estado === 'EN_PROCESO').length,
-        resueltos:  solicitudes.filter(s => s.estado === 'RESUELTO').length,
+        contenido,
+        pendientes: prev.pendientes + delta('PENDIENTE'),
+        enProceso:  prev.enProceso + delta('EN_PROCESO'),
+        resueltos:  prev.resueltos + delta('RESUELTO'),
       }
     })
   }
 
   async function handleCambiarEstado(id: number, estado: string) {
+    const anterior = data?.contenido.find(s => s.id === id)
+    if (!anterior) return
     setProcesando(id)
     try {
       const { data: actualizada } = await cambiarEstadoSolicitud(id, estado)
-      actualizarSolicitud(actualizada)
+      actualizarSolicitud(actualizada, anterior)
     } finally {
       setProcesando(null)
     }
@@ -59,10 +72,12 @@ export default function SoporteAdminPage() {
   async function handleResponder(id: number) {
     const texto = respuestaTexto[id]?.trim()
     if (!texto) return
+    const anterior = data?.contenido.find(s => s.id === id)
+    if (!anterior) return
     setProcesando(id)
     try {
       const { data: actualizada } = await responderSolicitud(id, texto)
-      actualizarSolicitud(actualizada)
+      actualizarSolicitud(actualizada, anterior)
       setRespuestaTexto(prev => ({ ...prev, [id]: '' }))
     } finally {
       setProcesando(null)
@@ -79,9 +94,7 @@ export default function SoporteAdminPage() {
 
   if (!data) return <div className="text-center py-16 text-gray-500">Error al cargar</div>
 
-  const solicitudesFiltradas = filtro === 'TODOS'
-    ? data.solicitudes
-    : data.solicitudes.filter(s => s.estado === filtro)
+  const solicitudes = data.contenido
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -93,7 +106,7 @@ export default function SoporteAdminPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total',      value: data.total,     color: 'text-gray-800' },
+          { label: 'Total',      value: data.pendientes + data.enProceso + data.resueltos, color: 'text-gray-800' },
           { label: 'Pendientes', value: data.pendientes, color: 'text-yellow-600' },
           { label: 'En proceso', value: data.enProceso,  color: 'text-blue-600' },
           { label: 'Resueltos',  value: data.resueltos,  color: 'text-green-600' },
@@ -110,7 +123,7 @@ export default function SoporteAdminPage() {
         {(['TODOS', 'PENDIENTE', 'EN_PROCESO', 'RESUELTO'] as const).map(f => (
           <button
             key={f}
-            onClick={() => setFiltro(f)}
+            onClick={() => cambiarFiltro(f)}
             className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               filtro === f
                 ? 'bg-primary-600 text-white border-primary-600'
@@ -123,11 +136,12 @@ export default function SoporteAdminPage() {
       </div>
 
       {/* Lista de solicitudes */}
-      {solicitudesFiltradas.length === 0 ? (
+      {solicitudes.length === 0 ? (
         <div className="card text-center py-10 text-gray-400">No hay solicitudes en este estado.</div>
       ) : (
+        <>
         <div className="flex flex-col gap-3">
-          {solicitudesFiltradas.map(s => (
+          {solicitudes.map(s => (
             <div key={s.id} className="card">
               {/* Cabecera */}
               <div
@@ -224,6 +238,29 @@ export default function SoporteAdminPage() {
             </div>
           ))}
         </div>
+
+        {data.totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => setPagina(p => p - 1)}
+              disabled={pagina === 0}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-500">
+              Página {data.paginaActual + 1} de {data.totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina(p => p + 1)}
+              disabled={pagina >= data.totalPaginas - 1}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   )

@@ -197,11 +197,18 @@ function KpiCard({ icon, label, value, sub, color }: {
 }
 
 // ── Página principal ──────────────────────────────────────────────────────────
+// Tamaño de página de la tabla "Detalle por producto" en pantalla. El endpoint sigue trayendo
+// el dataset completo de ventasPorProducto de una sola vez (page/size aquí NO viajan al
+// backend): las gráficas, el CSV y el PDF necesitan el reporte completo del período, así que
+// solo se recorta en el cliente lo que se renderiza en la tabla on-screen.
+const FILAS_POR_PAGINA = 30
+
 export default function ReportesPage() {
   const [periodo, setPeriodo]   = useState('30d')
   const [metrica, setMetrica]   = useState<'ganancia' | 'unidades'>('ganancia')
   const [data, setData]         = useState<ReporteData | null>(null)
   const [loading, setLoading]   = useState(true)
+  const [paginaTabla, setPaginaTabla] = useState(0)
 
   const cargar = useCallback(() => {
     setLoading(true)
@@ -211,6 +218,9 @@ export default function ReportesPage() {
   }, [periodo])
 
   useEffect(() => { cargar() }, [cargar])
+  // Reinicia la página de la tabla al cambiar de período (nuevo dataset) — mismo criterio que
+  // los listados paginados del backend, que resetean a la página 0 al cambiar un filtro.
+  useEffect(() => { setPaginaTabla(0) }, [periodo])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -456,22 +466,54 @@ export default function ReportesPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {data.ventasPorProducto.map((p, i) => (
-                          <tr key={i} className="hover:bg-gray-50/60 transition-colors">
-                            <td className="px-6 py-4">
-                              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                                style={{ background: COLORS[i % COLORS.length] }}>
-                                {i + 1}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 font-medium text-gray-800 max-w-[200px] truncate">{p.nombre}</td>
-                            <td className="px-6 py-4 text-right text-gray-600">{p.unidades.toLocaleString('es-CO')}</td>
-                            <td className="px-6 py-4 text-right font-semibold text-emerald-600">{fmt(p.ingresos)}</td>
-                          </tr>
-                        ))}
+                        {data.ventasPorProducto
+                          .slice(paginaTabla * FILAS_POR_PAGINA, paginaTabla * FILAS_POR_PAGINA + FILAS_POR_PAGINA)
+                          .map((p, i) => {
+                            const idx = paginaTabla * FILAS_POR_PAGINA + i
+                            return (
+                              <tr key={idx} className="hover:bg-gray-50/60 transition-colors">
+                                <td className="px-6 py-4">
+                                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                                    style={{ background: COLORS[idx % COLORS.length] }}>
+                                    {idx + 1}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 font-medium text-gray-800 max-w-[200px] truncate">{p.nombre}</td>
+                                <td className="px-6 py-4 text-right text-gray-600">{p.unidades.toLocaleString('es-CO')}</td>
+                                <td className="px-6 py-4 text-right font-semibold text-emerald-600">{fmt(p.ingresos)}</td>
+                              </tr>
+                            )
+                          })}
                       </tbody>
                     </table>
                   </div>
+
+                  {data.ventasPorProducto.length > FILAS_POR_PAGINA && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-500">
+                        {data.ventasPorProducto.length} producto(s) en total
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPaginaTabla(p => p - 1)}
+                          disabled={paginaTabla === 0}
+                          className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+                        >
+                          Anterior
+                        </button>
+                        <span className="text-sm text-gray-500">
+                          Página {paginaTabla + 1} de {Math.ceil(data.ventasPorProducto.length / FILAS_POR_PAGINA)}
+                        </span>
+                        <button
+                          onClick={() => setPaginaTabla(p => p + 1)}
+                          disabled={paginaTabla >= Math.ceil(data.ventasPorProducto.length / FILAS_POR_PAGINA) - 1}
+                          className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}

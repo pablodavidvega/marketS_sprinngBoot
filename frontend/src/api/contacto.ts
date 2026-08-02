@@ -1,5 +1,5 @@
 import api from './axios'
-import type { ContactoResponse, AdminContactoData } from '../types'
+import type { ContactoResponse } from '../types'
 
 export interface EnviarContactoParams {
   nombre: string
@@ -17,11 +17,29 @@ export const enviarContacto = (params: EnviarContactoParams) => {
   })
 }
 
-export const getMisSolicitudes = () =>
-  api.get<ContactoResponse[]>('/api/contacto/mis-solicitudes')
+// Respuestas paginadas (30 en 30) — mismo patrón que ModeradorApiController.pedidos() /
+// PedidosPage.tsx: la interfaz de la envoltura de paginación vive aquí (capa de API), no en
+// el types/index.ts compartido.
+export interface ContactoPaginado {
+  contenido: ContactoResponse[]
+  paginaActual: number
+  totalPaginas: number
+  totalElementos: number
+}
 
-export const getAdminSolicitudes = () =>
-  api.get<AdminContactoData>('/api/contacto/admin')
+export interface AdminContactoPaginado extends ContactoPaginado {
+  pendientes: number
+  enProceso: number
+  resueltos: number
+}
+
+export const getMisSolicitudes = (page = 0, size = 30) =>
+  api.get<ContactoPaginado>('/api/contacto/mis-solicitudes', { params: { page, size } })
+
+export const getAdminSolicitudes = (estado?: string, page = 0, size = 30) =>
+  api.get<AdminContactoPaginado>('/api/contacto/admin', {
+    params: { estado: estado || undefined, page, size },
+  })
 
 export const responderSolicitud = (id: number, respuesta: string) => {
   const form = new URLSearchParams({ respuesta })

@@ -1,6 +1,8 @@
 package com.example.MarketS.repository;
 
 import com.example.MarketS.model.Resena;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,7 +12,8 @@ import java.util.Map;
 
 public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
-    List<Resena> findByProductoIdOrderByFechaDesc(Long productoId);
+    // Paginado real (usado por DetallePage, botón "Ver más" de reseñas).
+    Page<Resena> findByProductoIdOrderByFechaDesc(Long productoId, Pageable pageable);
 
     boolean existsByProductoIdAndCompradorId(Long productoId, Long compradorId);
 

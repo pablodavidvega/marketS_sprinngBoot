@@ -81,6 +81,46 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE pr.vendedor = :vendedor ORDER BY p.fecha DESC")
     List<Pedido> findByVendedorWithDetails(@Param("vendedor") User vendedor);
 
+    // Página de IDs de pedidos que contienen productos del vendedor dado — usado por
+    // VendedorApiController.pedidosRecibidos (antes traía TODOS los pedidos del vendedor en una
+    // sola llamada, mismo problema que findAllWithUsuarioFiltrado). Se pagina SOLO sobre IDs, sin
+    // seleccionar el Pedido completo: Pedido.detalles es FetchType.EAGER, así que materializar la
+    // entidad dispararía la carga de esa colección para las 30 filas igual (ver comentario en
+    // findAllWithUsuarioFiltrado); seleccionar solo el id evita ese costo por completo. Se filtra
+    // con EXISTS en vez de JOIN + DISTINCT para no duplicar filas cuando el pedido tiene más de un
+    // producto de este vendedor (evita el error de Postgres "ORDER BY expressions must appear in
+    // select list" que SELECT DISTINCT + ORDER BY p.fecha dispararía). El detalle completo de esta
+    // página se resuelve aparte con findByIdsWithDetalles.
+    @Query(
+        value = """
+            SELECT p.id FROM Pedido p
+            WHERE EXISTS (SELECT 1 FROM DetallePedido d WHERE d.pedido = p AND d.producto.vendedor = :vendedor)
+            ORDER BY p.fecha DESC
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Pedido p
+            WHERE EXISTS (SELECT 1 FROM DetallePedido d WHERE d.pedido = p AND d.producto.vendedor = :vendedor)
+            """
+    )
+    Page<Long> findIdsByVendedor(@Param("vendedor") User vendedor, Pageable pageable);
+
+    // Página de IDs de pedidos del comprador dado — usado por PedidoApiController.misPedidos
+    // (mismo motivo que findIdsByVendedor: se pagina solo sobre IDs para no materializar
+    // Pedido.detalles, EAGER, en toda la lista antes de recortar la página).
+    @Query(
+        value = "SELECT p.id FROM Pedido p WHERE p.usuario = :usuario ORDER BY p.fecha DESC",
+        countQuery = "SELECT COUNT(p) FROM Pedido p WHERE p.usuario = :usuario"
+    )
+    Page<Long> findIdsByUsuario(@Param("usuario") User usuario, Pageable pageable);
+
+    // Detalle completo (detalles + producto + marca + categorías) de un conjunto puntual de
+    // pedidos — mismo JOIN FETCH que findByVendedorWithDetails/findByUsuarioWithDetails pero
+    // acotado a los IDs de una sola página (ver findIdsByVendedor/findIdsByUsuario). El orden de
+    // :ids no se preserva en la respuesta (la cláusula IN no lo garantiza); quien llama debe
+    // reordenar según la página de IDs ya ordenada por fecha.
+    @Query("SELECT DISTINCT p FROM Pedido p JOIN FETCH p.detalles d JOIN FETCH d.producto pr LEFT JOIN FETCH pr.marca LEFT JOIN FETCH pr.categorias WHERE p.id IN :ids")
+    List<Pedido> findByIdsWithDetalles(@Param("ids") List<Long> ids);
+
     // Embudo admin: usuarios distintos que compraron al menos una vez en un conjunto de estados.
     @Query("SELECT COUNT(DISTINCT p.usuario.id) FROM Pedido p WHERE p.estado IN :estados")
     long countDistinctUsuarioByEstadoIn(@Param("estados") List<String> estados);

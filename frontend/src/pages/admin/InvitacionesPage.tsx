@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getInvitaciones, crearInvitacion, revocarInvitacion,
@@ -10,6 +10,14 @@ import type { Invitacion, ConfigRegistro } from '../../types'
 // ── Tipos y helpers ───────────────────────────────────────────────────────────
 
 type EstadoInv = 'activa' | 'expirada' | 'agotada' | 'revocada'
+
+interface InvitacionesResponse {
+  contenido: Invitacion[]
+  paginaActual: number
+  totalPaginas: number
+  totalElementos: number
+  stats: { total: number; activa: number; expirada: number; agotada: number; revocada: number; totalUsos: number }
+}
 
 function getEstado(inv: Invitacion): EstadoInv {
   if (!inv.activo) return 'revocada'
@@ -125,30 +133,37 @@ function ModalGenerarInvitacion({ onClose, onCreada }: ModalProps) {
 type Filtro = 'todas' | EstadoInv
 
 export default function InvitacionesPage() {
-  const [invitaciones, setInvitaciones] = useState<Invitacion[]>([])
-  const [config,       setConfig]       = useState<ConfigRegistro>({ modo: 'ABIERTO', dominio: '' })
-  const [loading,      setLoading]      = useState(true)
-  const [guardando,    setGuardando]    = useState(false)
-  const [copiado,      setCopiado]      = useState<number | null>(null)
-  const [modal,        setModal]        = useState(false)
-  const [filtro,       setFiltro]       = useState<Filtro>('todas')
-  const [error,        setError]        = useState('')
-  const [exito,        setExito]        = useState('')
+  const [data,         setData]        = useState<InvitacionesResponse | null>(null)
+  const [config,       setConfig]      = useState<ConfigRegistro>({ modo: 'ABIERTO', dominio: '' })
+  const [loading,      setLoading]     = useState(true)
+  const [guardando,    setGuardando]   = useState(false)
+  const [copiado,      setCopiado]     = useState<number | null>(null)
+  const [modal,        setModal]       = useState(false)
+  const [pagina,       setPagina]      = useState(0)
+  const [filtro,       setFiltro]      = useState<Filtro>('todas')
+  const [error,        setError]       = useState('')
+  const [exito,        setExito]       = useState('')
 
-  useEffect(() => { cargar() }, [])
-
-  async function cargar() {
+  function cargar() {
     setLoading(true)
-    try {
-      const [invRes, cfgRes] = await Promise.all([getInvitaciones(), getConfigRegistro()])
-      setInvitaciones(invRes.data)
-      setConfig(cfgRes.data)
-    } catch {
-      setError('Error al cargar datos')
-    } finally {
-      setLoading(false)
-    }
+    setError('')
+    Promise.all([
+      getInvitaciones<InvitacionesResponse>({
+        estado: filtro === 'todas' ? undefined : filtro,
+        page: pagina,
+        size: 30,
+      }),
+      getConfigRegistro(),
+    ])
+      .then(([invRes, cfgRes]) => {
+        setData(invRes.data)
+        setConfig(cfgRes.data)
+      })
+      .catch(() => setError('Error al cargar datos'))
+      .finally(() => setLoading(false))
   }
+
+  useEffect(() => { cargar() }, [pagina, filtro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function guardarConfig() {
     setGuardando(true); setError(''); setExito('')
@@ -171,43 +186,30 @@ export default function InvitacionesPage() {
 
   async function handleRevocar(id: number) {
     await revocarInvitacion(id)
-    setInvitaciones(prev => prev.map(i => i.id === id ? { ...i, activo: false, vigente: false } : i))
+    cargar()
   }
 
   async function handleReactivar(id: number) {
     await reactivarInvitacion(id)
-    setInvitaciones(prev => prev.map(i => i.id === id ? { ...i, activo: true, vigente: true } : i))
+    cargar()
   }
 
   async function handleEliminar(id: number) {
     if (!confirm('¿Eliminar este link de invitación?')) return
     await eliminarInvitacion(id)
-    setInvitaciones(prev => prev.filter(i => i.id !== id))
+    cargar()
   }
 
   function handleCreada(inv: Invitacion) {
-    setInvitaciones(prev => [inv, ...prev])
     handleCopiar(inv)
+    if (pagina !== 0) setPagina(0)
+    else cargar()
   }
 
-  // ── Stats derivadas ───────────────────────────────────────────────────────
+  // ── Stats y filtros (calculados en el servidor, no dependen de la página actual) ──────────
 
-  const stats = useMemo(() => {
-    const conteo: Record<EstadoInv, number> = { activa: 0, expirada: 0, agotada: 0, revocada: 0 }
-    let totalUsos = 0
-    for (const inv of invitaciones) {
-      conteo[getEstado(inv)]++
-      totalUsos += inv.usosActuales
-    }
-    return { ...conteo, total: invitaciones.length, totalUsos }
-  }, [invitaciones])
-
-  const lista = useMemo(() =>
-    filtro === 'todas'
-      ? invitaciones
-      : invitaciones.filter(i => getEstado(i) === filtro),
-    [invitaciones, filtro]
-  )
+  const lista = data?.contenido ?? []
+  const stats = data?.stats ?? { total: 0, activa: 0, expirada: 0, agotada: 0, revocada: 0, totalUsos: 0 }
 
   const necesitaDominio = config.modo === 'DOMINIO' || config.modo === 'DOMINIO_O_INVITACION'
 
@@ -322,7 +324,7 @@ export default function InvitacionesPage() {
           {FILTROS.map(f => (
             <button
               key={f.key}
-              onClick={() => setFiltro(f.key)}
+              onClick={() => { setFiltro(f.key); if (pagina !== 0) setPagina(0) }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors
                 ${filtro === f.key
                   ? 'bg-primary-600 text-white border-primary-600'
@@ -458,6 +460,31 @@ export default function InvitacionesPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {data && data.totalPaginas > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-gray-500">{data.totalElementos} invitaciones en total</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagina(p => p - 1)}
+                disabled={pagina === 0}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-500">
+                Página {data.paginaActual + 1} de {data.totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina(p => p + 1)}
+                disabled={pagina >= data.totalPaginas - 1}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         )}
       </div>

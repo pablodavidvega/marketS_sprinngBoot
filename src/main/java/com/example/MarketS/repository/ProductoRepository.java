@@ -61,13 +61,21 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     List<Producto> findByCategorias_NombreCategoriaIgnoreCase(String nombreCategoria);
 
-    @Query("""
-        SELECT p FROM Producto p
-        LEFT JOIN FETCH p.marca
-        LEFT JOIN FETCH p.categorias
-        WHERE p.categorias.id = :categoriasId AND p.activo = true
-    """)
-    List<Producto> findByCategoriasIdAndActivoTrue(@Param("categoriasId") Long categoriasId);
+    // Paginado real (usado por HomePage al filtrar por categoría, botón "Ver más"). countQuery
+    // explícito, sin los JOIN FETCH, por el mismo motivo que en findAllFiltrado.
+    @Query(
+        value = """
+            SELECT p FROM Producto p
+            LEFT JOIN FETCH p.marca
+            LEFT JOIN FETCH p.categorias
+            WHERE p.categorias.id = :categoriasId AND p.activo = true
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Producto p
+            WHERE p.categorias.id = :categoriasId AND p.activo = true
+            """
+    )
+    Page<Producto> findByCategoriasIdAndActivoTrue(@Param("categoriasId") Long categoriasId, Pageable pageable);
 
     @Query("""
         SELECT p FROM Producto p
@@ -77,6 +85,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     """)
     List<Producto> findByActivoTrue();
 
+    // Top-N productos recientes (usado por el slider de portada, limit chico, sin necesidad de
+    // saber el total de páginas).
     @Query("""
         SELECT p FROM Producto p
         LEFT JOIN FETCH p.marca
@@ -86,18 +96,39 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     """)
     List<Producto> findByActivoTrueOrderByFechaAgregacionDesc(Pageable pageable);
 
-    @Query("""
-        SELECT p FROM Producto p
-        LEFT JOIN FETCH p.marca
-        LEFT JOIN FETCH p.categorias
-        WHERE p.activo = true
-        ORDER BY p.fechaAgregacion DESC
-    """)
-    List<Producto> findByActivoTrueOrderByFechaAgregacionDesc();
+    // Paginado real (usado por UltimosProductosPage, botón "Ver más"). countQuery explícito,
+    // sin los JOIN FETCH, por el mismo motivo que en findAllFiltrado.
+    @Query(
+        value = """
+            SELECT p FROM Producto p
+            LEFT JOIN FETCH p.marca
+            LEFT JOIN FETCH p.categorias
+            WHERE p.activo = true
+            ORDER BY p.fechaAgregacion DESC
+            """,
+        countQuery = "SELECT COUNT(p) FROM Producto p WHERE p.activo = true"
+    )
+    Page<Producto> paginaByActivoTrueOrderByFechaAgregacionDesc(Pageable pageable);
 
     List<Producto> findByVendedor(User vendedor);
 
     List<Producto> findByVendedorIdAndActivoTrue(Long vendedorId);
+
+    // Paginado real (usado por VendedorPerfilPage, botón "Ver más"). countQuery explícito,
+    // sin los JOIN FETCH.
+    @Query(
+        value = """
+            SELECT p FROM Producto p
+            LEFT JOIN FETCH p.marca
+            LEFT JOIN FETCH p.categorias
+            WHERE p.vendedor.id = :vendedorId AND p.activo = true
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Producto p
+            WHERE p.vendedor.id = :vendedorId AND p.activo = true
+            """
+    )
+    Page<Producto> paginaByVendedorIdAndActivoTrue(@Param("vendedorId") Long vendedorId, Pageable pageable);
 
     Page<Producto> findByVendedorId(Long vendedorId, Pageable pageable);
 

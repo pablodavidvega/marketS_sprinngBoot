@@ -10,6 +10,8 @@ import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,12 +47,17 @@ public class ChatApiController {
         this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
-    // GET /api/pedidos/{pedidoId}/chat/{vendedorId} — mensajes del hilo, marca como leídos los del otro participante
+    // GET /api/pedidos/{pedidoId}/chat/{vendedorId} — mensajes del hilo paginados de 30 en 30
+    // (page=0 trae los 30 más recientes), marca como leídos los del otro participante.
+    // El frontend pide page=0 por defecto y en el polling; solo pide páginas siguientes
+    // cuando el usuario hace click en "cargar mensajes anteriores" en la parte superior
+    // del chat, para no tener que traer/renderizar negociaciones muy largas de una sola vez.
     // @Transactional: marcarLeidosParaLector es una consulta @Modifying (UPDATE) y requiere una
     // transacción activa, si no Hibernate lanza TransactionRequiredException.
     @Transactional
     @GetMapping
-    public ResponseEntity<?> listar(@PathVariable Long pedidoId, @PathVariable Long vendedorId, Authentication auth) {
+    public ResponseEntity<?> listar(@PathVariable Long pedidoId, @PathVariable Long vendedorId,
+                                     @RequestParam(defaultValue = "0") int page, Authentication auth) {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(pedidoId).orElse(null);
         if (pedido == null) return ResponseEntity.notFound().build();
@@ -61,13 +68,18 @@ public class ChatApiController {
 
         chatMensajeRepository.marcarLeidosParaLector(pedidoId, vendedorId, usuario.getId());
 
-        List<Map<String, Object>> mensajes = chatMensajeRepository
-                .findByPedidoIdAndVendedorIdOrderByFechaEnvioAsc(pedidoId, vendedorId)
-                .stream()
+        Page<ChatMensaje> pagina = chatMensajeRepository.findByPedidoIdAndVendedorIdOrderByFechaEnvioDesc(
+                pedidoId, vendedorId, PageRequest.of(page, 30));
+
+        List<Map<String, Object>> mensajes = pagina.getContent().stream()
                 .map(m -> toMap(m, usuario.getId()))
                 .toList();
 
-        return ResponseEntity.ok(mensajes);
+        Map<String, Object> respuesta = new LinkedHashMap<>();
+        respuesta.put("mensajes", mensajes);
+        respuesta.put("page", page);
+        respuesta.put("hayMasAntiguos", pagina.hasNext());
+        return ResponseEntity.ok(respuesta);
     }
 
     // POST /api/pedidos/{pedidoId}/chat/{vendedorId} — envía un mensaje en el hilo

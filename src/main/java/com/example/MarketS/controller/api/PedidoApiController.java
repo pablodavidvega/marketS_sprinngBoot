@@ -20,6 +20,8 @@ import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -208,17 +210,46 @@ public class PedidoApiController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // GET /api/pedidos/mis-pedidos — historial del usuario autenticado
+    // GET /api/pedidos/mis-pedidos?page=0&size=30 — historial paginado del usuario autenticado.
+    // Antes traía TODO el historial del comprador en una sola llamada (mismo problema que
+    // ModeradorApiController.pedidos, ver comentario en
+    // PedidoRepository.findAllWithUsuarioFiltrado). Se pagina primero solo sobre IDs (sin tocar
+    // pedido.detalles, FetchType.EAGER) y el detalle completo se resuelve aparte solo para los
+    // pedidos de esta página — ver PedidoRepository.findIdsByUsuario/findByIdsWithDetalles.
     @GetMapping("/mis-pedidos")
-    public ResponseEntity<List<PedidoResponseDTO>> misPedidos(Authentication auth) {
+    public ResponseEntity<Map<String, Object>> misPedidos(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
         User usuario = resolverUsuario(auth);
-        List<Pedido> pedidosEntidad = pedidoRepository.findByUsuarioWithDetails(usuario);
+
+        Page<Long> pagina = pedidoRepository.findIdsByUsuario(usuario, PageRequest.of(page, size));
+        List<Long> idsPagina = pagina.getContent();
+
+        // findByIdsWithDetalles no garantiza el orden de la cláusula IN, así que se reordena
+        // según idsPagina (ya ordenado por fecha DESC desde findIdsByUsuario).
+        List<Pedido> pedidosConDetalles = idsPagina.isEmpty()
+                ? List.of()
+                : pedidoRepository.findByIdsWithDetalles(idsPagina);
+        Map<Long, Pedido> pedidosPorId = pedidosConDetalles.stream()
+                .collect(Collectors.toMap(Pedido::getId, p -> p));
+        List<Pedido> pedidosEntidad = idsPagina.stream()
+                .map(pedidosPorId::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
         Map<Long, String> vendedorUsernames = resolverVendedorUsernames(pedidosEntidad);
-        List<PedidoResponseDTO> pedidos = pedidosEntidad
+        List<PedidoResponseDTO> contenido = pedidosEntidad
                 .stream()
                 .map(p -> PedidoResponseDTO.from(p, null, null, vendedorUsernames))
                 .toList();
-        return ResponseEntity.ok(pedidos);
+
+        return ResponseEntity.ok(Map.of(
+                "contenido", contenido,
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements()
+        ));
     }
 
     // PATCH /api/pedidos/{id}/confirmar-recepcion — el cliente confirma que recibió el producto

@@ -31,6 +31,8 @@ export default function DetallePage() {
 
   // Reseñas
   const [resenas, setResenas] = useState<ResenasResponse | null>(null)
+  const [paginaResenas, setPaginaResenas] = useState(0)
+  const [cargandoMasResenas, setCargandoMasResenas] = useState(false)
   const [calificacion, setCalificacion] = useState(0)
   const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -38,6 +40,8 @@ export default function DetallePage() {
 
   // Preguntas y respuestas
   const [preguntas, setPreguntas] = useState<PreguntasResponse | null>(null)
+  const [paginaPreguntas, setPaginaPreguntas] = useState(0)
+  const [cargandoMasPreguntas, setCargandoMasPreguntas] = useState(false)
   const [nuevaPregunta, setNuevaPregunta] = useState('')
   const [enviandoPregunta, setEnviandoPregunta] = useState(false)
   const [errorPregunta, setErrorPregunta] = useState('')
@@ -59,16 +63,42 @@ export default function DetallePage() {
   useEffect(() => {
     if (!id) return
     setResenas(null)
-    getResenas(Number(id)).then(r => setResenas(r.data)).catch(() => setResenas({ promedio: 0, total: 0, puedeResenar: false, yaReseno: false, resenas: [] }))
+    setPaginaResenas(0)
+    getResenas(Number(id))
+      .then(r => setResenas(r.data))
+      .catch(() => setResenas({ promedio: 0, total: 0, puedeResenar: false, yaReseno: false, resenas: [], paginaActual: 0, totalPaginas: 0 }))
   }, [id, user?.email])
 
   useEffect(() => {
     if (!id) return
     setPreguntas(null)
+    setPaginaPreguntas(0)
     getPreguntas(Number(id))
       .then(r => setPreguntas(r.data))
-      .catch(() => setPreguntas({ total: 0, puedeResponder: false, preguntas: [] }))
+      .catch(() => setPreguntas({ total: 0, puedeResponder: false, preguntas: [], paginaActual: 0, totalPaginas: 0 }))
   }, [id, user?.email])
+
+  function handleVerMasResenas() {
+    if (!id || !resenas || cargandoMasResenas) return
+    setCargandoMasResenas(true)
+    getResenas(Number(id), paginaResenas + 1)
+      .then(r => {
+        setResenas(prev => prev ? { ...r.data, resenas: [...prev.resenas, ...r.data.resenas] } : r.data)
+        setPaginaResenas(r.data.paginaActual)
+      })
+      .finally(() => setCargandoMasResenas(false))
+  }
+
+  function handleVerMasPreguntas() {
+    if (!id || !preguntas || cargandoMasPreguntas) return
+    setCargandoMasPreguntas(true)
+    getPreguntas(Number(id), paginaPreguntas + 1)
+      .then(r => {
+        setPreguntas(prev => prev ? { ...r.data, preguntas: [...prev.preguntas, ...r.data.preguntas] } : r.data)
+        setPaginaPreguntas(r.data.paginaActual)
+      })
+      .finally(() => setCargandoMasPreguntas(false))
+  }
 
   // Deep-link desde la campanita de notificaciones (?foco=preguntas): baja hasta la sección
   // de preguntas una vez que ya se cargaron (si no, la página aún no tiene esa altura).
@@ -432,20 +462,33 @@ export default function DetallePage() {
           {resenas.resenas.length === 0 ? (
             <p className="text-gray-400 text-sm">Este producto aún no tiene reseñas. ¡Sé el primero en opinar!</p>
           ) : (
-            <div className="flex flex-col gap-4">
-              {resenas.resenas.map(r => (
-                <div key={r.id} className="border-b pb-4 last:border-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Stars value={r.calificacion} />
-                    <span className="font-medium text-sm text-gray-700">{r.compradorUsername}</span>
-                    <span className="text-xs text-gray-400 ml-auto">
-                      {new Date(r.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </span>
+            <>
+              <div className="flex flex-col gap-4">
+                {resenas.resenas.map(r => (
+                  <div key={r.id} className="border-b pb-4 last:border-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Stars value={r.calificacion} />
+                      <span className="font-medium text-sm text-gray-700">{r.compradorUsername}</span>
+                      <span className="text-xs text-gray-400 ml-auto">
+                        {new Date(r.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    {r.comentario && <p className="text-sm text-gray-600">{r.comentario}</p>}
                   </div>
-                  {r.comentario && <p className="text-sm text-gray-600">{r.comentario}</p>}
+                ))}
+              </div>
+              {paginaResenas < resenas.totalPaginas - 1 && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={handleVerMasResenas}
+                    disabled={cargandoMasResenas}
+                    className="btn-secondary px-6"
+                  >
+                    {cargandoMasResenas ? 'Cargando...' : 'Ver más'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -482,6 +525,7 @@ export default function DetallePage() {
           {preguntas.preguntas.length === 0 ? (
             <p className="text-gray-400 text-sm">Aún no hay preguntas sobre este producto.</p>
           ) : (
+            <>
             <div className="flex flex-col gap-5">
               {preguntas.preguntas.map(p => (
                 <div key={p.id} className="border-b pb-4 last:border-0">
@@ -526,6 +570,18 @@ export default function DetallePage() {
                 </div>
               ))}
             </div>
+            {paginaPreguntas < preguntas.totalPaginas - 1 && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={handleVerMasPreguntas}
+                  disabled={cargandoMasPreguntas}
+                  className="btn-secondary px-6"
+                >
+                  {cargandoMasPreguntas ? 'Cargando...' : 'Ver más'}
+                </button>
+              </div>
+            )}
+            </>
           )}
         </div>
       )}

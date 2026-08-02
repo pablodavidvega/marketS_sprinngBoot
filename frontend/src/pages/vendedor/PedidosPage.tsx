@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getPedidosVendedor, marcarCompletado, marcarRechazado, calificarComprador } from '../../api/pedidos'
+import { getPedidosVendedor, marcarCompletado, marcarRechazado, calificarComprador, type PedidosVendedorResponse } from '../../api/pedidos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
-import type { PedidoVendedorResponse } from '../../types'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 
 export default function PedidosVendedorPage() {
   const [searchParams] = useSearchParams()
-  const [pedidos, setPedidos] = useState<PedidoVendedorResponse[]>([])
+  const [data, setData] = useState<PedidosVendedorResponse | null>(null)
+  const [pagina, setPagina] = useState(0)
   const [loading, setLoading] = useState(true)
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
   const [expandido, setExpandido] = useState<number | null>(null)
@@ -26,11 +26,14 @@ export default function PedidosVendedorPage() {
   // no cambia, React Router no remonta el componente, solo actualiza los searchParams.
   const deepLinkAplicado = useRef<string | null>(null)
 
+  const pedidos = data?.contenido ?? []
+
   useEffect(() => {
-    getPedidosVendedor()
-      .then(r => setPedidos(r.data))
+    setLoading(true)
+    getPedidosVendedor(pagina)
+      .then(r => setData(r.data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   // Deep-link desde la campanita de notificaciones: ?pedido=123&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el chat (cada fila ya es por-vendedor).
@@ -57,8 +60,11 @@ export default function PedidosVendedorPage() {
   async function handleResolver(pedidoId: number, completado: boolean) {
     setResolviendo(pedidoId)
     try {
-      const { data } = completado ? await marcarCompletado(pedidoId) : await marcarRechazado(pedidoId)
-      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, estado: data.estado, yaResolviMiParte: true } : p))
+      const { data: resultado } = completado ? await marcarCompletado(pedidoId) : await marcarRechazado(pedidoId)
+      setData(prev => prev ? {
+        ...prev,
+        contenido: prev.contenido.map(p => p.pedidoId === pedidoId ? { ...p, estado: resultado.estado, yaResolviMiParte: true } : p),
+      } : prev)
     } finally {
       setResolviendo(null)
     }
@@ -78,7 +84,10 @@ export default function PedidosVendedorPage() {
     setErrorCalificacion('')
     try {
       await calificarComprador(pedidoId, { calificacion: calificacionValor, comentario: comentarioValor.trim() || undefined })
-      setPedidos(prev => prev.map(p => p.pedidoId === pedidoId ? { ...p, yaCalifiqueComprador: true, puedeCalificarComprador: false } : p))
+      setData(prev => prev ? {
+        ...prev,
+        contenido: prev.contenido.map(p => p.pedidoId === pedidoId ? { ...p, yaCalifiqueComprador: true, puedeCalificarComprador: false } : p),
+      } : prev)
       setCalificacionValor(0)
       setComentarioValor('')
     } catch (err: unknown) {
@@ -326,6 +335,33 @@ export default function PedidosVendedorPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {data && data.totalPaginas > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-gray-500">
+            {data.totalElementos} pedido(s) en total
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPagina(p => p - 1)}
+              disabled={pagina === 0}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-500">
+              Página {data.paginaActual + 1} de {data.totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina(p => p + 1)}
+              disabled={pagina >= data.totalPaginas - 1}
+              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       )}
     </div>

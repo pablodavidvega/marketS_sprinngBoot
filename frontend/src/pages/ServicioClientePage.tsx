@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { enviarContacto, getMisSolicitudes } from '../api/contacto'
-import type { ContactoResponse } from '../types'
+import type { ContactoPaginado } from '../api/contacto'
 
 const TIPOS = ['Pregunta', 'Queja', 'Reclamo', 'Sugerencia', 'Devolución / Reembolso', 'Otro']
 
@@ -60,25 +60,36 @@ export default function ServicioClientePage() {
   const [exito, setExito] = useState(false)
   const [errorForm, setErrorForm] = useState('')
 
-  // Mis solicitudes
-  const [solicitudes, setSolicitudes] = useState<ContactoResponse[]>([])
+  // Mis solicitudes (paginadas de 30 en 30)
+  const [misSolicitudes, setMisSolicitudes] = useState<ContactoPaginado | null>(null)
+  const [pagina, setPagina] = useState(0)
   const [expandida, setExpandida] = useState<number | null>(null)
 
   useEffect(() => {
     if (user) {
-      getMisSolicitudes().then(r => setSolicitudes(r.data)).catch(() => {})
+      getMisSolicitudes(pagina, 30).then(r => setMisSolicitudes(r.data)).catch(() => {})
     }
-  }, [user])
+  }, [user, pagina])
+
+  const solicitudes = misSolicitudes?.contenido ?? []
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
     setErrorForm('')
     try {
-      const nueva = await enviarContacto(form)
+      await enviarContacto(form)
       setExito(true)
       setForm({ nombre: '', email: '', tipoSolicitud: TIPOS[0], asunto: '', mensaje: '' })
-      if (user) setSolicitudes(prev => [nueva.data, ...prev])
+      // La nueva solicitud queda de primera en la página 0 (orden por fecha desc) — si ya
+      // estamos ahí, recargamos esa página; si no, saltar a la página 0 dispara el useEffect.
+      if (user) {
+        if (pagina === 0) {
+          getMisSolicitudes(0, 30).then(r => setMisSolicitudes(r.data)).catch(() => {})
+        } else {
+          setPagina(0)
+        }
+      }
     } catch {
       setErrorForm('No se pudo enviar la solicitud. Intenta de nuevo.')
     } finally {
@@ -276,6 +287,28 @@ export default function ServicioClientePage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {misSolicitudes && misSolicitudes.totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button
+                onClick={() => setPagina(p => p - 1)}
+                disabled={pagina === 0}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-500">
+                Página {misSolicitudes.paginaActual + 1} de {misSolicitudes.totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina(p => p + 1)}
+                disabled={pagina >= misSolicitudes.totalPaginas - 1}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Siguiente
+              </button>
             </div>
           )}
         </div>

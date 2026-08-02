@@ -35,8 +35,13 @@ export const getEstadisticasComunidad = () =>
 export const getDashboardVendedor = () =>
   api.get<DashboardVendedor>('/api/vendedor/dashboard')
 
-export const getUsuarios = (tipo?: string, valor?: string) =>
-  api.get<PerfilUsuario[]>('/api/admin/usuarios', { params: { tipo, valor } })
+export const getUsuarios = (tipo?: string, valor?: string, page = 0, size = 30) =>
+  api.get<{
+    contenido: PerfilUsuario[]
+    paginaActual: number
+    totalPaginas: number
+    totalElementos: number
+  }>('/api/admin/usuarios', { params: { tipo, valor, page, size } })
 
 export const cambiarRolUsuario = (id: number, rolId: number) =>
   api.put<PerfilUsuario>(`/api/admin/usuarios/${id}/rol`, { rolId })

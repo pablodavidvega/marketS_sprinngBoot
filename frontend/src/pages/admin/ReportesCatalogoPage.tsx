@@ -16,6 +16,7 @@ export default function ReportesCatalogoPage() {
   const [data, setData] = useState<ReporteCatalogo | null>(null)
   const [loading, setLoading] = useState(true)
   const [descargandoExcel, setDescargandoExcel] = useState(false)
+  const [pagina, setPagina] = useState(0)
 
   useEffect(() => {
     getReporteCatalogo()
@@ -41,6 +42,15 @@ export default function ReportesCatalogoPage() {
   const categoriasBar = categoriasPie
     .sort((a, b) => b.value - a.value)
     .slice(0, 10)
+
+  // Paginación solo de la tabla en pantalla (client-side): las categorías se pueden crear sin
+  // límite desde el panel de admin (ver CategoriaAdminApiController), así que esta lista no está
+  // acotada estructuralmente. Las gráficas, el CSV, el Excel y el PDF siguen usando
+  // "data.nombresCategorias"/"data.totalesCategorias" completos — solo el <table> se corta de 30 en 30.
+  const totalPaginasTabla = Math.max(1, Math.ceil(data.nombresCategorias.length / 30))
+  const categoriasTabla = data.nombresCategorias
+    .map((nombre, i) => ({ nombre, total: data.totalesCategorias[i] ?? 0 }))
+    .slice(pagina * 30, pagina * 30 + 30)
 
   // ── CSV ────────────────────────────────────────────────────────────────────
   function descargarCSV() {
@@ -276,14 +286,13 @@ export default function ReportesCatalogoPage() {
             </tr>
           </thead>
           <tbody>
-            {data.nombresCategorias.map((nombre, i) => {
-              const total = data.totalesCategorias[i] ?? 0
+            {categoriasTabla.map(({ nombre, total }, i) => {
               const pct = data.totalProductos > 0
                 ? ((total / data.totalProductos) * 100).toFixed(1)
                 : '0'
               return (
                 <tr key={nombre} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-400">{pagina * 30 + i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{nombre}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{total}</td>
                   <td className="px-4 py-3 text-center">
@@ -310,6 +319,28 @@ export default function ReportesCatalogoPage() {
           </tfoot>
         </table>
       </div>
+
+      {data.nombresCategorias.length > 0 && totalPaginasTabla > 1 && (
+        <div className="flex items-center justify-end gap-2 mt-3">
+          <button
+            onClick={() => setPagina(p => p - 1)}
+            disabled={pagina === 0}
+            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-500">
+            Página {pagina + 1} de {totalPaginasTabla}
+          </span>
+          <button
+            onClick={() => setPagina(p => p + 1)}
+            disabled={pagina >= totalPaginasTabla - 1}
+            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
     </div>
   )
 }

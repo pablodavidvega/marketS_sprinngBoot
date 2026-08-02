@@ -1,8 +1,9 @@
 import api from './axios'
-import type { PerfilVendedor, Producto } from '../types'
+import type { PerfilVendedor, VendedorProductosResponse } from '../types'
 
 export const getPerfilVendedor = (id: number) =>
   api.get<PerfilVendedor>(`/api/vendedores/${id}/perfil`)
 
-export const getProductosVendedor = (id: number) =>
-  api.get<Producto[]>(`/api/vendedores/${id}/productos`)
+// Paginado real (botón "Ver más" en VendedorPerfilPage).
+export const getProductosVendedor = (id: number, page = 0, size = 30) =>
+  api.get<VendedorProductosResponse>(`/api/vendedores/${id}/productos`, { params: { page, size } })

@@ -10,6 +10,8 @@ import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.FrontendLinkBuilder;
 import com.example.MarketS.service.NotificacionService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -44,14 +46,17 @@ public class PreguntaApiController {
         this.frontendLinkBuilder = frontendLinkBuilder;
     }
 
-    // GET /api/productos/{productoId}/preguntas — público
+    // GET /api/productos/{productoId}/preguntas — público, paginado real (usado por DetallePage
+    // con su botón "Ver más").
     @GetMapping
-    public ResponseEntity<?> listar(@PathVariable Long productoId, Authentication auth) {
+    public ResponseEntity<?> listar(@PathVariable Long productoId, Authentication auth,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "30") int size) {
         Producto producto = productoRepository.findById(productoId).orElse(null);
         if (producto == null) return ResponseEntity.notFound().build();
 
-        List<Map<String, Object>> preguntas = preguntaRepository
-                .findByProductoIdOrderByFechaPreguntaDesc(productoId)
+        Page<Pregunta> pagina = preguntaRepository.findByProductoIdOrderByFechaPreguntaDesc(productoId, PageRequest.of(page, size));
+        List<Map<String, Object>> preguntas = pagina.getContent()
                 .stream()
                 .map(this::toMap)
                 .toList();
@@ -71,6 +76,8 @@ public class PreguntaApiController {
         respuesta.put("total", preguntaRepository.countByProductoId(productoId));
         respuesta.put("puedeResponder", puedeResponder);
         respuesta.put("preguntas", preguntas);
+        respuesta.put("paginaActual", pagina.getNumber());
+        respuesta.put("totalPaginas", pagina.getTotalPages());
         return ResponseEntity.ok(respuesta);
     }
 

@@ -22,6 +22,7 @@ import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.service.UserService;
 import com.example.MarketS.service.reportes.ReporteContexto;
 import com.example.MarketS.service.reportes.ReporteExcelStrategy;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -223,43 +224,54 @@ public class AdminApiController {
     }
 
     // GET /api/admin/usuarios?valor=x — búsqueda inteligente por username o email (parcial,
-    // sin distinguir mayúsculas). ?tipo=rol&valor=vendedor filtra por rol en su lugar.
+    // sin distinguir mayúsculas), paginada de 30 en 30. ?tipo=rol&valor=vendedor filtra por rol
+    // en su lugar. Antes traía TODOS los usuarios en una sola llamada — mismo problema de fondo
+    // que PedidoRepository.findAllWithUsuarioFiltrado (ver comentario en ModeradorApiController.pedidos).
     @GetMapping("/usuarios")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<PerfilResponseDTO>> listarUsuarios(
+    public ResponseEntity<Map<String, Object>> listarUsuarios(
             @RequestParam(required = false) String tipo,
-            @RequestParam(required = false) String valor) {
+            @RequestParam(required = false) String valor,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
 
-        // Caso más común (sin filtro, "ver todos"): proyección escalar, nunca instancia la
-        // entidad User — evita el disparo automático de Hibernate al inicializar
-        // User.vendedor en cada fila (ver UserRepository.findAllPerfilProjection).
-        // Nota: "tipo" es opcional (la búsqueda inteligente por texto no lo envía), así que
-        // el único criterio real para decidir si hay filtro es si llegó "valor".
-        if (valor == null || valor.isBlank()) {
-            List<Object[]> filas = userRepository.findAllPerfilProjection();
+        // Casos de volumen potencialmente grande (sin filtro "ver todos", filtro por rol, o
+        // búsqueda inteligente por texto en username/email): proyección escalar paginada en la
+        // BD, nunca instancia la entidad User completa — evita el disparo automático de
+        // Hibernate al inicializar User.vendedor en cada fila (ver
+        // UserRepository.findAllPerfilProjectionFiltrado).
+        if (!"nombre".equals(tipo) && !"email".equals(tipo) && !"direccion".equals(tipo)) {
+            boolean esFiltroRol = "rol".equals(tipo) && valor != null && !valor.isBlank();
+            String rol = esFiltroRol ? "ROLE_" + valor.toUpperCase() : null;
+            String q = (!esFiltroRol && valor != null && !valor.isBlank()) ? valor : null;
 
-            List<Long> vendedorIds = filas.stream()
+            Page<Object[]> pagina = userRepository.findAllPerfilProjectionFiltrado(
+                    rol, q, PageRequest.of(page, size));
+
+            List<Long> vendedorIds = pagina.getContent().stream()
                     .filter(f -> "ROLE_VENDEDOR".equals(f[5]))
                     .map(f -> ((Number) f[0]).longValue())
                     .toList();
             Map<Long, String> ciudades = resolverCiudades(vendedorIds);
 
-            List<PerfilResponseDTO> respuesta = filas.stream()
+            List<PerfilResponseDTO> contenido = pagina.getContent().stream()
                     .map(f -> PerfilResponseDTO.fromProjection(f, ciudades.get(((Number) f[0]).longValue())))
                     .toList();
-            return ResponseEntity.ok(respuesta);
+
+            return ResponseEntity.ok(Map.of(
+                    "contenido", contenido,
+                    "paginaActual", pagina.getNumber(),
+                    "totalPaginas", pagina.getTotalPages(),
+                    "totalElementos", pagina.getTotalElements()
+            ));
         }
 
-        // Búsquedas filtradas: resultados acotados (0-1 para nombre/email), se mantiene la
-        // ruta por entidad completa. tipo puede venir null (búsqueda inteligente por defecto).
-        List<User> usuarios = switch (tipo == null ? "" : tipo) {
+        // Búsquedas puntuales heredadas (nombre/email exactos, dirección): resultados acotados
+        // (0-1 para nombre/email), se mantiene la ruta por entidad completa, paginada en memoria.
+        List<User> usuarios = switch (tipo) {
             case "nombre" -> userService.buscarPorNombre(valor).map(List::of).orElse(List.of());
             case "email"  -> userService.buscarPorEmail(valor).map(List::of).orElse(List.of());
-            case "direccion" -> userService.buscarPorDireccion(valor);
-            case "rol"    -> userService.listarPorRol("ROLE_" + valor.toUpperCase());
-            // Búsqueda inteligente: sin "tipo" explícito, se busca por coincidencia parcial
-            // (case-insensitive) en username O email a la vez — ver UserService.buscarPorNombreOCorreo.
-            default       -> userService.buscarPorNombreOCorreo(valor);
+            default       -> userService.buscarPorDireccion(valor); // "direccion"
         };
 
         List<Long> vendedorIds = usuarios.stream()
@@ -268,11 +280,18 @@ public class AdminApiController {
                 .toList();
         Map<Long, String> ciudades = resolverCiudades(vendedorIds);
 
-        List<PerfilResponseDTO> respuesta = usuarios.stream()
+        int desde = Math.min(page * size, usuarios.size());
+        int hasta = Math.min(desde + size, usuarios.size());
+        List<PerfilResponseDTO> contenido = usuarios.subList(desde, hasta).stream()
                 .map(u -> PerfilResponseDTO.from(u, ciudades.get(u.getId())))
                 .toList();
 
-        return ResponseEntity.ok(respuesta);
+        return ResponseEntity.ok(Map.of(
+                "contenido", contenido,
+                "paginaActual", page,
+                "totalPaginas", Math.max(1, (int) Math.ceil(usuarios.size() / (double) size)),
+                "totalElementos", (long) usuarios.size()
+        ));
     }
 
     // Ciudad de cada vendedor, resuelta en batch (evita el N+1 de user.getVendedor()).

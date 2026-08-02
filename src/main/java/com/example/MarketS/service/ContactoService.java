@@ -5,10 +5,11 @@ import com.example.MarketS.model.EstadoContacto;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.ContactoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,12 +22,12 @@ public class ContactoService {
         return contactoRepository.save(contacto);
     }
 
-    public List<Contacto> listarTodos() {
-        return contactoRepository.findAllByOrderByFechaCreacionDesc();
+    public Page<Contacto> listarPaginado(EstadoContacto estado, Pageable pageable) {
+        return contactoRepository.findAllFiltrado(estado, pageable);
     }
 
-    public List<Contacto> listarPorUsuario(User user) {
-        return contactoRepository.findByUserOrderByFechaCreacionDesc(user);
+    public Page<Contacto> listarPorUsuarioPaginado(User user, Pageable pageable) {
+        return contactoRepository.findByUserOrderByFechaCreacionDesc(user, pageable);
     }
 
     public Optional<Contacto> buscarPorId(Long id) {

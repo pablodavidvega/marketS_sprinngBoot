@@ -10,6 +10,8 @@ import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.ReputacionService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -75,16 +77,28 @@ public class ProductoApiController {
         return ResponseEntity.ok(buildDTOs(productos));
     }
 
-    // GET /api/productos/recientes?limit=10 — últimos productos agregados (orden descendente).
-    // limit<=0 devuelve el listado completo, usado por la vista "Ver todos los últimos productos".
+    // GET /api/productos/recientes?limit=10 — últimos productos agregados (orden descendente),
+    // usado por el slider de portada (top-N chico, sin paginar).
+    // limit<=0 activa el modo paginado real (page/size), usado por la vista "Ver todos los
+    // últimos productos" con su botón "Ver más".
     @GetMapping("/productos/recientes")
-    public ResponseEntity<List<ProductoResponseDTO>> productosRecientes(
-            @RequestParam(defaultValue = "10") int limit) {
-        List<Producto> productos = limit > 0
-                ? productoRepository.findByActivoTrueOrderByFechaAgregacionDesc(
-                        org.springframework.data.domain.PageRequest.of(0, limit))
-                : productoRepository.findByActivoTrueOrderByFechaAgregacionDesc();
-        return ResponseEntity.ok(buildDTOs(productos));
+    public ResponseEntity<?> productosRecientes(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        if (limit > 0) {
+            List<Producto> productos = productoRepository.findByActivoTrueOrderByFechaAgregacionDesc(
+                    PageRequest.of(0, limit));
+            return ResponseEntity.ok(buildDTOs(productos));
+        }
+
+        Page<Producto> pagina = productoRepository.paginaByActivoTrueOrderByFechaAgregacionDesc(
+                PageRequest.of(page, size));
+        return ResponseEntity.ok(Map.of(
+                "contenido", buildDTOs(pagina.getContent()),
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements()));
     }
 
     // GET /api/productos/sugerencias?q=... — autocompletado (máx 8 resultados livianos)
@@ -136,11 +150,19 @@ public class ProductoApiController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // GET /api/productos/categoria/{categoriaId} — filtro por categoría
+    // GET /api/productos/categoria/{categoriaId} — filtro por categoría, paginado real
+    // (usado por HomePage con su botón "Ver más").
     @GetMapping("/productos/categoria/{categoriaId}")
-    public ResponseEntity<List<ProductoResponseDTO>> porCategoria(@PathVariable Long categoriaId) {
-        List<Producto> productos = productoRepository.findByCategoriasIdAndActivoTrue(categoriaId);
-        return ResponseEntity.ok(buildDTOs(productos));
+    public ResponseEntity<Map<String, Object>> porCategoria(
+            @PathVariable Long categoriaId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        Page<Producto> pagina = productoRepository.findByCategoriasIdAndActivoTrue(categoriaId, PageRequest.of(page, size));
+        return ResponseEntity.ok(Map.of(
+                "contenido", buildDTOs(pagina.getContent()),
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements()));
     }
 
     // GET /api/categorias — listado completo de categorías

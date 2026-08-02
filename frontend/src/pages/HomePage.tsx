@@ -16,6 +16,13 @@ export default function HomePage() {
   const [filtro, setFiltro] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Con categoría activa: paginado real server-side, "Ver más" pide la siguiente página al
+  // backend y la concatena. Sin categoría (búsqueda general/"Todos"): el backend ya devuelve
+  // un arreglo plano acotado a 200 (ver getProductos), y "Ver más" solo revela más de lo ya
+  // descargado (comportamiento sin cambios).
+  const [pagina, setPagina] = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(0)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [visibles, setVisibles] = useState(PRODUCTOS_POR_PAGINA)
   const buscadorRef = useRef<HTMLDivElement>(null)
 
@@ -29,15 +36,44 @@ export default function HomePage() {
     setLoading(true)
     setError('')
     setVisibles(PRODUCTOS_POR_PAGINA)
-    const req = categoriaActiva
-      ? getProductosPorCategoria(categoriaActiva)
-      : getProductos(filtro || undefined, 200)
 
-    req
-      .then(r => setProductos(r.data))
+    if (categoriaActiva) {
+      getProductosPorCategoria(categoriaActiva, 0, PRODUCTOS_POR_PAGINA)
+        .then(r => {
+          setProductos(r.data.contenido)
+          setPagina(r.data.paginaActual)
+          setTotalPaginas(r.data.totalPaginas)
+        })
+        .catch(() => setError('Error al cargar productos'))
+        .finally(() => setLoading(false))
+      return
+    }
+
+    getProductos(filtro || undefined, 200)
+      .then(r => {
+        setProductos(r.data)
+        setPagina(0)
+        setTotalPaginas(1)
+      })
       .catch(() => setError('Error al cargar productos'))
       .finally(() => setLoading(false))
   }, [categoriaActiva, filtro])
+
+  function handleVerMas() {
+    if (categoriaActiva) {
+      if (cargandoMas) return
+      setCargandoMas(true)
+      getProductosPorCategoria(categoriaActiva, pagina + 1, PRODUCTOS_POR_PAGINA)
+        .then(r => {
+          setProductos(prev => [...prev, ...r.data.contenido])
+          setPagina(r.data.paginaActual)
+          setTotalPaginas(r.data.totalPaginas)
+        })
+        .finally(() => setCargandoMas(false))
+      return
+    }
+    setVisibles(v => v + PRODUCTOS_POR_PAGINA)
+  }
 
   function handleSearch(q: string) {
     setCategoriaActiva(null)
@@ -116,15 +152,16 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {productos.slice(0, visibles).map(p => <ProductoCard key={p.id} producto={p} />)}
+            {(categoriaActiva ? productos : productos.slice(0, visibles)).map(p => <ProductoCard key={p.id} producto={p} />)}
           </div>
-          {visibles < productos.length && (
+          {(categoriaActiva ? pagina < totalPaginas - 1 : visibles < productos.length) && (
             <div className="flex justify-center mt-8">
               <button
-                onClick={() => setVisibles(v => v + PRODUCTOS_POR_PAGINA)}
+                onClick={handleVerMas}
+                disabled={cargandoMas}
                 className="btn-secondary px-6"
               >
-                Ver más
+                {cargandoMas ? 'Cargando...' : 'Ver más'}
               </button>
             </div>
           )}

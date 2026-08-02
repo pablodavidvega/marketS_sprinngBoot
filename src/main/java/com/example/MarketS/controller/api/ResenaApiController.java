@@ -7,6 +7,8 @@ import com.example.MarketS.repository.DetallePedidoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.security.UsuarioPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -39,15 +41,19 @@ public class ResenaApiController {
         this.detallePedidoRepository = detallePedidoRepository;
     }
 
-    // GET /api/productos/{productoId}/resenas — público
+    // GET /api/productos/{productoId}/resenas — público, paginado real (usado por DetallePage
+    // con su botón "Ver más").
     @GetMapping
-    public ResponseEntity<?> listar(@PathVariable Long productoId, Authentication auth) {
+    public ResponseEntity<?> listar(@PathVariable Long productoId, Authentication auth,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "30") int size) {
         if (productoRepository.findById(productoId).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        List<Map<String, Object>> resenas = resenaRepository
-                .findByProductoIdOrderByFechaDesc(productoId)
+        Page<Resena> pagina = resenaRepository.findByProductoIdOrderByFechaDesc(productoId, PageRequest.of(page, size));
+
+        List<Map<String, Object>> resenas = pagina.getContent()
                 .stream()
                 .map(r -> {
                     Map<String, Object> m = new LinkedHashMap<>();
@@ -80,6 +86,8 @@ public class ResenaApiController {
         respuesta.put("puedeResenar", puedeResenar);
         respuesta.put("yaReseno", yaReseno);
         respuesta.put("resenas", resenas);
+        respuesta.put("paginaActual", pagina.getNumber());
+        respuesta.put("totalPaginas", pagina.getTotalPages());
 
         return ResponseEntity.ok(respuesta);
     }

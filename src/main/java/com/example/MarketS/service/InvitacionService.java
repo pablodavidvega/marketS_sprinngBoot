@@ -4,10 +4,12 @@ import com.example.MarketS.model.Invitacion;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.InvitacionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,8 +55,22 @@ public class InvitacionService {
         return true;
     }
 
-    public List<Invitacion> listar() {
-        return repo.findAll();
+    // Invitaciones paginadas (30 por defecto, ver InvitacionAdminRestController), con filtro
+    // opcional por el estado derivado que muestra el panel admin (activa/expirada/agotada/revocada).
+    public Page<Invitacion> listar(String estado, Pageable pageable) {
+        return repo.findAllFiltrado(estado, pageable);
+    }
+
+    // Conteos globales para las tarjetas de resumen — no varían con el filtro/página activos.
+    public Map<String, Object> stats() {
+        return Map.of(
+                "total",     repo.count(),
+                "activa",    repo.countActivas(),
+                "expirada",  repo.countExpiradas(),
+                "agotada",   repo.countAgotadas(),
+                "revocada",  repo.countRevocadas(),
+                "totalUsos", repo.sumUsosActuales()
+        );
     }
 
     public void revocar(Long id) {

@@ -5,16 +5,36 @@ import ProductoCard from '../components/ProductoCard'
 import { useFavoritos } from '../context/FavoritosContext'
 import type { Producto } from '../types'
 
+const FAVORITOS_POR_PAGINA = 30
+
 export default function MisFavoritosPage() {
   const { esFavorito, cargado } = useFavoritos()
   const [productos, setProductos] = useState<Producto[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [cargandoMas, setCargandoMas] = useState(false)
 
   useEffect(() => {
-    getMisFavoritos()
-      .then(r => setProductos(r.data))
+    getMisFavoritos({ page: 0, size: FAVORITOS_POR_PAGINA })
+      .then(r => {
+        setProductos(r.data.contenido)
+        setPagina(r.data.paginaActual)
+        setTotalPaginas(r.data.totalPaginas)
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  function verMas() {
+    setCargandoMas(true)
+    getMisFavoritos({ page: pagina + 1, size: FAVORITOS_POR_PAGINA })
+      .then(r => {
+        setProductos(prev => [...prev, ...r.data.contenido])
+        setPagina(r.data.paginaActual)
+        setTotalPaginas(r.data.totalPaginas)
+      })
+      .finally(() => setCargandoMas(false))
+  }
 
   // Se filtra contra el contexto (una vez cargado) para que quitar un favorito
   // con el corazón lo saque de esta lista al instante, sin esperar a un refetch.
@@ -38,11 +58,24 @@ export default function MisFavoritosPage() {
           <Link to="/" className="btn-primary">Explorar productos</Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {visibles.map(p => (
-            <ProductoCard key={p.id} producto={p} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {visibles.map(p => (
+              <ProductoCard key={p.id} producto={p} />
+            ))}
+          </div>
+          {pagina < totalPaginas - 1 && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={verMas}
+                disabled={cargandoMas}
+                className="btn-secondary px-6 disabled:opacity-50"
+              >
+                {cargandoMas ? 'Cargando...' : 'Ver más'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

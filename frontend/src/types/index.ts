@@ -221,6 +221,8 @@ export interface ResenasResponse {
   puedeResenar: boolean
   yaReseno: boolean
   resenas: Resena[]
+  paginaActual: number
+  totalPaginas: number
 }
 
 export interface SugerenciaProducto {
@@ -387,6 +389,8 @@ export interface PreguntasResponse {
   total: number
   puedeResponder: boolean
   preguntas: Pregunta[]
+  paginaActual: number
+  totalPaginas: number
 }
 
 export interface ReporteCatalogo {

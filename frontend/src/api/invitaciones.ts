@@ -11,8 +11,10 @@ export const validarToken = (token: string) =>
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
-export const getInvitaciones = () =>
-  api.get<Invitacion[]>('/api/admin/invitaciones')
+// El tipo de la respuesta paginada (contenido/paginaActual/totalPaginas/...) se declara
+// localmente en InvitacionesPage.tsx, igual que en ModeradorProductosPage/ModeradorPedidosPage.
+export const getInvitaciones = <T = unknown>(params: { estado?: string; page?: number; size?: number }) =>
+  api.get<T>('/api/admin/invitaciones', { params })
 
 export const crearInvitacion = (data: {
   descripcion?: string

@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles, descargarPdfUsuarios } from '../../api/usuario'
 import { useToast } from '../../components/Toast'
+import { useDebounce } from '../../hooks/useDebounce'
 import type { PerfilUsuario } from '../../types'
+
+interface UsuariosPaginadosResponse {
+  contenido: PerfilUsuario[]
+  paginaActual: number
+  totalPaginas: number
+  totalElementos: number
+}
 
 // ─── Helpers de presentación ───────────────────────────────────────────────
 function formatRol(nombre: string): string {
@@ -24,10 +32,12 @@ function rolBadge(nombre: string): string {
 
 // ─── Página ────────────────────────────────────────────────────────────────
 export default function UsuariosPage() {
-  const [usuarios,  setUsuarios]  = useState<PerfilUsuario[]>([])
+  const [data,      setData]      = useState<UsuariosPaginadosResponse | null>(null)
   const [roles,     setRoles]     = useState<{ id: number; nombre: string }[]>([])
   const [loading,   setLoading]   = useState(true)
+  const [pagina,         setPagina]         = useState(0)
   const [busqueda,       setBusqueda]       = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 350)
   const [rolFiltro,      setRolFiltro]      = useState('') // sufijo sin "ROLE_", ej. "ADMIN"
   const [accionId,       setAccionId]       = useState<number | null>(null)
   const [error,          setError]          = useState('')
@@ -37,7 +47,7 @@ export default function UsuariosPage() {
   // Filtrar por rol y buscar por texto son mutuamente excluyentes: el rol, al ser una
   // coincidencia exacta, tiene prioridad sobre la búsqueda inteligente por texto.
   function parametrosBusqueda(): [string | undefined, string | undefined] {
-    return rolFiltro ? ['rol', rolFiltro] : [undefined, busqueda || undefined]
+    return rolFiltro ? ['rol', rolFiltro] : [undefined, busquedaDebounced || undefined]
   }
 
   function cargar() {
@@ -45,23 +55,20 @@ export default function UsuariosPage() {
     setError('')
     const [tipo, valor] = parametrosBusqueda()
     Promise.all([
-      getUsuarios(tipo, valor),
+      getUsuarios(tipo, valor, pagina, 30),
       getRoles(),
     ])
       .then(([u, r]) => {
-        setUsuarios(u.data)
+        setData(u.data)
         setRoles(r.data)
       })
       .catch(() => setError('Error al cargar usuarios'))
       .finally(() => setLoading(false))
   }
 
-  // Búsqueda inteligente: se dispara sola mientras el admin escribe o cambia el rol
-  // (con un pequeño debounce), sin necesidad de presionar Enter ni el botón Buscar.
-  useEffect(() => {
-    const t = setTimeout(() => cargar(), 350)
-    return () => clearTimeout(t)
-  }, [busqueda, rolFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Búsqueda inteligente: se dispara sola mientras el admin escribe (con debounce) o cambia el
+  // rol o de página, sin necesidad de presionar Enter ni el botón Buscar.
+  useEffect(() => { cargar() }, [pagina, rolFiltro, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Cambiar rol ────────────────────────────────────────────────────────────
   async function handleCambiarRol(usuario: PerfilUsuario, rolId: number) {
@@ -107,7 +114,7 @@ export default function UsuariosPage() {
     setError('')
     try {
       await eliminarUsuario(userId)
-      setUsuarios(prev => prev.filter(u => u.id !== userId))
+      cargar()
     } catch {
       setError('Error al eliminar el usuario')
     } finally {
@@ -171,7 +178,7 @@ export default function UsuariosPage() {
             placeholder="Ej: caro, maria@correo.com..."
             value={busqueda}
             disabled={!!rolFiltro}
-            onChange={e => setBusqueda(e.target.value)}
+            onChange={e => { setBusqueda(e.target.value); if (pagina !== 0) setPagina(0) }}
           />
         </div>
         <div>
@@ -179,7 +186,11 @@ export default function UsuariosPage() {
           <select
             className="input"
             value={rolFiltro}
-            onChange={e => { setRolFiltro(e.target.value); if (e.target.value) setBusqueda('') }}
+            onChange={e => {
+              setRolFiltro(e.target.value)
+              if (e.target.value) setBusqueda('')
+              if (pagina !== 0) setPagina(0)
+            }}
           >
             <option value="">Todos los roles</option>
             {roles.map(r => (
@@ -197,6 +208,7 @@ export default function UsuariosPage() {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
         </div>
       ) : (
+        <>
         <div className="card overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -211,7 +223,7 @@ export default function UsuariosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {usuarios.map(u => {
+              {(data?.contenido ?? []).map(u => {
                 const esVendedor     = u.rol === 'ROLE_VENDEDOR'
                 const rolActualId    = roles.find(r => r.nombre === u.rol)?.id ?? ''
                 const cargando       = accionId === u.id
@@ -298,7 +310,7 @@ export default function UsuariosPage() {
                 )
               })}
 
-              {usuarios.length === 0 && (
+              {(data?.contenido.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                     No se encontraron usuarios
@@ -308,6 +320,34 @@ export default function UsuariosPage() {
             </tbody>
           </table>
         </div>
+
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-sm text-gray-500">
+            {data?.totalElementos ?? 0} usuarios en total
+          </p>
+          {data && data.totalPaginas > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagina(p => p - 1)}
+                disabled={pagina === 0}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-500">
+                Página {data.paginaActual + 1} de {data.totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina(p => p + 1)}
+                disabled={pagina >= data.totalPaginas - 1}
+                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+        </div>
+        </>
       )}
     </div>
   )

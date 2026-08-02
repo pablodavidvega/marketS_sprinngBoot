@@ -6,6 +6,8 @@ import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.ConfiguracionAppService;
 import com.example.MarketS.service.InvitacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -24,13 +26,28 @@ public class InvitacionAdminRestController {
     private final InvitacionService invitacionService;
     private final ConfiguracionAppService configService;
 
-    // GET /api/admin/invitaciones — listar todas
+    // GET /api/admin/invitaciones — listar paginadas (30 por defecto), con filtro opcional por
+    // estado (activa/expirada/agotada/revocada). Antes traía todas sin paginar.
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> listar() {
-        List<Map<String, Object>> lista = invitacionService.listar().stream()
+    public ResponseEntity<Map<String, Object>> listar(
+            @RequestParam(required = false) String estado,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        Page<Invitacion> pagina = invitacionService.listar(
+                (estado == null || estado.isBlank()) ? null : estado,
+                PageRequest.of(page, size));
+
+        List<Map<String, Object>> contenido = pagina.getContent().stream()
                 .map(this::toMap)
                 .toList();
-        return ResponseEntity.ok(lista);
+
+        return ResponseEntity.ok(Map.of(
+                "contenido", contenido,
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements(),
+                "stats", invitacionService.stats()
+        ));
     }
 
     // POST /api/admin/invitaciones — crear nueva

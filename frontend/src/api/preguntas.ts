@@ -1,8 +1,8 @@
 import api from './axios'
 import type { Pregunta, PreguntasResponse } from '../types'
 
-export const getPreguntas = (productoId: number) =>
-  api.get<PreguntasResponse>(`/api/productos/${productoId}/preguntas`)
+export const getPreguntas = (productoId: number, page = 0, size = 30) =>
+  api.get<PreguntasResponse>(`/api/productos/${productoId}/preguntas`, { params: { page, size } })
 
 export const crearPregunta = (productoId: number, contenido: string) =>
   api.post<Pregunta>(`/api/productos/${productoId}/preguntas`, { contenido })

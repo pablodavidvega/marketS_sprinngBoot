@@ -1,6 +1,8 @@
 package com.example.MarketS.repository;
 
 import com.example.MarketS.model.Pregunta;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -8,7 +10,8 @@ import java.util.List;
 
 public interface PreguntaRepository extends JpaRepository<Pregunta, Long> {
 
-    List<Pregunta> findByProductoIdOrderByFechaPreguntaDesc(Long productoId);
+    // Paginado real (usado por DetallePage, botón "Ver más" de preguntas).
+    Page<Pregunta> findByProductoIdOrderByFechaPreguntaDesc(Long productoId, Pageable pageable);
 
     long countByProductoId(Long productoId);
 

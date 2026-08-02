@@ -9,6 +9,8 @@ import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.ReputacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,14 +54,23 @@ public class VendedorPublicController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // GET /api/vendedores/{id}/productos — catálogo público del vendedor
+    // GET /api/vendedores/{id}/productos — catálogo público del vendedor, paginado real
+    // (usado por VendedorPerfilPage con su botón "Ver más").
     @GetMapping("/{id}/productos")
-    public ResponseEntity<List<ProductoResponseDTO>> productos(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> productos(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
         return userRepository.findById(id)
                 .filter(u -> u.isActive())
                 .map(u -> {
-                    List<Producto> productos = productoRepository.findByVendedorIdAndActivoTrue(u.getId());
-                    return ResponseEntity.ok(buildDTOs(productos, u));
+                    Page<Producto> pagina = productoRepository.paginaByVendedorIdAndActivoTrue(u.getId(), PageRequest.of(page, size));
+                    Map<String, Object> respuesta = new HashMap<>();
+                    respuesta.put("contenido", buildDTOs(pagina.getContent(), u));
+                    respuesta.put("paginaActual", pagina.getNumber());
+                    respuesta.put("totalPaginas", pagina.getTotalPages());
+                    respuesta.put("totalElementos", pagina.getTotalElements());
+                    return ResponseEntity.ok(respuesta);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

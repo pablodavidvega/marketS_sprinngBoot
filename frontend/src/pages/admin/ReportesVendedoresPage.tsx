@@ -103,6 +103,7 @@ function dibujarTorta(data: VendedorEstadisticas[], campo: keyof VendedorEstadis
 export default function ReportesVendedoresPage() {
   const [data, setData] = useState<VendedorEstadisticas[]>([])
   const [loading, setLoading] = useState(true)
+  const [pagina, setPagina] = useState(0)
 
   useEffect(() => {
     getReporteVendedores()
@@ -126,6 +127,11 @@ export default function ReportesVendedoresPage() {
   const totalIngresos  = data.reduce((s, v) => s + v.ingresosTotal, 0)
   const totalUnidades  = data.reduce((s, v) => s + v.totalUnidades, 0)
   const topVendedor    = datosOrdenados[0]?.username ?? '—'
+
+  // Paginación solo de la tabla en pantalla (client-side): las gráficas, el CSV y el PDF
+  // siguen usando "datosOrdenados" completo — solo el <table> se corta de 30 en 30.
+  const totalPaginasTabla = Math.max(1, Math.ceil(datosOrdenados.length / 30))
+  const filasTabla = datosOrdenados.slice(pagina * 30, pagina * 30 + 30)
 
   // ── CSV ──────────────────────────────────────────────────────────────────
   function descargarCSV() {
@@ -346,9 +352,9 @@ export default function ReportesVendedoresPage() {
               </tr>
             </thead>
             <tbody>
-              {datosOrdenados.map((v, i) => (
+              {filasTabla.map((v, i) => (
                 <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                  <td className="px-4 py-3 text-gray-400">{pagina * 30 + i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{v.username}</td>
                   <td className="px-4 py-3 text-gray-500">{v.email}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{v.totalProductos}</td>
@@ -367,6 +373,28 @@ export default function ReportesVendedoresPage() {
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+
+      {data.length > 0 && totalPaginasTabla > 1 && (
+        <div className="flex items-center justify-end gap-2 mt-3">
+          <button
+            onClick={() => setPagina(p => p - 1)}
+            disabled={pagina === 0}
+            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-500">
+            Página {pagina + 1} de {totalPaginasTabla}
+          </span>
+          <button
+            onClick={() => setPagina(p => p + 1)}
+            disabled={pagina >= totalPaginasTabla - 1}
+            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+          >
+            Siguiente
+          </button>
         </div>
       )}
     </div>

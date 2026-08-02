@@ -8,6 +8,8 @@ import com.example.MarketS.repository.FavoritoRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.security.UsuarioPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -34,18 +36,22 @@ public class FavoritoApiController {
         this.userRepository = userRepository;
     }
 
-    // GET /api/favoritos — productos guardados por el usuario autenticado
+    // GET /api/favoritos — productos guardados por el usuario autenticado, paginados
+    // (mismo patrón que ModeradorApiController.pedidos: page/size con default size=30).
     @GetMapping
-    public ResponseEntity<?> misFavoritos(Authentication auth) {
+    public ResponseEntity<?> misFavoritos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size,
+            Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
         if (usuario == null) return ResponseEntity.status(401).build();
 
-        List<Favorito> favoritos = favoritoRepository.findByUsuarioIdWithProducto(usuario.getId());
+        Page<Favorito> pagina = favoritoRepository.findByUsuarioIdWithProducto(usuario.getId(), PageRequest.of(page, size));
 
         // Vendedor resuelto en batch: producto.getVendedor() es LAZY y, con muchos vendedores
         // distintos, cargar el User completo por producto dispararía la consulta extra a
         // "vendedores" documentada en Producto.vendedor (ver ProductoApiController.buildDTOs).
-        List<Long> vendedorIds = favoritos.stream()
+        List<Long> vendedorIds = pagina.getContent().stream()
                 .map(f -> f.getProducto().getVendedor())
                 .filter(Objects::nonNull)
                 .map(User::getId)
@@ -57,11 +63,16 @@ public class FavoritoApiController {
                     vendedorUsernames.put(((Number) row[0]).longValue(), (String) row[1]));
         }
 
-        List<ProductoResponseDTO> productos = favoritos.stream()
+        List<ProductoResponseDTO> contenido = pagina.getContent().stream()
                 .map(f -> ProductoResponseDTO.from(f.getProducto(), null, null, null, vendedorUsernames))
                 .toList();
 
-        return ResponseEntity.ok(productos);
+        return ResponseEntity.ok(Map.of(
+                "contenido", contenido,
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements()
+        ));
     }
 
     // GET /api/favoritos/ids — solo los ids de productos favoritos (para marcar el corazón en catálogo/listados)

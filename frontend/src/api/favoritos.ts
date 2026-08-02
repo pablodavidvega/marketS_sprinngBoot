@@ -1,8 +1,8 @@
 import api from './axios'
-import type { Producto } from '../types'
+import type { VendedorProductosResponse } from '../types'
 
-export const getMisFavoritos = () =>
-  api.get<Producto[]>('/api/favoritos')
+export const getMisFavoritos = (params?: { page?: number; size?: number }) =>
+  api.get<VendedorProductosResponse>('/api/favoritos', { params })
 
 export const getMisFavoritosIds = () =>
   api.get<number[]>('/api/favoritos/ids')
