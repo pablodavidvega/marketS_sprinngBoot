@@ -65,6 +65,7 @@ export default function ProductoCard({ producto }: Props) {
       precio: producto.precio,
       imagen: imagenUrl,
       cantidad: 1,
+      stock: producto.stock,
     })
   }
 
@@ -76,6 +77,7 @@ export default function ProductoCard({ producto }: Props) {
       precio: producto.precio,
       imagen: imagenUrl,
       cantidad: 1,
+      stock: producto.stock,
     })
     navigate('/carrito')
   }
