@@ -58,7 +58,7 @@ public class CargaMasivaUsuariosService {
                 total++;
                 final int filaActual = fila;
                 try {
-                    String[] datos = linea.split("\\s*[;,]\\s*", -1);
+                    String[] datos = parseLineaCsv(linea);
                     User u = construirUsuario(datos, filaActual);
                     guardarUsuario(u, filaActual, errores);
                     if (errores.stream().noneMatch(e -> e.startsWith("Fila " + filaActual))) correctos++;
@@ -153,6 +153,34 @@ public class CargaMasivaUsuariosService {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Divide una línea de CSV en columnas respetando campos entre comillas dobles: una
+    // dirección como "Calle 10 # 5-20, Barrio Centro" no debe partirse por la coma interna.
+    // Acepta coma o punto y coma como separador (fuera de comillas), igual que antes.
+    private String[] parseLineaCsv(String linea) {
+        List<String> campos = new ArrayList<>();
+        StringBuilder actual = new StringBuilder();
+        boolean entreComillas = false;
+
+        for (int i = 0; i < linea.length(); i++) {
+            char c = linea.charAt(i);
+            if (c == '"') {
+                if (entreComillas && i + 1 < linea.length() && linea.charAt(i + 1) == '"') {
+                    actual.append('"');
+                    i++;
+                } else {
+                    entreComillas = !entreComillas;
+                }
+            } else if (!entreComillas && (c == ',' || c == ';')) {
+                campos.add(actual.toString().trim());
+                actual.setLength(0);
+            } else {
+                actual.append(c);
+            }
+        }
+        campos.add(actual.toString().trim());
+        return campos.toArray(new String[0]);
+    }
 
     private String col(String[] datos, int i) {
         if (i >= datos.length || datos[i] == null) return "";
