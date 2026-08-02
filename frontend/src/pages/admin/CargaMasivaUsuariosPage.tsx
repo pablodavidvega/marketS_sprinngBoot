@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { cargarUsuariosMasivo } from '../../api/usuario'
 import type { ResultadoCarga } from '../../types'
 
@@ -142,6 +143,11 @@ export default function CargaMasivaUsuariosPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel admin
+        </Link>
+      </div>
 
       {/* Encabezado */}
       <div className="mb-8">

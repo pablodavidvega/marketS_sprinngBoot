@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles, descargarPdfUsuarios } from '../../api/usuario'
+import { useToast } from '../../components/Toast'
 import type { PerfilUsuario } from '../../types'
 
 // ─── Helpers de presentación ───────────────────────────────────────────────
 function formatRol(nombre: string): string {
   const map: Record<string, string> = {
-    ROLE_ADMIN:    'Administrador',
-    ROLE_VENDEDOR: 'Vendedor',
-    ROLE_CLIENTE:  'Cliente',
+    ROLE_ADMIN:     'Administrador',
+    ROLE_MODERADOR: 'Moderador',
+    ROLE_VENDEDOR:  'Vendedor',
+    ROLE_CLIENTE:   'Cliente',
   }
   return map[nombre] ?? nombre
 }
 
 function rolBadge(nombre: string): string {
-  if (nombre === 'ROLE_ADMIN')    return 'bg-purple-100 text-purple-700 border-purple-200'
-  if (nombre === 'ROLE_VENDEDOR') return 'bg-blue-100 text-blue-700 border-blue-200'
+  if (nombre === 'ROLE_ADMIN')     return 'bg-purple-100 text-purple-700 border-purple-200'
+  if (nombre === 'ROLE_MODERADOR') return 'bg-amber-100 text-amber-700 border-amber-200'
+  if (nombre === 'ROLE_VENDEDOR')  return 'bg-blue-100 text-blue-700 border-blue-200'
   return 'bg-gray-100 text-gray-600 border-gray-200'
 }
 
@@ -28,6 +32,7 @@ export default function UsuariosPage() {
   const [accionId,       setAccionId]       = useState<number | null>(null)
   const [error,          setError]          = useState('')
   const [descargandoPdf, setDescargandoPdf] = useState(false)
+  const { showToast } = useToast()
 
   // Filtrar por rol y buscar por texto son mutuamente excluyentes: el rol, al ser una
   // coincidencia exacta, tiene prioridad sobre la búsqueda inteligente por texto.
@@ -74,6 +79,13 @@ export default function UsuariosPage() {
     setError('')
     try {
       await cambiarRolUsuario(usuario.id, rolId)
+      if (rolObjetivo?.nombre === 'ROLE_MODERADOR' || rolObjetivo?.nombre === 'ROLE_ADMIN') {
+        showToast(
+          `"${usuario.username}" ahora es ${formatRol(rolObjetivo.nombre)}. ` +
+          'Ya no podrá comprar como cliente con esta cuenta.',
+          'success'
+        )
+      }
       cargar()
     } catch (err: unknown) {
       const msg =
@@ -126,6 +138,11 @@ export default function UsuariosPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel admin
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Gestión de usuarios</h1>
         <button

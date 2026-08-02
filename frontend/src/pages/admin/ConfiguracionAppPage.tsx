@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAppConfig, aplicarColor, type AppConfigData } from '../../context/AppConfigContext'
 
@@ -74,6 +75,11 @@ export default function ConfiguracionAppPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel admin
+        </Link>
+      </div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Configuración de la aplicación</h1>
         <p className="text-gray-500 text-sm mt-1">

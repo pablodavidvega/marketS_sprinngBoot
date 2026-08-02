@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -118,19 +118,21 @@ export default function ReportesVendedoresPage() {
     )
   }
 
-  const totalComisiones = data.reduce((s, v) => s + v.comisionTotal, 0)
-  const totalIngresos   = data.reduce((s, v) => s + v.ingresosTotal, 0)
-  const totalGanancias  = data.reduce((s, v) => s + v.gananciaTotal, 0)
-  const topVendedor     = data[0]?.username ?? '—'
+  // MarketS no cobra comisión (0% desde junio 2026): ingresos y ganancia del vendedor son el
+  // mismo número, así que el reporte solo muestra "Ingresos". Se ordena explícitamente por
+  // ingresosTotal (en vez de confiar en el orden que trae el backend, por gananciaTotal) para
+  // que "Top vendedor" y la gráfica de barras siempre correspondan entre sí.
+  const datosOrdenados = [...data].sort((a, b) => b.ingresosTotal - a.ingresosTotal)
+  const totalIngresos  = data.reduce((s, v) => s + v.ingresosTotal, 0)
+  const totalUnidades  = data.reduce((s, v) => s + v.totalUnidades, 0)
+  const topVendedor    = datosOrdenados[0]?.username ?? '—'
 
   // ── CSV ──────────────────────────────────────────────────────────────────
   function descargarCSV() {
-    const header = ['Vendedor', 'Email', 'Productos', 'Unidades vendidas', 'Ganancia', 'Comisión plataforma', 'Ingresos brutos']
-    const rows = data.map(v => [
+    const header = ['Vendedor', 'Email', 'Productos', 'Unidades vendidas', 'Ingresos']
+    const rows = datosOrdenados.map(v => [
       v.username, v.email,
       v.totalProductos, v.totalUnidades,
-      v.gananciaTotal.toFixed(2),
-      v.comisionTotal.toFixed(2),
       v.ingresosTotal.toFixed(2),
     ])
     const csv = [header, ...rows].map(r => r.join(',')).join('\n')
@@ -168,8 +170,8 @@ export default function ReportesVendedoresPage() {
 
     const cards = [
       ['Vendedores activos', String(data.length)],
-      ['Comisiones totales', fmt(totalComisiones)],
-      ['Ingresos brutos', fmt(totalIngresos)],
+      ['Unidades vendidas', String(totalUnidades)],
+      ['Ingresos totales', fmt(totalIngresos)],
       ['Top vendedor', topVendedor],
     ]
     cards.forEach(([label, value], i) => {
@@ -190,13 +192,13 @@ export default function ReportesVendedoresPage() {
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(30, 41, 59)
-    doc.text('Top vendedores por ingresos brutos', 14, 72)
-    const barImg = dibujarBarras(data, 'ingresosTotal')
+    doc.text('Top vendedores por ingresos', 14, 72)
+    const barImg = dibujarBarras(datosOrdenados, 'ingresosTotal')
     doc.addImage(barImg, 'PNG', 14, 75, 120, 58)
 
-    // Gráfica de torta (comisiones)
-    doc.text('Distribución de comisiones', 140, 72)
-    const pieImg = dibujarTorta(data, 'comisionTotal')
+    // Gráfica de torta (ingresos)
+    doc.text('Distribución de ingresos', 140, 72)
+    const pieImg = dibujarTorta(datosOrdenados, 'ingresosTotal')
     doc.addImage(pieImg, 'PNG', 138, 75, 58, 58)
 
     // Tabla detallada
@@ -210,53 +212,37 @@ export default function ReportesVendedoresPage() {
 
     autoTable(doc, {
       startY: 22,
-      head: [['Vendedor', 'Email', 'Productos', 'Unidades', 'Ganancia', 'Comisión', 'Ingresos']],
-      body: data.map(v => [
+      head: [['Vendedor', 'Email', 'Productos', 'Unidades', 'Ingresos']],
+      body: datosOrdenados.map(v => [
         v.username,
         v.email,
         v.totalProductos,
         v.totalUnidades,
-        fmt(v.gananciaTotal),
-        fmt(v.comisionTotal),
         fmt(v.ingresosTotal),
       ]),
-      foot: [['TOTAL', '', '', data.reduce((s, v) => s + v.totalUnidades, 0), fmt(totalGanancias), fmt(totalComisiones), fmt(totalIngresos)]],
+      foot: [['TOTAL', '', '', totalUnidades, fmt(totalIngresos)]],
       headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold', fontSize: 8 },
       footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold', fontSize: 8 },
       bodyStyles: { fontSize: 8 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
-        0: { cellWidth: 28 }, 1: { cellWidth: 40 },
-        2: { cellWidth: 18, halign: 'center' }, 3: { cellWidth: 18, halign: 'center' },
-        4: { cellWidth: 28, halign: 'right' }, 5: { cellWidth: 28, halign: 'right' },
-        6: { cellWidth: 28, halign: 'right' },
+        0: { cellWidth: 36 }, 1: { cellWidth: 50 },
+        2: { cellWidth: 24, halign: 'center' }, 3: { cellWidth: 24, halign: 'center' },
+        4: { cellWidth: 36, halign: 'right' },
       },
     })
-
-    // Segunda gráfica en página 2: barras de ganancias vendedor
-    const finalY = (doc as any).lastAutoTable.finalY + 8
-    if (finalY < 180) {
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(30, 41, 59)
-      doc.text('Top vendedores por ganancia neta', 14, finalY)
-      const barImg2 = dibujarBarras(data, 'gananciaTotal')
-      doc.addImage(barImg2, 'PNG', 14, finalY + 4, 120, 58)
-    }
 
     doc.save(`reporte-vendedores-${new Date().toISOString().slice(0, 10)}.pdf`)
   }
 
-  const barData = data.slice(0, 8).map(v => ({
+  const barData = datosOrdenados.slice(0, 8).map(v => ({
     name: v.username.length > 10 ? v.username.substring(0, 9) + '…' : v.username,
     ingresos: Math.round(v.ingresosTotal),
-    ganancia: Math.round(v.gananciaTotal),
-    comision: Math.round(v.comisionTotal),
   }))
 
-  const pieData = data.slice(0, 6).map(v => ({
+  const pieData = datosOrdenados.slice(0, 6).map(v => ({
     name: v.username,
-    value: Math.round(v.comisionTotal),
+    value: Math.round(v.ingresosTotal),
   }))
   const totalPie = pieData.reduce((s, d) => s + d.value, 0)
 
@@ -288,11 +274,11 @@ export default function ReportesVendedoresPage() {
         </div>
         <div className="card text-center">
           <p className="text-3xl font-bold text-green-600">{fmt(totalIngresos)}</p>
-          <p className="text-sm text-gray-500 mt-1">Ingresos brutos</p>
+          <p className="text-sm text-gray-500 mt-1">Ingresos totales</p>
         </div>
         <div className="card text-center">
-          <p className="text-3xl font-bold text-blue-600">{fmt(totalComisiones)}</p>
-          <p className="text-sm text-gray-500 mt-1">Comisiones plataforma</p>
+          <p className="text-3xl font-bold text-blue-600">{totalUnidades}</p>
+          <p className="text-sm text-gray-500 mt-1">Unidades vendidas</p>
         </div>
         <div className="card text-center">
           <p className="text-lg font-bold text-purple-600 truncate">{topVendedor}</p>
@@ -305,24 +291,21 @@ export default function ReportesVendedoresPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Barras */}
           <div className="card lg:col-span-2">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">Ingresos brutos por vendedor</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Ingresos por vendedor</h2>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={barData} margin={{ top: 4, right: 8, bottom: 20, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" interval={0} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => '$' + (v / 1000).toFixed(0) + 'k'} />
                 <Tooltip formatter={(v) => fmt(Number(v))} />
-                <Legend />
                 <Bar dataKey="ingresos" name="Ingresos" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="ganancia" name="Ganancia" fill="#10b981" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="comision" name="Comisión" fill="#f59e0b" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Torta */}
           <div className="card">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribución de comisiones</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribución de ingresos</h2>
             <ResponsiveContainer width="100%" height={190}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} dataKey="value">
@@ -359,21 +342,17 @@ export default function ReportesVendedoresPage() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Productos</th>
                 <th className="text-center px-4 py-3 font-semibold text-gray-600">Unidades</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Ganancia</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Comisión</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Ingresos brutos</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">Ingresos</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((v, i) => (
+              {datosOrdenados.map((v, i) => (
                 <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-gray-400">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{v.username}</td>
                   <td className="px-4 py-3 text-gray-500">{v.email}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{v.totalProductos}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{v.totalUnidades}</td>
-                  <td className="px-4 py-3 text-right font-medium text-green-600">{fmt(v.gananciaTotal)}</td>
-                  <td className="px-4 py-3 text-right font-medium text-blue-600">{fmt(v.comisionTotal)}</td>
                   <td className="px-4 py-3 text-right font-bold text-gray-800">{fmt(v.ingresosTotal)}</td>
                 </tr>
               ))}
@@ -382,10 +361,8 @@ export default function ReportesVendedoresPage() {
               <tr className="bg-gray-50 border-t-2 border-gray-200">
                 <td colSpan={4} className="px-4 py-3 font-bold text-gray-700">Total</td>
                 <td className="px-4 py-3 text-center font-bold text-gray-700">
-                  {data.reduce((s, v) => s + v.totalUnidades, 0)}
+                  {totalUnidades}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-green-600">{fmt(totalGanancias)}</td>
-                <td className="px-4 py-3 text-right font-bold text-blue-600">{fmt(totalComisiones)}</td>
                 <td className="px-4 py-3 text-right font-bold text-gray-800">{fmt(totalIngresos)}</td>
               </tr>
             </tfoot>

@@ -13,17 +13,22 @@ const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
 
 export default function CarritoPage() {
   const { items, total, quitar, actualizar } = useCarrito()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, hasRole } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('MERCADOPAGO')
+
+  // Administradores y moderadores no compran con su propia cuenta — evita el conflicto de
+  // interés de moderar/administrar el marketplace y comprar en él a la vez.
+  const bloqueadoPorRol = hasRole('ADMIN') || hasRole('MODERADOR')
 
   async function handleCheckout() {
     if (!isAuthenticated) {
       navigate('/login')
       return
     }
+    if (bloqueadoPorRol) return
     setError('')
     setLoading(true)
     try {
@@ -157,6 +162,13 @@ export default function CarritoPage() {
             )}
           </div>
 
+          {bloqueadoPorRol && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg p-3 mb-3">
+              Tu cuenta es de {hasRole('ADMIN') ? 'administrador' : 'moderador'} y no puede realizar compras.
+              Usa una cuenta de cliente para comprar.
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-3">
               {error}
@@ -165,16 +177,18 @@ export default function CarritoPage() {
 
           <button
             onClick={handleCheckout}
-            disabled={loading}
-            className="btn-primary w-full"
+            disabled={loading || bloqueadoPorRol}
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
               ? 'Procesando...'
-              : !isAuthenticated
-                ? 'Ingresar para comprar'
-                : metodoPago === 'MERCADOPAGO'
-                  ? 'Pagar con MercadoPago'
-                  : 'Registrar pedido'}
+              : bloqueadoPorRol
+                ? 'No disponible para tu rol'
+                : !isAuthenticated
+                  ? 'Ingresar para comprar'
+                  : metodoPago === 'MERCADOPAGO'
+                    ? 'Pagar con MercadoPago'
+                    : 'Registrar pedido'}
           </button>
 
           <Link to="/" className="block text-center text-sm text-gray-500 hover:text-primary-600 mt-3">

@@ -188,6 +188,9 @@ export interface DashboardAdmin {
   totalClientes: number
   totalVendedores: number
   totalAdmins: number
+  totalProductos: number
+  productosActivos: number
+  totalPedidos: number
   reputacionVendedores: Record<string, number>
   reputacionCompradores: Record<string, number>
   totalFavoritos: number

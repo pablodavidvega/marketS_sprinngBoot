@@ -109,4 +109,38 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     // Embudo admin: cuántos vendedores distintos han publicado al menos un producto.
     @Query("SELECT COUNT(DISTINCT p.vendedor.id) FROM Producto p")
     long countDistinctVendedores();
+
+    // Todos los productos (activos e inactivos) paginados, con filtro opcional de
+    // activo/inactivo y búsqueda por nombre, vendedor o categoría — para moderador.
+    // countQuery explícito (sin los JOIN FETCH, que no aportan nada a un COUNT) para evitar
+    // depender de que Spring Data derive correctamente el count a partir de una query con
+    // fetch joins.
+    @Query(
+        value = """
+            SELECT p FROM Producto p
+            LEFT JOIN FETCH p.marca
+            LEFT JOIN FETCH p.categorias c
+            LEFT JOIN p.vendedor v
+            WHERE (:activo IS NULL OR p.activo = :activo)
+              AND (:q IS NULL
+                   OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(v.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(c.nombreCategoria) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            ORDER BY p.fechaAgregacion DESC
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Producto p
+            LEFT JOIN p.categorias c
+            LEFT JOIN p.vendedor v
+            WHERE (:activo IS NULL OR p.activo = :activo)
+              AND (:q IS NULL
+                   OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(v.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%'))
+                   OR LOWER(c.nombreCategoria) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            """
+    )
+    Page<Producto> findAllFiltrado(@Param("activo") Boolean activo, @Param("q") String q, Pageable pageable);
+
+    long countByActivoTrue();
+    long countByActivoFalse();
 }

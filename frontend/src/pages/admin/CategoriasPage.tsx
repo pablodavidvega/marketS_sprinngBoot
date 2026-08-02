@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getCategoriasAdmin,
   crearCategoria,
@@ -73,6 +74,11 @@ export default function CategoriasPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel admin
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-2xl font-bold text-gray-800">Categorías de productos</h1>
         <button onClick={abrirNuevo} className="btn-primary">+ Nueva categoría</button>

@@ -99,6 +99,17 @@ public class PedidoApiController {
                                           Authentication auth) {
         User usuario = resolverUsuario(auth);
 
+        // Los administradores y moderadores no compran con su propia cuenta — evita el
+        // conflicto de interés de que quien modera/administra el marketplace también sea
+        // comprador en él. Validación en el backend además del bloqueo en el frontend
+        // (CarritoPage), por si se llama a este endpoint directamente.
+        String rol = usuario.getRol() != null ? usuario.getRol().getRolname() : "";
+        if ("ROLE_ADMIN".equals(rol) || "ROLE_MODERADOR".equals(rol)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Los administradores y moderadores no pueden realizar compras con su cuenta."
+            ));
+        }
+
         // Convertir DTO a Map<Integer, Integer> que espera PedidoService
         Map<Integer, Integer> carrito = request.getItems().stream()
                 .collect(Collectors.toMap(

@@ -1,7 +1,10 @@
 package com.example.MarketS.repository;
 
+import com.example.MarketS.dto.PedidoModeradorDTO;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,9 +49,28 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("SELECT p FROM Pedido p LEFT JOIN FETCH p.detalles WHERE p.id = :id")
     Optional<Pedido> findByIdWithDetalles(@Param("id") Long id);
 
-    // Todos los pedidos con comprador cargado (para moderador)
-    @Query("SELECT p FROM Pedido p JOIN FETCH p.usuario ORDER BY p.fecha DESC")
-    List<Pedido> findAllWithUsuario();
+    // Listado paginado de pedidos con filtro opcional de estado/búsqueda, para moderador.
+    // Proyecta directamente a PedidoModeradorDTO en vez de devolver la entidad Pedido: esta
+    // última tiene detalles FetchType.EAGER (y DetallePedido.producto también EAGER), así que
+    // materializarla dispara un N+1 real (una query por pedido para "detalles", y otra más por
+    // cada detalle para su "producto") aunque este listado no use ese dato para nada. Antes de
+    // esto, con la página ya limitada a 30 filas, esos ~90 queries extra seguían tardando ~6s
+    // contra la BD remota; proyectar evita hidratar la entidad por completo (1 query + el count).
+    @Query(
+        value = """
+            SELECT new com.example.MarketS.dto.PedidoModeradorDTO(p.id, u.username, p.fecha, p.estado, p.total)
+            FROM Pedido p JOIN p.usuario u
+            WHERE (:estado IS NULL OR p.estado = :estado)
+              AND (:q IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')) OR str(p.id) LIKE CONCAT('%', CAST(:q AS string), '%'))
+            ORDER BY p.fecha DESC
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Pedido p JOIN p.usuario u
+            WHERE (:estado IS NULL OR p.estado = :estado)
+              AND (:q IS NULL OR LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')) OR str(p.id) LIKE CONCAT('%', CAST(:q AS string), '%'))
+            """
+    )
+    Page<PedidoModeradorDTO> findAllWithUsuarioFiltrado(@Param("estado") String estado, @Param("q") String q, Pageable pageable);
 
     // Pedidos que contienen productos del vendedor dado, con detalles cargados.
     // OJO: no se hace JOIN FETCH de pr.vendedor (ya lo conocemos, es el parámetro "vendedor")

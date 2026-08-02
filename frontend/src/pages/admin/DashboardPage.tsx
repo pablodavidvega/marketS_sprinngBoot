@@ -151,13 +151,16 @@ export default function AdminDashboardPage() {
     { label: 'Vendedores', value: data.totalVendedores, color: 'text-green-600' },
     { label: 'Admins', value: data.totalAdmins, color: 'text-purple-600' },
     { label: 'Favoritos guardados', value: data.totalFavoritos, color: 'text-red-500' },
+    { label: 'Productos totales', value: data.totalProductos, color: 'text-teal-600' },
+    { label: 'Productos activos', value: data.productosActivos, color: 'text-emerald-600' },
+    { label: 'Pedidos totales', value: data.totalPedidos, color: 'text-amber-600' },
   ]
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Panel de administración</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {stats.map(s => (
           <div key={s.label} className="card text-center">
             <p className={`text-4xl font-bold ${s.color}`}>{s.value}</p>
@@ -328,6 +331,28 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="font-semibold text-gray-800">Configuración</h2>
               <p className="text-sm text-gray-500">Ajustes generales de la plataforma</p>
+            </div>
+          </div>
+        </Link>
+        <Link to="/moderador/productos" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl group-hover:bg-cyan-200 transition-colors">
+              📦
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Moderar productos</h2>
+              <p className="text-sm text-gray-500">Ver y activar/desactivar productos de todos los vendedores</p>
+            </div>
+          </div>
+        </Link>
+        <Link to="/moderador/pedidos" className="card hover:shadow-md transition-shadow group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-lime-100 rounded-lg flex items-center justify-center text-lime-600 text-xl group-hover:bg-lime-200 transition-colors">
+              🧾
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Ver todos los pedidos</h2>
+              <p className="text-sm text-gray-500">Vista de solo lectura de todos los pedidos de la plataforma</p>
             </div>
           </div>
         </Link>

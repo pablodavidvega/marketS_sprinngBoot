@@ -1,5 +1,8 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { useDebounce } from '../../hooks/useDebounce'
 
 interface PedidoMod {
   id: number
@@ -9,15 +12,11 @@ interface PedidoMod {
   total: number
 }
 
-const ESTADO_CLASES: Record<string, string> = {
-  PAGADO:    'text-green-700 bg-green-50 border-green-200',
-  PENDIENTE: 'text-amber-700 bg-amber-50 border-amber-200',
-  CANCELADO: 'text-red-600 bg-red-50 border-red-200',
-  ENVIADO:   'text-blue-700 bg-blue-50 border-blue-200',
-}
-
-function estadoClase(estado: string) {
-  return ESTADO_CLASES[estado] ?? 'text-gray-600 bg-gray-100 border-gray-200'
+interface PedidosModResponse {
+  contenido: PedidoMod[]
+  paginaActual: number
+  totalPaginas: number
+  totalElementos: number
 }
 
 function formatFecha(s: string) {
@@ -25,39 +24,42 @@ function formatFecha(s: string) {
 }
 
 export default function ModeradorPedidosPage() {
-  const [pedidos,  setPedidos]  = useState<PedidoMod[]>([])
-  const [loading,  setLoading]  = useState(true)
+  const [data, setData] = useState<PedidosModResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [pagina, setPagina] = useState(0)
   const [busqueda, setBusqueda] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('TODOS')
+  const busquedaDebounced = useDebounce(busqueda, 350)
+  const [filtroEstado, setFiltroEstado] = useState('')
 
-  useEffect(() => {
-    api.get<PedidoMod[]>('/api/moderador/pedidos')
-      .then(res => setPedidos(res.data))
+  function cargar() {
+    setLoading(true)
+    setError('')
+    api.get<PedidosModResponse>('/api/moderador/pedidos', {
+      params: {
+        page: pagina,
+        size: 30,
+        estado: filtroEstado || undefined,
+        q: busquedaDebounced || undefined,
+      },
+    })
+      .then(res => setData(res.data))
+      .catch(() => setError('No se pudieron cargar los pedidos. Intenta de nuevo.'))
       .finally(() => setLoading(false))
-  }, [])
+  }
 
-  const estados = useMemo(() => {
-    const set = new Set(pedidos.map(p => p.estado))
-    return ['TODOS', ...Array.from(set)]
-  }, [pedidos])
+  useEffect(() => { cargar() }, [pagina, filtroEstado, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const lista = useMemo(() => {
-    let res = pedidos
-    if (filtroEstado !== 'TODOS') res = res.filter(p => p.estado === filtroEstado)
-    if (busqueda.trim()) {
-      const q = busqueda.toLowerCase()
-      res = res.filter(p =>
-        p.comprador.toLowerCase().includes(q) ||
-        String(p.id).includes(q)
-      )
-    }
-    return res
-  }, [pedidos, filtroEstado, busqueda])
-
-  const totalMostrado = lista.reduce((s, p) => s + p.total, 0)
+  const pedidos = data?.contenido ?? []
+  const totalMostrado = pedidos.reduce((s, p) => s + p.total, 0)
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-4 mb-2">
+        <Link to="/moderador/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">
+          ← Panel moderador
+        </Link>
+      </div>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
@@ -67,31 +69,43 @@ export default function ModeradorPedidosPage() {
           className="input max-w-xs text-sm"
           placeholder="Buscar por comprador o ID..."
           value={busqueda}
-          onChange={e => setBusqueda(e.target.value)}
+          onChange={e => { setBusqueda(e.target.value); if (pagina !== 0) setPagina(0) }}
         />
       </div>
 
       {/* Filtros de estado */}
       <div className="flex gap-2 mb-5 flex-wrap">
-        {estados.map(e => (
+        <button
+          onClick={() => { setFiltroEstado(''); if (pagina !== 0) setPagina(0) }}
+          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+            ${filtroEstado === '' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+        >
+          Todos
+        </button>
+        {Object.keys(ESTADO_COLOR).map(e => (
           <button
             key={e}
-            onClick={() => setFiltroEstado(e)}
+            onClick={() => { setFiltroEstado(e); if (pagina !== 0) setPagina(0) }}
+            title={ESTADO_INFO[e]}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-              ${filtroEstado === e
-                ? 'bg-primary-600 text-white border-primary-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+              ${filtroEstado === e ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
           >
-            {e === 'TODOS' ? `Todos (${pedidos.length})` : `${e} (${pedidos.filter(p => p.estado === e).length})`}
+            {e.replace(/_/g, ' ')}
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-4">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
         </div>
-      ) : lista.length === 0 ? (
+      ) : pedidos.length === 0 ? (
         <p className="text-center text-gray-400 py-16">No hay pedidos que coincidan.</p>
       ) : (
         <>
@@ -108,14 +122,17 @@ export default function ModeradorPedidosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {lista.map(p => (
+                  {pedidos.map(p => (
                     <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-gray-400 font-mono text-xs">#{p.id}</td>
                       <td className="px-4 py-3 font-medium text-gray-800">@{p.comprador}</td>
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatFecha(p.fecha)}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-medium border px-2 py-0.5 rounded-full ${estadoClase(p.estado)}`}>
-                          {p.estado}
+                        <span
+                          className={`text-xs font-medium border px-2 py-0.5 rounded-full cursor-help ${ESTADO_COLOR[p.estado] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                          title={ESTADO_INFO[p.estado] ?? ''}
+                        >
+                          {p.estado.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-800">
@@ -127,12 +144,36 @@ export default function ModeradorPedidosPage() {
               </table>
             </div>
           </div>
-          <p className="text-right text-sm text-gray-500 mt-3">
-            {lista.length} pedidos · Total:{' '}
-            <span className="font-semibold text-gray-800">
-              ${totalMostrado.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-            </span>
-          </p>
+
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-sm text-gray-500">
+              {data?.totalElementos ?? 0} pedidos en total · Suma de esta página:{' '}
+              <span className="font-semibold text-gray-800">
+                ${totalMostrado.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+              </span>
+            </p>
+            {data && data.totalPaginas > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPagina(p => p - 1)}
+                  disabled={pagina === 0}
+                  className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                <span className="text-sm text-gray-500">
+                  Página {data.paginaActual + 1} de {data.totalPaginas}
+                </span>
+                <button
+                  onClick={() => setPagina(p => p + 1)}
+                  disabled={pagina >= data.totalPaginas - 1}
+                  className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

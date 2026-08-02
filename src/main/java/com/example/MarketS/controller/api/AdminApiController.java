@@ -90,15 +90,19 @@ public class AdminApiController {
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard() {
-        return ResponseEntity.ok(Map.of(
-                "totalUsuarios",   userService.contarTodos(),
-                "totalClientes",   userService.contarPorRol("ROLE_CLIENTE"),
-                "totalVendedores", userService.contarPorRol("ROLE_VENDEDOR"),
-                "totalAdmins",     userService.contarPorRol("ROLE_ADMIN"),
-                "reputacionVendedores",  distribucionReputacion("ROLE_VENDEDOR", true),
-                "reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false),
-                "totalFavoritos",      favoritoRepository.count(),
-                "productoMasGuardado", productoMasGuardado()
+        // Map.ofEntries en vez de Map.of: con 11 pares se pasa del máximo de 10 que soporta Map.of.
+        return ResponseEntity.ok(Map.ofEntries(
+                Map.entry("totalUsuarios",   userService.contarTodos()),
+                Map.entry("totalClientes",   userService.contarPorRol("ROLE_CLIENTE")),
+                Map.entry("totalVendedores", userService.contarPorRol("ROLE_VENDEDOR")),
+                Map.entry("totalAdmins",     userService.contarPorRol("ROLE_ADMIN")),
+                Map.entry("totalProductos",   productoRepository.count()),
+                Map.entry("productosActivos", productoRepository.countByActivoTrue()),
+                Map.entry("totalPedidos",     pedidoRepository.count()),
+                Map.entry("reputacionVendedores",  distribucionReputacion("ROLE_VENDEDOR", true)),
+                Map.entry("reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false)),
+                Map.entry("totalFavoritos",      favoritoRepository.count()),
+                Map.entry("productoMasGuardado", productoMasGuardado())
         ));
     }
 
