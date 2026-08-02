@@ -90,12 +90,13 @@ public class AdminApiController {
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard() {
-        // Map.ofEntries en vez de Map.of: con 11 pares se pasa del máximo de 10 que soporta Map.of.
+        // Map.ofEntries en vez de Map.of: con 12 pares se pasa del máximo de 10 que soporta Map.of.
         return ResponseEntity.ok(Map.ofEntries(
-                Map.entry("totalUsuarios",   userService.contarTodos()),
-                Map.entry("totalClientes",   userService.contarPorRol("ROLE_CLIENTE")),
-                Map.entry("totalVendedores", userService.contarPorRol("ROLE_VENDEDOR")),
-                Map.entry("totalAdmins",     userService.contarPorRol("ROLE_ADMIN")),
+                Map.entry("totalUsuarios",    userService.contarTodos()),
+                Map.entry("totalClientes",    userService.contarPorRol("ROLE_CLIENTE")),
+                Map.entry("totalVendedores",  userService.contarPorRol("ROLE_VENDEDOR")),
+                Map.entry("totalModeradores", userService.contarPorRol("ROLE_MODERADOR")),
+                Map.entry("totalAdmins",      userService.contarPorRol("ROLE_ADMIN")),
                 Map.entry("totalProductos",   productoRepository.count()),
                 Map.entry("productosActivos", productoRepository.countByActivoTrue()),
                 Map.entry("totalPedidos",     pedidoRepository.count()),

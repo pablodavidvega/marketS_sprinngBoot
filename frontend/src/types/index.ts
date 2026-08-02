@@ -187,6 +187,7 @@ export interface DashboardAdmin {
   totalUsuarios: number
   totalClientes: number
   totalVendedores: number
+  totalModeradores: number
   totalAdmins: number
   totalProductos: number
   productosActivos: number

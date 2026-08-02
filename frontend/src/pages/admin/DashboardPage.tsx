@@ -149,6 +149,7 @@ export default function AdminDashboardPage() {
     { label: 'Total usuarios', value: data.totalUsuarios, color: 'text-primary-600' },
     { label: 'Clientes', value: data.totalClientes, color: 'text-blue-600' },
     { label: 'Vendedores', value: data.totalVendedores, color: 'text-green-600' },
+    { label: 'Moderadores', value: data.totalModeradores, color: 'text-cyan-600' },
     { label: 'Admins', value: data.totalAdmins, color: 'text-purple-600' },
     { label: 'Favoritos guardados', value: data.totalFavoritos, color: 'text-red-500' },
     { label: 'Productos totales', value: data.totalProductos, color: 'text-teal-600' },
