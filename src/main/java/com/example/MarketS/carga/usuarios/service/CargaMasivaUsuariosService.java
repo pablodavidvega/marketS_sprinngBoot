@@ -114,21 +114,41 @@ public class CargaMasivaUsuariosService {
         String username = col(datos, 0);
         String email    = col(datos, 1);
         String password = col(datos, 2);
+        String phone    = col(datos, 3);
 
         if (username.isBlank()) throw new IllegalArgumentException("'username' es obligatorio");
         if (email.isBlank())    throw new IllegalArgumentException("'email' es obligatorio");
         if (password.isBlank()) throw new IllegalArgumentException("'password' es obligatoria");
 
+        // username, email, password y phone son siempre las primeras 4 columnas, y rol siempre
+        // la última. Si el CSV no encerró entre comillas una dirección con coma (ej. "Calle 10 #
+        // 5-20, Bogotá"), la coma interna la parte en columnas de más: todo lo que quede entre
+        // phone y la última columna se reconstruye como una sola dirección, en vez de que el
+        // rol quede empujado a un valor que nunca coincide con VENDEDOR/CLIENTE.
+        String address;
+        String rolInput;
+        if (datos.length <= 6) {
+            address = col(datos, 4);
+            rolInput = col(datos, 5).toUpperCase();
+        } else {
+            StringBuilder direccion = new StringBuilder();
+            for (int i = 4; i < datos.length - 1; i++) {
+                if (direccion.length() > 0) direccion.append(", ");
+                direccion.append(col(datos, i));
+            }
+            address = direccion.toString();
+            rolInput = col(datos, datos.length - 1).toUpperCase();
+        }
+
         User u = new User();
         u.setUsername(username);
         u.setEmail(email);
         u.setPassword(password); // se encripta en guardarUsuario
-        u.setPhone(col(datos, 3).isBlank() ? "" : col(datos, 3));
-        u.setAddress(col(datos, 4).isBlank() ? null : col(datos, 4));
+        u.setPhone(phone.isBlank() ? "" : phone);
+        u.setAddress(address.isBlank() ? null : address);
         u.setActive(true);
 
         // Rol: CLIENTE por defecto, acepta CLIENTE o VENDEDOR
-        String rolInput = col(datos, 5).toUpperCase();
         String rolname = rolInput.equals("VENDEDOR") ? "ROLE_VENDEDOR" : "ROLE_CLIENTE";
         Rol rol = rolRepository.findByRolname(rolname)
                 .orElseThrow(() -> new IllegalStateException("Rol '" + rolname + "' no encontrado en la BD"));
