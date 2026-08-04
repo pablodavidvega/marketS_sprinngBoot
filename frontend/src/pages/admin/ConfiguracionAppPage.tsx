@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { useAppConfig, aplicarColor, type AppConfigData } from '../../context/AppConfigContext'
@@ -21,6 +21,7 @@ export default function ConfiguracionAppPage() {
   const [reseting, setReseting] = useState(false)
   const [mensaje,  setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [logoError, setLogoError] = useState(false)
+  const [subiendoLogo, setSubiendoLogo] = useState(false)
 
   useEffect(() => {
     api.get<AppConfigData>('/api/config/app')
@@ -45,6 +46,27 @@ export default function ConfiguracionAppPage() {
       setMensaje({ tipo: 'error', texto: 'Error al guardar. Intenta de nuevo.' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleLogoFile(e: ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+    setSubiendoLogo(true)
+    setMensaje(null)
+    try {
+      const fd = new FormData()
+      fd.append('imagen', archivo)
+      const res = await api.post<AppConfigData>('/api/config/app/logo', fd)
+      setForm(prev => ({ ...prev, logoUrl: res.data.logoUrl }))
+      setLogoError(false)
+      await refresh()
+      setMensaje({ tipo: 'ok', texto: 'Logo subido y guardado correctamente.' })
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al subir el logo. Intenta de nuevo.' })
+    } finally {
+      setSubiendoLogo(false)
     }
   }
 
@@ -159,16 +181,29 @@ export default function ConfiguracionAppPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                URL del logotipo <span className="text-gray-400 font-normal">(opcional)</span>
+                Logotipo <span className="text-gray-400 font-normal">(opcional)</span>
               </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="input py-1 text-xs flex-1"
+                  disabled={subiendoLogo}
+                  onChange={handleLogoFile}
+                />
+                {subiendoLogo && <span className="text-xs text-gray-400">Subiendo...</span>}
+              </div>
               <input
-                className="input"
+                className="input mt-2"
                 value={form.logoUrl}
                 onChange={e => { set('logoUrl', e.target.value); setLogoError(false) }}
                 placeholder="https://cdn.miempresa.com/logo.png"
                 type="url"
               />
-              <p className="text-xs text-gray-400 mt-1">Si se deja vacío, se muestra el nombre como texto.</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Sube una imagen desde tu equipo (se guarda al instante) o pega la URL de una imagen ya alojada.
+                Si se deja vacío, se muestra el nombre como texto.
+              </p>
             </div>
 
             <div>

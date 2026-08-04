@@ -1,12 +1,15 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.service.CloudStorageService;
 import com.example.MarketS.service.ConfiguracionAppService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -20,6 +23,7 @@ public class AppConfigController {
     private static final String KEY_DESCRIPCION = "app.descripcion";
 
     private final ConfiguracionAppService configuracionAppService;
+    private final CloudStorageService cloudStorageService;
 
     @Value("${app.nombre:MarketS}")
     private String nombreDefault;
@@ -50,6 +54,17 @@ public class AppConfigController {
         if (body.containsKey("colorPrimario")) configuracionAppService.set(KEY_COLOR,       body.get("colorPrimario").strip());
         if (body.containsKey("logoUrl"))       configuracionAppService.set(KEY_LOGO,        body.get("logoUrl").strip());
         if (body.containsKey("descripcion"))   configuracionAppService.set(KEY_DESCRIPCION, body.get("descripcion").strip());
+        return getConfig();
+    }
+
+    @PostMapping("/app/logo")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> subirLogo(@RequestParam("imagen") MultipartFile imagen) throws IOException {
+        if (imagen.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "La imagen es obligatoria"));
+        }
+        String url = cloudStorageService.subirArchivo(imagen, "config");
+        configuracionAppService.set(KEY_LOGO, url);
         return getConfig();
     }
 
