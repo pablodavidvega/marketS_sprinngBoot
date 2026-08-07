@@ -8,6 +8,10 @@ import { buildImageUrl } from '../utils/image'
 const DURACION_MIN = 3000
 const DURACION_MAX = 5000
 
+// Paleta fija del showcase de "últimos productos" — un color por posición de columna,
+// independiente del producto y del color de marca configurable (ver ConfiguracionAppPage).
+const PALETA_SHOWCASE = ['#F2A900', '#22252B', '#7C3AED', '#F0466E', '#0EA5B7']
+
 type SlideItem =
   | { tipo: 'resumen'; key: 'resumen'; productos: Producto[] }
   | { tipo: 'banner'; key: string; banner: BannerSlide }
@@ -37,7 +41,7 @@ export default function ProductosRecientesSlider() {
 
   useEffect(() => {
     Promise.all([
-      getProductosRecientes(10).then(r => setProductos(r.data)).catch(() => {}),
+      getProductosRecientes(5).then(r => setProductos(r.data)).catch(() => {}),
       getBannersActivos().then(r => setBanners(r.data)).catch(() => {}),
     ]).finally(() => setCargado(true))
   }, [])
@@ -107,10 +111,6 @@ export default function ProductosRecientesSlider() {
     setIndex(1)
   }
 
-  function irAlListado() {
-    navigate('/productos/recientes')
-  }
-
   function irAlBanner(banner: BannerSlide) {
     const { interno, ruta } = resolverDestino(banner.enlace)
     if (interno) navigate(ruta)
@@ -146,54 +146,49 @@ export default function ProductosRecientesSlider() {
             return (
               <div
                 key={`${item.key}-${i}`}
-                role="button"
-                tabIndex={0}
-                onClick={irAlListado}
-                onKeyDown={e => { if (e.key === 'Enter') irAlListado() }}
-                className="relative w-full h-full flex-shrink-0 cursor-pointer overflow-hidden bg-gradient-to-br from-[#0d1b3d] via-[#060e24] to-[#000510] flex flex-col"
+                className="relative w-full h-full flex-shrink-0 overflow-hidden"
               >
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" />
+                <div className="w-full h-full flex sm:grid sm:grid-cols-5 overflow-x-auto snap-x snap-mandatory">
+                  {item.productos.map((p, colIdx) => {
+                    const imagenUrl = buildImageUrl(p.imagen)
+                    const color = PALETA_SHOWCASE[colIdx % PALETA_SHOWCASE.length]
+                    return (
+                      <div
+                        key={p.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigate(`/productos/${p.id}`)}
+                        onKeyDown={e => { if (e.key === 'Enter') navigate(`/productos/${p.id}`) }}
+                        className="group relative flex-shrink-0 w-[75%] sm:w-auto h-full flex flex-col justify-end cursor-pointer snap-center px-3 pb-4 pt-6"
+                        style={{ backgroundColor: color }}
+                      >
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity pointer-events-none" />
 
-                <div className="relative px-4 pt-3 pb-2">
-                  <span className="text-white font-bold text-sm flex items-center gap-1.5 drop-shadow">
-                    ✦ Lo más nuevo
-                  </span>
-                </div>
-
-                <div className="relative flex-1 px-3 pb-3">
-                  <div className="grid grid-cols-3 grid-rows-4 sm:grid-cols-5 sm:grid-rows-2 gap-1.5 sm:gap-3 h-full">
-                    {item.productos.map(p => {
-                      const imagenUrl = buildImageUrl(p.imagen)
-                      return (
-                        <div
-                          key={p.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={e => { e.stopPropagation(); navigate(`/productos/${p.id}`) }}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') { e.stopPropagation(); navigate(`/productos/${p.id}`) }
-                          }}
-                          className="group flex flex-col rounded-lg bg-white/10 hover:bg-white/20 transition-colors p-1.5 cursor-pointer min-h-0"
-                        >
-                          <div className="relative flex-1 rounded-md overflow-hidden bg-white/10 min-h-0">
+                        {/* "Plato" claro que contiene la imagen tal cual venga (sin estirar ni recortar) —
+                            las fotos las suben los vendedores con tamaños y fondos dispares */}
+                        <div className="relative w-full flex-1 min-h-0 mb-3 p-2">
+                          <div className="w-full h-full rounded-2xl bg-white/90 shadow-lg flex items-center justify-center overflow-hidden p-3">
                             {imagenUrl ? (
                               <img
                                 src={imagenUrl}
                                 alt={p.nombre}
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center text-white/50 text-[10px]">Sin imagen</div>
+                              <span className="text-gray-300 text-xs">Sin imagen</span>
                             )}
                           </div>
-                          <p className="text-white text-[10px] sm:text-[11px] font-medium line-clamp-1 mt-1">{p.nombre}</p>
-                          <p className="text-emerald-300 text-[10px] sm:text-[11px] font-bold leading-tight">
-                            ${p.precio.toLocaleString('es-CO')}
-                          </p>
                         </div>
-                      )
-                    })}
-                  </div>
+
+                        <div className="relative w-full text-center">
+                          <p className="text-white font-bold text-sm line-clamp-2 drop-shadow">{p.nombre}</p>
+                          <p className="text-white/90 font-bold text-base mt-0.5">${p.precio.toLocaleString('es-CO')}</p>
+                        </div>
+
+                        <span className="absolute bottom-3 right-3 text-white/80 text-lg leading-none">→</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
