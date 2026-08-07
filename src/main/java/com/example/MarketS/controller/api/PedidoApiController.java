@@ -9,6 +9,7 @@ import com.example.MarketS.model.ResolucionVentaExterna;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.PedidoRepository;
 import com.example.MarketS.repository.ResenaCompradorRepository;
+import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.ResolucionVentaExternaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
@@ -53,6 +54,7 @@ public class PedidoApiController {
     private final NotificacionService notificacionService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final ResenaRepository resenaRepository;
     private final ResenaCompradorRepository resenaCompradorRepository;
     private final ResolucionVentaExternaRepository resolucionVentaExternaRepository;
     private final FrontendLinkBuilder frontendLinkBuilder;
@@ -64,6 +66,7 @@ public class PedidoApiController {
                                 NotificacionService notificacionService,
                                 EmailService emailService,
                                 UserRepository userRepository,
+                                ResenaRepository resenaRepository,
                                 ResenaCompradorRepository resenaCompradorRepository,
                                 ResolucionVentaExternaRepository resolucionVentaExternaRepository,
                                 FrontendLinkBuilder frontendLinkBuilder) {
@@ -74,6 +77,7 @@ public class PedidoApiController {
         this.notificacionService = notificacionService;
         this.emailService = emailService;
         this.userRepository = userRepository;
+        this.resenaRepository = resenaRepository;
         this.resenaCompradorRepository = resenaCompradorRepository;
         this.resolucionVentaExternaRepository = resolucionVentaExternaRepository;
         this.frontendLinkBuilder = frontendLinkBuilder;
@@ -239,9 +243,19 @@ public class PedidoApiController {
                 .toList();
 
         Map<Long, String> vendedorUsernames = resolverVendedorUsernames(pedidosEntidad);
+
+        List<Long> productoIds = pedidosEntidad.stream()
+                .flatMap(p -> p.getDetalles().stream())
+                .map(d -> d.getProducto().getId())
+                .distinct()
+                .toList();
+        Set<Long> productosResenados = productoIds.isEmpty()
+                ? Set.of()
+                : new java.util.HashSet<>(resenaRepository.findProductoIdsResenadosByComprador(usuario.getId(), productoIds));
+
         List<PedidoResponseDTO> contenido = pedidosEntidad
                 .stream()
-                .map(p -> PedidoResponseDTO.from(p, null, null, vendedorUsernames))
+                .map(p -> PedidoResponseDTO.from(p, null, null, vendedorUsernames, productosResenados))
                 .toList();
 
         return ResponseEntity.ok(Map.of(

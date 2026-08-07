@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getMisPedidos, confirmarRecepcion, type MisPedidosResponse } from '../../api/pedidos'
+import { crearResena } from '../../api/productos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
+import Stars from '../../components/Stars'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+
+// Mismo criterio que ResenaApiController/PedidoApiController.calificarComprador: estados que
+// representan una venta concretada (por MercadoPago o por fuera de la app).
+const ESTADOS_RESENABLES = ['PAGADO', 'RECIBIDO', 'COMPLETADO_EXTERNO']
 
 export default function MisPedidosPage() {
   const [searchParams] = useSearchParams()
@@ -14,6 +20,17 @@ export default function MisPedidosPage() {
   const [confirmando, setConfirmando] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<string | null>(null)
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
+
+  // Calificación de producto desde la vista de pedidos (misma reseña de DetallePage, ver
+  // ResenaApiController). formAbierto/formData usan como clave `${pedidoId}-${productoId}`
+  // para poder tener el formulario abierto de forma independiente si el mismo producto
+  // aparece en más de un pedido; resenados es global por producto porque la reseña es única
+  // por producto+comprador, sin importar en qué pedido se originó.
+  const [formAbierto, setFormAbierto] = useState<string | null>(null)
+  const [formData, setFormData] = useState<Record<string, { calificacion: number; comentario: string }>>({})
+  const [enviandoResena, setEnviandoResena] = useState<string | null>(null)
+  const [errorResena, setErrorResena] = useState<Record<string, string>>({})
+  const [resenados, setResenados] = useState<Set<number>>(new Set())
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({})
   // Guarda el último query string ya aplicado (no un simple booleano) para poder reaccionar
   // de nuevo cuando se hace clic en otra notificación estando ya en esta vista: como la ruta
@@ -63,6 +80,27 @@ export default function MisPedidosPage() {
       } : prev)
     } finally {
       setConfirmando(null)
+    }
+  }
+
+  async function handleEnviarResena(key: string, productoId: number, e: React.FormEvent) {
+    e.preventDefault()
+    const datos = formData[key] ?? { calificacion: 0, comentario: '' }
+    if (datos.calificacion === 0) {
+      setErrorResena(prev => ({ ...prev, [key]: 'Selecciona una calificación' }))
+      return
+    }
+    setEnviandoResena(key)
+    setErrorResena(prev => ({ ...prev, [key]: '' }))
+    try {
+      await crearResena(productoId, { calificacion: datos.calificacion, comentario: datos.comentario.trim() || undefined })
+      setResenados(prev => new Set(prev).add(productoId))
+      setFormAbierto(null)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setErrorResena(prev => ({ ...prev, [key]: msg || 'Error al enviar la reseña' }))
+    } finally {
+      setEnviandoResena(null)
     }
   }
 
@@ -151,34 +189,87 @@ export default function MisPedidosPage() {
               {expandido === pedido.pedidoId && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex flex-col gap-3">
-                    {pedido.detalles.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Link to={`/productos/${item.productoId}`} className="flex-shrink-0">
-                          {item.productoImagen ? (
-                            <img
-                              src={item.productoImagen}
-                              alt={item.productoNombre}
-                              className="w-14 h-14 object-cover rounded-lg"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xl">
-                              📦
-                            </div>
-                          )}
-                        </Link>
-                        <div className="flex-1 min-w-0">
-                          <Link to={`/productos/${item.productoId}`} className="font-medium text-gray-800 truncate hover:text-primary-600 hover:underline block">
-                            {item.productoNombre}
+                    {pedido.detalles.map((item, i) => {
+                      const resenaKey = `${pedido.pedidoId}-${item.productoId}`
+                      const yaReseno = item.yaReseno || resenados.has(item.productoId)
+                      const puedeResenar = ESTADOS_RESENABLES.includes(pedido.estado)
+                      const datosForm = formData[resenaKey] ?? { calificacion: 0, comentario: '' }
+                      return (
+                      <div key={i} className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <Link to={`/productos/${item.productoId}`} className="flex-shrink-0">
+                            {item.productoImagen ? (
+                              <img
+                                src={item.productoImagen}
+                                alt={item.productoNombre}
+                                className="w-14 h-14 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xl">
+                                📦
+                              </div>
+                            )}
                           </Link>
-                          <p className="text-sm text-gray-500">
-                            {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <Link to={`/productos/${item.productoId}`} className="font-medium text-gray-800 truncate hover:text-primary-600 hover:underline block">
+                              {item.productoNombre}
+                            </Link>
+                            <p className="text-sm text-gray-500">
+                              {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
+                            </p>
+                          </div>
+                          <span className="font-semibold text-gray-700 flex-shrink-0">
+                            ${item.subtotal.toLocaleString('es-CO')}
+                          </span>
                         </div>
-                        <span className="font-semibold text-gray-700 flex-shrink-0">
-                          ${item.subtotal.toLocaleString('es-CO')}
-                        </span>
+
+                        {puedeResenar && (
+                          <div className="ml-[68px]">
+                            {yaReseno ? (
+                              <span className="text-xs text-green-600">✓ Ya calificaste este producto</span>
+                            ) : formAbierto === resenaKey ? (
+                              <form onSubmit={e => handleEnviarResena(resenaKey, item.productoId, e)} className="bg-gray-50 rounded-lg p-3 max-w-sm">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Stars
+                                    value={datosForm.calificacion}
+                                    interactive
+                                    onChange={v => setFormData(prev => ({ ...prev, [resenaKey]: { ...datosForm, calificacion: v } }))}
+                                  />
+                                </div>
+                                <textarea
+                                  value={datosForm.comentario}
+                                  onChange={e => setFormData(prev => ({ ...prev, [resenaKey]: { ...datosForm, comentario: e.target.value } }))}
+                                  placeholder="Comentario opcional..."
+                                  maxLength={500}
+                                  rows={2}
+                                  className="input w-full resize-none text-sm"
+                                />
+                                {errorResena[resenaKey] && (
+                                  <p className="text-red-500 text-xs mt-1">{errorResena[resenaKey]}</p>
+                                )}
+                                <div className="flex gap-2 mt-2">
+                                  <button type="submit" disabled={enviandoResena === resenaKey} className="btn-primary text-sm py-1.5 px-3">
+                                    {enviandoResena === resenaKey ? 'Enviando...' : 'Publicar'}
+                                  </button>
+                                  <button type="button" onClick={() => setFormAbierto(null)} className="btn-secondary text-sm py-1.5 px-3">
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setFormAbierto(resenaKey)}
+                                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                              >
+                                ⭐ Calificar producto
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* Chat con cada vendedor del pedido (un pedido puede tener varios) */}

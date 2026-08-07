@@ -17,6 +17,11 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
     boolean existsByProductoIdAndCompradorId(Long productoId, Long compradorId);
 
+    // Batch: de una lista de productos, cuáles ya calificó este comprador — usado por
+    // PedidoApiController.misPedidos para mostrar el botón "Calificar" solo donde falta.
+    @Query("SELECT r.producto.id FROM Resena r WHERE r.comprador.id = :compradorId AND r.producto.id IN :productoIds")
+    List<Long> findProductoIdsResenadosByComprador(@Param("compradorId") Long compradorId, @Param("productoIds") List<Long> productoIds);
+
     long countByProductoId(Long productoId);
 
     @Query("SELECT COALESCE(AVG(r.calificacion), 0.0) FROM Resena r WHERE r.producto.id = :productoId")

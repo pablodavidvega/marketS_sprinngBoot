@@ -7,6 +7,7 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Getter
 @Builder
@@ -32,6 +33,7 @@ public class PedidoResponseDTO {
         private Double subtotal;
         private Long vendedorId;
         private String vendedorUsername;
+        private Boolean yaReseno;
     }
 
     public static PedidoResponseDTO from(Pedido pedido) {
@@ -48,6 +50,15 @@ public class PedidoResponseDTO {
     // una consulta extra por cada vendedor distinto (ver Producto.vendedor).
     public static PedidoResponseDTO from(Pedido pedido, String paymentUrl, String preferenceId,
                                           Map<Long, String> vendedorUsernames) {
+        return from(pedido, paymentUrl, preferenceId, vendedorUsernames, null);
+    }
+
+    // Variante con estado de reseña por producto (ver PedidoApiController.misPedidos): permite
+    // mostrar el botón "Calificar" en la vista de pedidos sin que el comprador tenga que volver
+    // al detalle del producto — misma reseña de producto de siempre (Resena), un solo botón que
+    // ya la alimenta.
+    public static PedidoResponseDTO from(Pedido pedido, String paymentUrl, String preferenceId,
+                                          Map<Long, String> vendedorUsernames, Set<Long> productosResenados) {
         List<DetalleDTO> detalles = pedido.getDetalles() != null
                 ? pedido.getDetalles().stream().map(d -> {
                         Long vendedorId = d.getProducto().getVendedor() != null ? d.getProducto().getVendedor().getId() : null;
@@ -63,6 +74,7 @@ public class PedidoResponseDTO {
                                 .subtotal(d.getPrecioUnitario() * d.getCantidad())
                                 .vendedorId(vendedorId)
                                 .vendedorUsername(vendedorUsername)
+                                .yaReseno(productosResenados != null && productosResenados.contains(d.getProducto().getId()))
                                 .build();
                     })
                         .toList()

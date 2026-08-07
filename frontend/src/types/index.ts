@@ -151,6 +151,7 @@ export interface DetallePedido {
   subtotal: number
   vendedorId: number | null
   vendedorUsername: string | null
+  yaReseno: boolean
 }
 
 export interface PedidoResponse {
