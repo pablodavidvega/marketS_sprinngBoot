@@ -11,6 +11,7 @@ type CarritoAction =
   | { type: 'QUITAR'; payload: { productoId: number } }
   | { type: 'ACTUALIZAR'; payload: { productoId: number; cantidad: number } }
   | { type: 'LIMPIAR' }
+  | { type: 'LIMPIAR_VENDEDOR'; payload: { vendedorId: number | null } }
   | { type: 'CARGAR'; payload: CarritoItem[] }
 
 interface CarritoContextType {
@@ -21,6 +22,7 @@ interface CarritoContextType {
   quitar: (productoId: number) => void
   actualizar: (productoId: number, cantidad: number) => void
   limpiar: () => void
+  limpiarVendedor: (vendedorId: number | null) => void
 }
 
 const CarritoContext = createContext<CarritoContextType | null>(null)
@@ -28,11 +30,16 @@ const CarritoContext = createContext<CarritoContextType | null>(null)
 function reducer(state: CarritoState, action: CarritoAction): CarritoState {
   switch (action.type) {
     case 'AGREGAR': {
-      const existing = state.items.find(i => i.productoId === action.payload.productoId)
+      // Clave compuesta productoId+vendedorId: el mismo producto agregado dos veces se fusiona,
+      // pero un producto con igual id de vendedores distintos (no debería pasar en la práctica,
+      // pero por las dudas) se mantiene como items separados.
+      const existing = state.items.find(
+        i => i.productoId === action.payload.productoId && i.vendedorId === action.payload.vendedorId
+      )
       if (existing) {
         return {
           items: state.items.map(i =>
-            i.productoId === action.payload.productoId
+            i === existing
               // stock se actualiza al valor más reciente (el que trae el payload) por si cambió
               // desde que se agregó por primera vez; cantidad nunca puede superarlo.
               ? { ...i, stock: action.payload.stock, cantidad: Math.min(i.cantidad + action.payload.cantidad, action.payload.stock) }
@@ -54,6 +61,8 @@ function reducer(state: CarritoState, action: CarritoAction): CarritoState {
       }
     case 'LIMPIAR':
       return { items: [] }
+    case 'LIMPIAR_VENDEDOR':
+      return { items: state.items.filter(i => i.vendedorId !== action.payload.vendedorId) }
     case 'CARGAR':
       return { items: action.payload }
     default:
@@ -103,6 +112,7 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
         quitar: (productoId) => dispatch({ type: 'QUITAR', payload: { productoId } }),
         actualizar: (productoId, cantidad) => dispatch({ type: 'ACTUALIZAR', payload: { productoId, cantidad } }),
         limpiar: () => dispatch({ type: 'LIMPIAR' }),
+        limpiarVendedor: (vendedorId) => dispatch({ type: 'LIMPIAR_VENDEDOR', payload: { vendedorId } }),
       }}
     >
       {children}

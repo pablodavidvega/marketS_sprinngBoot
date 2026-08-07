@@ -18,6 +18,7 @@ import VendedorProductosPage from './pages/vendedor/ProductosPage'
 import VendedorPedidosPage from './pages/vendedor/PedidosPage'
 import VendedorReportesPage from './pages/vendedor/ReportesPage'
 import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
+import VendedorMercadoPagoPage from './pages/vendedor/MercadoPagoPage'
 import MisPedidosPage from './pages/cliente/MisPedidosPage'
 import EditarPerfilPage from './pages/EditarPerfilPage'
 import VenderPage from './pages/VenderPage'
@@ -163,6 +164,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['VENDEDOR']}>
                 <CargaMasivaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendedor/pagos"
+            element={
+              <ProtectedRoute roles={['VENDEDOR']}>
+                <VendedorMercadoPagoPage />
               </ProtectedRoute>
             }
           />

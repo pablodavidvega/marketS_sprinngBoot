@@ -14,6 +14,7 @@ import com.example.MarketS.repository.ResolucionVentaExternaRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.FrontendLinkBuilder;
+import com.example.MarketS.service.MercadoPagoOAuthService;
 import com.example.MarketS.service.MercadoPagoService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.PedidoService;
@@ -50,6 +51,7 @@ public class PedidoApiController {
     private final PedidoService pedidoService;
     private final PedidoRepository pedidoRepository;
     private final MercadoPagoService mercadoPagoService;
+    private final MercadoPagoOAuthService mercadoPagoOAuthService;
     private final ProductoService productoService;
     private final NotificacionService notificacionService;
     private final EmailService emailService;
@@ -62,6 +64,7 @@ public class PedidoApiController {
     public PedidoApiController(PedidoService pedidoService,
                                 PedidoRepository pedidoRepository,
                                 MercadoPagoService mercadoPagoService,
+                                MercadoPagoOAuthService mercadoPagoOAuthService,
                                 ProductoService productoService,
                                 NotificacionService notificacionService,
                                 EmailService emailService,
@@ -73,6 +76,7 @@ public class PedidoApiController {
         this.pedidoService = pedidoService;
         this.pedidoRepository = pedidoRepository;
         this.mercadoPagoService = mercadoPagoService;
+        this.mercadoPagoOAuthService = mercadoPagoOAuthService;
         this.productoService = productoService;
         this.notificacionService = notificacionService;
         this.emailService = emailService;
@@ -135,6 +139,22 @@ public class PedidoApiController {
             return crearPedidoConAcuerdoExterno(pedido, metodoPago.toUpperCase());
         }
 
+        // El pago va directo a la cuenta de MercadoPago del vendedor del pedido (ver
+        // MercadoPagoOAuthService) — si no la conectó, no hay a dónde mandar el dinero y el
+        // pedido se rechaza (no queda un "PENDIENTE" fantasma; el stock recién baja al
+        // confirmarse el pago, así que rechazar acá no deja nada inconsistente).
+        User vendedorPedido = resolverVendedorDelPedido(pedido);
+        String accessTokenVendedor = vendedorPedido != null
+                ? mercadoPagoOAuthService.obtenerAccessTokenVigente(vendedorPedido).orElse(null)
+                : null;
+        if (accessTokenVendedor == null) {
+            pedido.setEstado("RECHAZADO");
+            pedidoRepository.save(pedido);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Este vendedor no tiene MercadoPago conectado. Elige un acuerdo externo (efectivo, transferencia, Nequi, otro) para completar la compra."
+            ));
+        }
+
         // Generar preferencia de MercadoPago con back_urls al frontend React
         String successUrl  = appUrl + "/api/pedidos/mp/exito?pedidoId=" + pedido.getId();
         String failureUrl  = appUrl + "/api/pedidos/mp/fallo?pedidoId=" + pedido.getId();
@@ -145,7 +165,8 @@ public class PedidoApiController {
                 pedido.getTotal(),
                 "Compra MarketS - Pedido #" + pedido.getId(),
                 usuario.getEmail(),
-                successUrl, failureUrl, pendingUrl
+                successUrl, failureUrl, pendingUrl,
+                accessTokenVendedor
         );
 
         if (!Boolean.TRUE.equals(mpResult.get("success"))) {
@@ -564,7 +585,7 @@ public class PedidoApiController {
             return false;
         }
 
-        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId);
+        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId, resolverTokenVendedorPorPedido(pedidoId));
 
         if (!Boolean.TRUE.equals(pago.get("valido"))) {
             return false;
@@ -586,7 +607,7 @@ public class PedidoApiController {
             return false;
         }
 
-        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId);
+        Map<String, Object> pago = mercadoPagoService.verificarPago(paymentId, resolverTokenVendedorPorPedido(pedidoId));
 
         if (!Boolean.TRUE.equals(pago.get("valido"))) {
             return false;
@@ -727,5 +748,28 @@ public class PedidoApiController {
         User usuario = UsuarioPrincipal.from(auth);
         if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
         return usuario;
+    }
+
+    // Un pedido es siempre de un solo vendedor (ver PedidoService.crearPedido); alcanza con el
+    // vendedor del primer detalle que lo tenga.
+    private User resolverVendedorDelPedido(Pedido pedido) {
+        if (pedido.getDetalles() == null) return null;
+        return pedido.getDetalles().stream()
+                .map(d -> d.getProducto().getVendedor())
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Token del vendedor dueño del pedido para verificar un pago con la API de MP — null si el
+    // pedido no tiene vendedor conectado (ej. órdenes creadas antes de conectar MercadoPago),
+    // en cuyo caso MercadoPagoService.verificarPago cae al token de la plataforma.
+    private String resolverTokenVendedorPorPedido(Long pedidoId) {
+        if (pedidoId == null) return null;
+        return pedidoRepository.findByIdWithDetalles(pedidoId)
+                .map(this::resolverVendedorDelPedido)
+                .filter(java.util.Objects::nonNull)
+                .flatMap(mercadoPagoOAuthService::obtenerAccessTokenVigente)
+                .orElse(null);
     }
 }

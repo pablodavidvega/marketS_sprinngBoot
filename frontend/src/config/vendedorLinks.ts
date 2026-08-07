@@ -38,4 +38,11 @@ export const VENDEDOR_LINKS: VendedorLink[] = [
     description: 'Análisis de ventas con gráficas y descarga CSV',
     iconClass: 'bg-blue-100 text-blue-600 group-hover:bg-blue-200',
   },
+  {
+    to: '/vendedor/pagos',
+    label: 'MercadoPago',
+    icon: '💳',
+    description: 'Conecta tu cuenta para recibir tus ventas directo',
+    iconClass: 'bg-teal-100 text-teal-600 group-hover:bg-teal-200',
+  },
 ]

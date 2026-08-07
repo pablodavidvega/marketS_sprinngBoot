@@ -89,6 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/tasas/**").permitAll()
                         .requestMatchers("/api/usuarios/estadisticas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/pedidos/mp/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/mercadopago/oauth/callback").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

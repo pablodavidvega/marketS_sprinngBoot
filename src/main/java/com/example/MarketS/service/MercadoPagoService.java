@@ -23,14 +23,26 @@ public class MercadoPagoService {
 
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email) {
-        return crearPreferencia(pedidoId, monto, descripcion, email, null, null, null);
+        return crearPreferencia(pedidoId, monto, descripcion, email, null, null, null, null);
     }
 
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email,
                                                 String successUrl, String failureUrl, String pendingUrl) {
+        return crearPreferencia(pedidoId, monto, descripcion, email, successUrl, failureUrl, pendingUrl, null);
+    }
+
+    // accessTokenVendedor: token OAuth propio del vendedor dueño del pedido (ver
+    // MercadoPagoOAuthService), para que el pago vaya directo a su cuenta. Si viene null, se usa
+    // el token de la propia plataforma (compatibilidad con los overloads de arriba).
+    public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
+                                                String descripcion, String email,
+                                                String successUrl, String failureUrl, String pendingUrl,
+                                                String accessTokenVendedor) {
         try {
-            String token = config.getAccessToken();
+            String token = (accessTokenVendedor != null && !accessTokenVendedor.isBlank())
+                    ? accessTokenVendedor
+                    : config.getAccessToken();
 
             if (token == null || token.isEmpty()) {
                 Map<String, Object> error = new HashMap<>();
@@ -143,8 +155,16 @@ public class MercadoPagoService {
      * y pertenece al pedido indicado. Nunca confiar solo en los query params del callback.
      */
     public Map<String, Object> verificarPago(String paymentId) {
+        return verificarPago(paymentId, null);
+    }
+
+    // accessTokenVendedor: el pago se consulta con el token de la cuenta de MP que lo recibió
+    // (el vendedor dueño del pedido) — si viene null, se usa el token de la plataforma.
+    public Map<String, Object> verificarPago(String paymentId, String accessTokenVendedor) {
         try {
-            String token = config.getAccessToken();
+            String token = (accessTokenVendedor != null && !accessTokenVendedor.isBlank())
+                    ? accessTokenVendedor
+                    : config.getAccessToken();
             if (token == null || token.isEmpty()) {
                 return Map.of("valido", false, "motivo", "Token MP no configurado");
             }

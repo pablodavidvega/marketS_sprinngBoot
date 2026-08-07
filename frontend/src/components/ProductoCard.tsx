@@ -66,6 +66,8 @@ export default function ProductoCard({ producto }: Props) {
       imagen: imagenUrl,
       cantidad: 1,
       stock: producto.stock,
+      vendedorId: producto.vendedorId ?? null,
+      vendedorUsername: producto.vendedorUsername ?? null,
     })
   }
 
@@ -78,6 +80,8 @@ export default function ProductoCard({ producto }: Props) {
       imagen: imagenUrl,
       cantidad: 1,
       stock: producto.stock,
+      vendedorId: producto.vendedorId ?? null,
+      vendedorUsername: producto.vendedorUsername ?? null,
     })
     navigate('/carrito')
   }

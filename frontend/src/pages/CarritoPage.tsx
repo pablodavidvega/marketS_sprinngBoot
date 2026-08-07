@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { crearPedido, type MetodoPago } from '../api/pedidos'
+import type { CarritoItem } from '../types'
 
 const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
   { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
@@ -11,8 +12,38 @@ const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
   { valor: 'OTRO', etiqueta: 'Otro acuerdo' },
 ]
 
-export default function CarritoPage() {
-  const { items, total, quitar, actualizar } = useCarrito()
+interface GrupoVendedor {
+  vendedorId: number | null
+  vendedorUsername: string | null
+  items: CarritoItem[]
+  subtotal: number
+}
+
+// Un pedido solo puede ser de un vendedor (ver PedidoService.crearPedido), así que el carrito
+// arma un grupo por vendedor en vez de mezclarlos: cada grupo se paga/checkoutea por separado.
+function agruparPorVendedor(items: CarritoItem[]): GrupoVendedor[] {
+  const grupos = new Map<string, GrupoVendedor>()
+  for (const item of items) {
+    const vendedorId = item.vendedorId ?? null
+    const clave = vendedorId === null ? 'sin-vendedor' : String(vendedorId)
+    const grupo = grupos.get(clave)
+    if (grupo) {
+      grupo.items.push(item)
+      grupo.subtotal += item.precio * item.cantidad
+    } else {
+      grupos.set(clave, {
+        vendedorId,
+        vendedorUsername: item.vendedorUsername ?? null,
+        items: [item],
+        subtotal: item.precio * item.cantidad,
+      })
+    }
+  }
+  return Array.from(grupos.values())
+}
+
+function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
+  const { quitar, actualizar, limpiarVendedor } = useCarrito()
   const { isAuthenticated, hasRole } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
@@ -33,9 +64,10 @@ export default function CarritoPage() {
     setLoading(true)
     try {
       const { data } = await crearPedido(
-        items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad })),
+        grupo.items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad })),
         metodoPago
       )
+      limpiarVendedor(grupo.vendedorId)
       if (metodoPago !== 'MERCADOPAGO') {
         navigate(`/pedidos/confirmacion?status=acordado&pedido_id=${data.pedidoId}`)
         return
@@ -47,6 +79,7 @@ export default function CarritoPage() {
       const errData = (err as { response?: { data?: { mensaje?: string; error?: string; pedidoId?: number } } })?.response?.data
       // El pedido se creó pero MercadoPago falló — navegar igual para poder simular pago
       if (errData?.pedidoId) {
+        limpiarVendedor(grupo.vendedorId)
         navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${errData.pedidoId}`)
         return
       }
@@ -56,27 +89,17 @@ export default function CarritoPage() {
     }
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13L5.4 5M17 19a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z" />
-        </svg>
-        <h2 className="text-xl font-semibold text-gray-600 mb-2">Tu carrito está vacío</h2>
-        <Link to="/" className="btn-primary inline-block mt-4">Ver productos</Link>
-      </div>
-    )
-  }
-
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Carrito de compras</h1>
+    <div className="card">
+      <h2 className="text-lg font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-100">
+        {grupo.vendedorUsername ? `Vendedor: @${grupo.vendedorUsername}` : 'Productos'}
+      </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Items */}
+        {/* Items del grupo */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          {items.map(item => (
-            <div key={item.productoId} className="card flex gap-4 items-start">
+          {grupo.items.map(item => (
+            <div key={item.productoId} className="flex gap-4 items-start">
               <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                 {item.imagen ? (
                   <img src={item.imagen} alt={item.nombre} className="w-full h-full object-cover" />
@@ -118,17 +141,16 @@ export default function CarritoPage() {
           ))}
         </div>
 
-        {/* Summary */}
-        <div className="card h-fit">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Resumen del pedido</h2>
+        {/* Resumen y checkout de este grupo */}
+        <div className="h-fit">
           <div className="flex justify-between text-gray-600 mb-2">
             <span>Subtotal</span>
-            <span>${total.toLocaleString('es-CO')}</span>
+            <span>${grupo.subtotal.toLocaleString('es-CO')}</span>
           </div>
           <div className="border-t border-gray-200 my-3" />
           <div className="flex justify-between font-bold text-gray-800 text-lg mb-4">
             <span>Total</span>
-            <span>${total.toLocaleString('es-CO')}</span>
+            <span>${grupo.subtotal.toLocaleString('es-CO')}</span>
           </div>
 
           <div className="mb-4">
@@ -137,7 +159,7 @@ export default function CarritoPage() {
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="radio"
-                  name="metodoPago"
+                  name={`metodoPago-${grupo.vendedorId ?? 'sin-vendedor'}`}
                   checked={metodoPago === 'MERCADOPAGO'}
                   onChange={() => setMetodoPago('MERCADOPAGO')}
                 />
@@ -147,7 +169,7 @@ export default function CarritoPage() {
                 <label key={m.valor} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="radio"
-                    name="metodoPago"
+                    name={`metodoPago-${grupo.vendedorId ?? 'sin-vendedor'}`}
                     checked={metodoPago === m.valor}
                     onChange={() => setMetodoPago(m.valor)}
                   />
@@ -190,12 +212,49 @@ export default function CarritoPage() {
                     ? 'Pagar con MercadoPago'
                     : 'Registrar pedido'}
           </button>
-
-          <Link to="/" className="block text-center text-sm text-gray-500 hover:text-primary-600 mt-3">
-            Seguir comprando
-          </Link>
         </div>
       </div>
+    </div>
+  )
+}
+
+export default function CarritoPage() {
+  const { items, total } = useCarrito()
+
+  if (items.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 6h13M7 13L5.4 5M17 19a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z" />
+        </svg>
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">Tu carrito está vacío</h2>
+        <Link to="/" className="btn-primary inline-block mt-4">Ver productos</Link>
+      </div>
+    )
+  }
+
+  const grupos = agruparPorVendedor(items)
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">Carrito de compras</h1>
+      {grupos.length > 1 && (
+        <p className="text-sm text-gray-500 mb-6">
+          Tienes productos de {grupos.length} vendedores distintos — cada uno se paga por separado.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-6">
+        {grupos.map(grupo => (
+          <GrupoCarrito key={grupo.vendedorId ?? 'sin-vendedor'} grupo={grupo} />
+        ))}
+      </div>
+
+      {grupos.length > 1 && (
+        <div className="mt-6 text-right text-sm text-gray-500">
+          Total general: <span className="font-semibold text-gray-700">${total.toLocaleString('es-CO')}</span>
+        </div>
+      )}
     </div>
   )
 }

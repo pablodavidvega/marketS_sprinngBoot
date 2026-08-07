@@ -26,6 +26,10 @@ public class FrontendLinkBuilder {
         return frontendUrl + "/productos/" + productoId + "?foco=preguntas";
     }
 
+    public String mercadoPagoConectado(boolean exito) {
+        return frontendUrl + "/vendedor/pagos?conectado=" + exito;
+    }
+
     private String rutaPedidos(boolean esVendedor) {
         return esVendedor ? "/vendedor/pedidos" : "/cliente/mis-pedidos";
     }

@@ -102,6 +102,20 @@ public class PedidoService {
                 total += subtotal;
             }
 
+            // Un pedido solo puede ser de un vendedor: lo exige el pago directo a la cuenta de
+            // MercadoPago de ese vendedor (una preferencia de pago pertenece a un solo vendedor).
+            // El carrito del frontend ya agrupa por vendedor antes de llamar a este endpoint,
+            // pero se valida también acá por si se llama directo a la API.
+            long vendedoresDistintos = detalles.stream()
+                    .map(d -> d.getProducto().getVendedor())
+                    .filter(java.util.Objects::nonNull)
+                    .map(User::getId)
+                    .distinct()
+                    .count();
+            if (vendedoresDistintos > 1) {
+                throw new RuntimeException("Todos los productos de un pedido deben ser del mismo vendedor");
+            }
+
             // Asegurar que la lista de detalles no sea null
             pedido.setDetalles(detalles);
             pedido.setTotal(total);

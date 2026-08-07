@@ -143,6 +143,8 @@ export default function DetallePage() {
       imagen:     primeraImagen,
       cantidad,
       stock:      producto.stock,
+      vendedorId: producto.vendedorId ?? null,
+      vendedorUsername: producto.vendedorUsername ?? null,
     })
     setAgregado(true)
     setTimeout(() => setAgregado(false), 2000)
@@ -221,6 +223,8 @@ export default function DetallePage() {
       imagen:     primeraImagen,
       cantidad,
       stock:      producto.stock,
+      vendedorId: producto.vendedorId ?? null,
+      vendedorUsername: producto.vendedorUsername ?? null,
     })
     navigate('/carrito')
   }
