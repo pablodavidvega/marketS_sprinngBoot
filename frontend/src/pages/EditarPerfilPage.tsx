@@ -210,7 +210,7 @@ export default function EditarPerfilPage() {
       </div>
 
       {/* Redes sociales — solo vendedores */}
-      {perfil.rol === 'VENDEDOR' && (
+      {perfil.rol === 'ROLE_VENDEDOR' && (
         <div className="card mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-1">Redes sociales</h2>
           <p className="text-sm text-gray-500 mb-4">
