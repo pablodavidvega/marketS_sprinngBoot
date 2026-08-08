@@ -16,6 +16,8 @@ import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.repository.VendedorRepository;
+import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.ReporteAdminService;
 import com.example.MarketS.service.ReportePdfService;
 import com.example.MarketS.service.ReputacionService;
@@ -68,6 +70,12 @@ public class AdminApiController {
 
     @Autowired
     private ReportePdfService reportePdfService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
                                ReputacionService reputacionService, ProductoRepository productoRepository,
@@ -371,6 +379,16 @@ public class AdminApiController {
         }
 
         userService.cambiarRol(id, rolId);
+
+        // Solo si REALMENTE pasa a ser vendedor recién ahora (no en cada guardado si ya lo era) —
+        // mismo aviso que recibe alguien que se registra como vendedor o usa "Convertirme en
+        // vendedor" (ver AuthApiController.registro / ClienteApiController.convertirVendedor).
+        if (!"ROLE_VENDEDOR".equals(rolActual) && "ROLE_VENDEDOR".equals(rolNuevo.getRolname())) {
+            emailService.enviarGuiaMercadoPago(usuario.getEmail(), usuario.getUsername());
+            notificacionService.crear(usuario,
+                    "Ahora sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
+                    "VENDEDOR_CONFIGURAR_MP", null);
+        }
 
         return userService.buscarPorId(id)
                 .map(PerfilResponseDTO::from)

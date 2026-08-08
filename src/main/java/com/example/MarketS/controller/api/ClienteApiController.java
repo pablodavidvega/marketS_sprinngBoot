@@ -11,6 +11,8 @@ import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.JwtTokenProvider;
+import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.UserService;
@@ -53,11 +55,14 @@ public class ClienteApiController {
     private final UserService userService;
     private final JwtTokenProvider tokenProvider;
     private final AuthCookieService cookieService;
+    private final EmailService emailService;
+    private final NotificacionService notificacionService;
 
     public ClienteApiController(PedidoRepository pedidoRepository, UserRepository userRepository,
                                  ReputacionService reputacionService, RolRepository rolRepository,
                                  UserService userService, JwtTokenProvider tokenProvider,
-                                 AuthCookieService cookieService) {
+                                 AuthCookieService cookieService, EmailService emailService,
+                                 NotificacionService notificacionService) {
         this.pedidoRepository = pedidoRepository;
         this.userRepository = userRepository;
         this.reputacionService = reputacionService;
@@ -65,6 +70,8 @@ public class ClienteApiController {
         this.userService = userService;
         this.tokenProvider = tokenProvider;
         this.cookieService = cookieService;
+        this.emailService = emailService;
+        this.notificacionService = notificacionService;
     }
 
     // GET /api/cliente/dashboard
@@ -143,6 +150,11 @@ public class ClienteApiController {
         usuario.setVendedor(vendedor);
         usuario.setRol(rolVendedor);
         userService.guardar(usuario);
+
+        emailService.enviarGuiaMercadoPago(usuario.getEmail(), usuario.getUsername());
+        notificacionService.crear(usuario,
+                "Ya sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
+                "VENDEDOR_CONFIGURAR_MP", null);
 
         Authentication authStub = new UsernamePasswordAuthenticationToken(
                 usuario.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_VENDEDOR")));

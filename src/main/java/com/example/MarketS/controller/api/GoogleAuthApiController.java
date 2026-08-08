@@ -12,6 +12,7 @@ import com.example.MarketS.security.GoogleTokenVerifierService;
 import com.example.MarketS.security.JwtTokenProvider;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.RegistroElegibilidadService;
 import com.example.MarketS.service.UserService;
 import io.jsonwebtoken.Claims;
@@ -66,6 +67,7 @@ public class GoogleAuthApiController {
     private final RegistroElegibilidadService elegibilidadService;
     private final InvitacionService invitacionService;
     private final EmailService emailService;
+    private final NotificacionService notificacionService;
 
     public GoogleAuthApiController(GoogleTokenVerifierService googleTokenVerifier,
                                     JwtTokenProvider tokenProvider,
@@ -75,7 +77,8 @@ public class GoogleAuthApiController {
                                     UserService userService,
                                     RegistroElegibilidadService elegibilidadService,
                                     InvitacionService invitacionService,
-                                    EmailService emailService) {
+                                    EmailService emailService,
+                                    NotificacionService notificacionService) {
         this.googleTokenVerifier = googleTokenVerifier;
         this.tokenProvider = tokenProvider;
         this.cookieService = cookieService;
@@ -85,6 +88,7 @@ public class GoogleAuthApiController {
         this.elegibilidadService = elegibilidadService;
         this.invitacionService = invitacionService;
         this.emailService = emailService;
+        this.notificacionService = notificacionService;
     }
 
     // POST /api/auth/google — login directo si el usuario ya existe (por googleId o por
@@ -202,6 +206,12 @@ public class GoogleAuthApiController {
         }
 
         emailService.enviarBienvenida(creado.getEmail(), creado.getUsername(), rol.getRolname());
+        if ("VENDEDOR".equals(tipoRol)) {
+            emailService.enviarGuiaMercadoPago(creado.getEmail(), creado.getUsername());
+            notificacionService.crear(creado,
+                    "Ya sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
+                    "VENDEDOR_CONFIGURAR_MP", null);
+        }
         return emitirCookieYResponder(creado, response);
     }
 

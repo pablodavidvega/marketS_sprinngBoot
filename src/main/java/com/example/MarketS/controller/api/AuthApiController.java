@@ -11,6 +11,7 @@ import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.JwtTokenProvider;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.RegistroElegibilidadService;
 import com.example.MarketS.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -52,6 +53,7 @@ public class AuthApiController {
     private final UserService userService;
     private final RolRepository rolRepository;
     private final EmailService emailService;
+    private final NotificacionService notificacionService;
     private final InvitacionService invitacionService;
     private final RegistroElegibilidadService elegibilidadService;
     private final AuthCookieService cookieService;
@@ -61,6 +63,7 @@ public class AuthApiController {
                               UserService userService,
                               RolRepository rolRepository,
                               EmailService emailService,
+                              NotificacionService notificacionService,
                               InvitacionService invitacionService,
                               RegistroElegibilidadService elegibilidadService,
                               AuthCookieService cookieService) {
@@ -69,6 +72,7 @@ public class AuthApiController {
         this.userService = userService;
         this.rolRepository = rolRepository;
         this.emailService = emailService;
+        this.notificacionService = notificacionService;
         this.invitacionService = invitacionService;
         this.elegibilidadService = elegibilidadService;
         this.cookieService = cookieService;
@@ -173,6 +177,12 @@ public class AuthApiController {
                 invitacionService.usarToken(token);
             }
             emailService.enviarBienvenida(creado.getEmail(), creado.getUsername(), rol.getRolname());
+            if ("VENDEDOR".equals(tipoRol)) {
+                emailService.enviarGuiaMercadoPago(creado.getEmail(), creado.getUsername());
+                notificacionService.crear(creado,
+                        "Ya sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
+                        "VENDEDOR_CONFIGURAR_MP", null);
+            }
             return ResponseEntity.ok(PerfilResponseDTO.from(creado));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo o nombre de usuario ya está en uso"));

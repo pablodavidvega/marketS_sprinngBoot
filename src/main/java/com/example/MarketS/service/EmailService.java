@@ -179,6 +179,78 @@ public class EmailService {
                 : "Tu cuenta ya está lista. Esto es lo que podés hacer:";
         String boton = esVendedor ? "Ir a mi panel de vendedor" : "Ir a MarketS";
 
+        return htmlCard(saludo, subtitulo, pasos, destino, boton,
+                "¿No creaste esta cuenta? Escribinos respondiendo este correo.");
+    }
+
+    // Correo dedicado a la conexión de MercadoPago — se dispara en los 3 momentos en que un
+    // usuario pasa a ser vendedor (registro directo, "Convertirme en vendedor" desde la
+    // plataforma, o un admin le cambia el rol), no solo en el alta: sin esto, alguien que ya
+    // tenía cuenta y se convierte en vendedor no se enteraba de que hace falta un paso extra
+    // para poder cobrar (ver PedidoApiController: sin MercadoPago conectado, MarketS ni
+    // siquiera deja pagarle por esa vía).
+    @Async
+    public void enviarGuiaMercadoPago(String para, String username) {
+        try {
+            String asunto = "💳 Un paso más para poder cobrar tus ventas - MarketS";
+            String destino = frontendLinkBuilder.conectarMercadoPago();
+            String textoAlterno = textoGuiaMercadoPago(username, destino);
+            String html = htmlGuiaMercadoPago(username, destino);
+
+            if (resendApiKey != null && !resendApiKey.isBlank()) {
+                enviarViaResend(para, asunto, textoAlterno, html);
+            } else {
+                MimeMessage mime = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mime, true, "UTF-8");
+                helper.setFrom(fromConNombre());
+                helper.setReplyTo(mailFrom);
+                helper.setTo(para);
+                helper.setSubject(asunto);
+                helper.setText(textoAlterno, html);
+                mailSender.send(mime);
+            }
+            logger.info("Correo de guía MercadoPago enviado a: {}", para);
+        } catch (Exception e) {
+            logger.error("Error enviando guía MercadoPago a: {} - {}", para, e.getMessage());
+        }
+    }
+
+    private String textoGuiaMercadoPago(String username, String destino) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("¡Hola, ").append(username).append("!\n\n");
+        sb.append("Ya sos vendedor en MarketS. Para poder cobrar tus ventas, conectá tu cuenta de MercadoPago:\n\n");
+        sb.append("  1. Entrá a tu panel de vendedor → Pagos\n");
+        sb.append("  2. Hacé clic en \"Conectar con MercadoPago\"\n");
+        sb.append("  3. Iniciá sesión con tu cuenta de MercadoPago (o creá una gratis si no tenés)\n");
+        sb.append("  4. Autorizá a MarketS a procesar pagos en tu nombre\n");
+        sb.append("  5. Listo — vas a ver el estado en \"Conectado\"\n\n");
+        sb.append("Conectar MercadoPago: ").append(destino).append("\n\n");
+        sb.append("Mientras no la conectes, tus compradores solo van a poder pagarte por acuerdos externos ")
+          .append("(efectivo, transferencia, etc.), no por MercadoPago.\n");
+        return sb.toString();
+    }
+
+    private String htmlGuiaMercadoPago(String username, String destino) {
+        String pasos = """
+                <tr><td style="padding:7px 0;font-size:15px;color:#374151;"><b style="color:#2563eb;">1.</b>&nbsp; Entrá a tu panel de vendedor → <b>Pagos</b></td></tr>
+                <tr><td style="padding:7px 0;font-size:15px;color:#374151;"><b style="color:#2563eb;">2.</b>&nbsp; Hacé clic en <b>"Conectar con MercadoPago"</b></td></tr>
+                <tr><td style="padding:7px 0;font-size:15px;color:#374151;"><b style="color:#2563eb;">3.</b>&nbsp; Iniciá sesión con tu cuenta de MercadoPago (o creá una gratis si no tenés)</td></tr>
+                <tr><td style="padding:7px 0;font-size:15px;color:#374151;"><b style="color:#2563eb;">4.</b>&nbsp; Autorizá a MarketS a procesar pagos en tu nombre</td></tr>
+                <tr><td style="padding:7px 0;font-size:15px;color:#374151;"><b style="color:#2563eb;">5.</b>&nbsp; Listo — vas a ver el estado en <b>"Conectado"</b> ✅</td></tr>
+                """;
+
+        String saludo = "¡Un paso más, " + username + "! 💳";
+        String subtitulo = "Ya sos vendedor en MarketS. Para poder cobrar tus ventas, conectá tu cuenta de MercadoPago:";
+        String nota = "Mientras no la conectes, tus compradores solo van a poder pagarte por acuerdos externos "
+                + "(efectivo, transferencia, etc.) — MarketS todavía no va a poder cobrarte por MercadoPago.";
+
+        return htmlCard(saludo, subtitulo, pasos, destino, "Conectar MercadoPago", nota);
+    }
+
+    // Estructura visual común a todos los correos "de tarjeta" (bienvenida, guía de
+    // MercadoPago): header con la marca, título + bajada, bloque de pasos y botón CTA.
+    private String htmlCard(String h1, String subtitulo, String bloqueInteriorFilasTabla,
+                             String ctaHref, String ctaLabel, String notaPie) {
         return """
                 <!doctype html>
                 <html lang="es">
@@ -211,7 +283,7 @@ public class EmailService {
                           </tr>
                           <tr>
                             <td style="padding:20px 32px 28px;border-top:1px solid #f3f4f6;text-align:center;">
-                              <p style="margin:0;font-size:12px;color:#9ca3af;">¿No creaste esta cuenta? Escribinos respondiendo este correo.</p>
+                              <p style="margin:0;font-size:12px;color:#9ca3af;">%s</p>
                             </td>
                           </tr>
                         </table>
@@ -220,7 +292,7 @@ public class EmailService {
                   </table>
                 </body>
                 </html>
-                """.formatted(saludo, subtitulo, pasos, destino, boton);
+                """.formatted(h1, subtitulo, bloqueInteriorFilasTabla, ctaHref, ctaLabel, notaPie);
     }
 
     private void enviarViaResend(String to, String subject, String text) {

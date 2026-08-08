@@ -53,6 +53,8 @@ export function destinoDeNotificacion(n: Notificacion, esVendedor: boolean): str
     case 'STOCK_BAJO':
     case 'STOCK_DESCUENTO_FALLIDO':
       return '/vendedor/productos'
+    case 'VENDEDOR_CONFIGURAR_MP':
+      return '/vendedor/pagos'
     default:
       return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
   }
