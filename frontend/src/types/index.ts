@@ -34,6 +34,7 @@ export interface PerfilUsuario {
   rol: string
   city?: string
   createdAt: string
+  passwordEstablecida?: boolean
 }
 
 export interface TallaStock {

@@ -167,10 +167,12 @@ public class GoogleAuthApiController {
         user.setUsername(dto.getUsername());
         user.setEmail(email);
         // Password aleatoria que el usuario nunca conoce: esta cuenta solo se usa vía Google.
-        // Si algún día quiere loguearse con password, puede pedir una nueva por "olvidé mi
-        // contraseña" (flujo ya existente) — evita tener que tolerar password null en
-        // CustomUserDetailsService/UsuarioPrincipal.
+        // Evita tener que tolerar password null en CustomUserDetailsService/UsuarioPrincipal.
+        // passwordEstablecida=false marca que no es una password real; el usuario puede crear
+        // una desde su perfil (UsuarioApiController.cambiarPassword) o vía "olvidé mi
+        // contraseña", cualquiera de los dos la deja en true.
         user.setPassword(UUID.randomUUID().toString() + UUID.randomUUID());
+        user.setPasswordEstablecida(false);
         user.setPhone(dto.getPhone());
         user.setAddress(dto.getAddress());
         user.setRol(rol);

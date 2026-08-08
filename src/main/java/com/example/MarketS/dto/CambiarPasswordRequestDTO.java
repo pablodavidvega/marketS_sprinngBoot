@@ -9,7 +9,8 @@ import lombok.Setter;
 @Setter
 public class CambiarPasswordRequestDTO {
 
-    @NotBlank(message = "La contraseña actual es obligatoria")
+    // No @NotBlank: los usuarios sin password propia (alta por Google, ver
+    // User.passwordEstablecida) crean su primera contraseña sin conocer una "actual".
     private String currentPassword;
 
     @NotBlank(message = "La nueva contraseña es obligatoria")

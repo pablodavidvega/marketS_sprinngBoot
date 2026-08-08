@@ -15,7 +15,7 @@ export const actualizarPerfil = (data: {
 }) => api.put<PerfilUsuario>('/api/me', data)
 
 export const cambiarPassword = (data: {
-  currentPassword: string
+  currentPassword?: string
   newPassword: string
   confirmPassword: string
 }) => api.put<{ mensaje: string }>('/api/me/password', data)

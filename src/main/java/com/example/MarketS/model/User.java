@@ -52,6 +52,15 @@ public class User {
     @Column(name = "fecha_aceptacion_terminos")
     private LocalDateTime fechaAceptacionTerminos;
 
+    // true si el usuario conoce su contraseña actual (la puso él mismo al registrarse o al
+    // restablecerla). false para altas por Google (ver GoogleAuthApiController.completar), que
+    // reciben una password aleatoria que nunca ven — así el perfil puede ofrecer "crear
+    // contraseña" en vez de "cambiar contraseña" sin pedir una que no conocen.
+    // Default true a nivel de columna: mismo patrón que "acepto_terminos" para que Hibernate
+    // pueda agregar esta columna NOT NULL sobre una tabla "users" con filas existentes.
+    @Column(name = "password_establecida", nullable = false, columnDefinition = "boolean default true")
+    private boolean passwordEstablecida = true;
+
     @ManyToOne
     @JoinColumn(name="rol_id")
     private Rol rol;

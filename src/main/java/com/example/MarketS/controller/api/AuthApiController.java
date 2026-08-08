@@ -232,6 +232,7 @@ public class AuthApiController {
         }
 
         user.setPassword(userService.codificarPassword(password));
+        user.setPasswordEstablecida(true);
         user.setResetToken(null);
         user.setResetTokenExpira(null);
         userService.guardar(user);

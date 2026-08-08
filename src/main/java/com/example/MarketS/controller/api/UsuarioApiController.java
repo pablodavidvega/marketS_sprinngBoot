@@ -76,9 +76,21 @@ public class UsuarioApiController {
                                               Authentication auth) {
         User user = resolverUsuario(auth);
 
-        if (!userService.verificarPassword(request.getCurrentPassword(), user.getPassword())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "La contraseña actual es incorrecta"));
+        // Cuentas sin password propia (alta por Google, ver User.passwordEstablecida) no tienen
+        // una "actual" que puedan conocer — se les deja crear la primera sin ese chequeo.
+        if (user.isPasswordEstablecida()) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "La contraseña actual es obligatoria"));
+            }
+            if (!userService.verificarPassword(request.getCurrentPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "La contraseña actual es incorrecta"));
+            }
+            if (userService.verificarPassword(request.getNewPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "La nueva contraseña no puede ser igual a la actual"));
+            }
         }
 
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -86,12 +98,8 @@ public class UsuarioApiController {
                     .body(Map.of("error", "Las contraseñas nuevas no coinciden"));
         }
 
-        if (userService.verificarPassword(request.getNewPassword(), user.getPassword())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "La nueva contraseña no puede ser igual a la actual"));
-        }
-
         user.setPassword(userService.codificarPassword(request.getNewPassword()));
+        user.setPasswordEstablecida(true);
         userService.guardar(user);
 
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));

@@ -18,6 +18,7 @@ public class PerfilResponseDTO {
     private String rol;
     private String city;
     private LocalDateTime createdAt;
+    private boolean passwordEstablecida;
 
     // Un solo usuario: aquí sí es seguro tocar el fetch LAZY de Vendedor (una única consulta
     // extra, no hay N+1 posible con un solo User).
@@ -40,6 +41,7 @@ public class PerfilResponseDTO {
                 .rol(user.getRol().getRolname())
                 .city(city)
                 .createdAt(user.getCreatedAt())
+                .passwordEstablecida(user.isPasswordEstablecida())
                 .build();
     }
 

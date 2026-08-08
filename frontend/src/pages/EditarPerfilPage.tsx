@@ -137,6 +137,11 @@ export default function EditarPerfilPage() {
     }
   }
 
+  // Cuentas creadas con Google reciben una password aleatoria que nunca ven (ver
+  // GoogleAuthApiController.completar) — para esas, `passwordEstablecida` llega en false y el
+  // formulario ofrece "crear" en vez de "cambiar" contraseña, sin pedir una actual que no conocen.
+  const tienePasswordPropia = perfil.passwordEstablecida !== false
+
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault()
     setPassMsg(null)
@@ -148,9 +153,11 @@ export default function EditarPerfilPage() {
 
     setPassCargando(true)
     try {
-      const r = await cambiarPassword(pass)
+      const datos = tienePasswordPropia ? pass : { newPassword: pass.newPassword, confirmPassword: pass.confirmPassword }
+      const r = await cambiarPassword(datos)
       setPassMsg({ tipo: 'ok', texto: r.data.mensaje ?? 'Contraseña actualizada correctamente.' })
       setPass({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPerfil(p => (p ? { ...p, passwordEstablecida: true } : p))
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? 'Error al cambiar la contraseña.'
       setPassMsg({ tipo: 'error', texto: msg })
@@ -328,9 +335,17 @@ export default function EditarPerfilPage() {
         </div>
       )}
 
-      {/* Cambiar contraseña */}
+      {/* Cambiar / crear contraseña */}
       <div className="card">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Cambiar contraseña</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">
+          {tienePasswordPropia ? 'Cambiar contraseña' : 'Crear contraseña'}
+        </h2>
+        {!tienePasswordPropia && (
+          <p className="text-sm text-gray-500 mb-4">
+            Te registraste con Google y todavía no tenés una contraseña propia. Creá una si además
+            querés poder iniciar sesión con tu correo y contraseña.
+          </p>
+        )}
 
         {passMsg && (
           <div className={`text-sm rounded-lg px-4 py-3 mb-4 ${
@@ -343,14 +358,16 @@ export default function EditarPerfilPage() {
         )}
 
         <form onSubmit={handlePassword} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
-            <PasswordInput
-              value={pass.currentPassword}
-              onChange={v => setPass(p => ({ ...p, currentPassword: v }))}
-              required
-            />
-          </div>
+          {tienePasswordPropia && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+              <PasswordInput
+                value={pass.currentPassword}
+                onChange={v => setPass(p => ({ ...p, currentPassword: v }))}
+                required
+              />
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
             <PasswordInput
@@ -372,7 +389,9 @@ export default function EditarPerfilPage() {
           </div>
           <div className="flex justify-end">
             <button type="submit" className="btn-primary" disabled={passCargando}>
-              {passCargando ? 'Actualizando...' : 'Cambiar contraseña'}
+              {passCargando
+                ? 'Guardando...'
+                : tienePasswordPropia ? 'Cambiar contraseña' : 'Crear contraseña'}
             </button>
           </div>
         </form>
