@@ -120,6 +120,34 @@ public class PedidoApiController {
             ));
         }
 
+        String metodoPago = request.getMetodoPago();
+        boolean esAcuerdoExterno = metodoPago != null && METODOS_EXTERNOS.contains(metodoPago.toUpperCase());
+
+        // El pago va directo a la cuenta de MercadoPago del vendedor (ver
+        // MercadoPagoOAuthService) — si no la conectó, no hay a dónde mandar el dinero. Se valida
+        // ANTES de crear el pedido: hacerlo después (como antes) ya disparaba el correo +
+        // notificación de "pedido creado" para una compra que nunca pudo procesarse, y encima
+        // dejaba un pedido RECHAZADO fantasma en el historial del comprador y del vendedor. El
+        // carrito es de un solo vendedor (ver PedidoService.crearPedido), así que alcanza con
+        // resolver el vendedor del primer ítem.
+        String accessTokenVendedor = null;
+        if (!esAcuerdoExterno) {
+            User vendedorCarrito;
+            try {
+                vendedorCarrito = productoService.obtenerProductoPorId(request.getItems().get(0).getProductoId()).getVendedor();
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            }
+            accessTokenVendedor = vendedorCarrito != null
+                    ? mercadoPagoOAuthService.obtenerAccessTokenVigente(vendedorCarrito).orElse(null)
+                    : null;
+            if (accessTokenVendedor == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Este vendedor no tiene MercadoPago conectado. Elige un acuerdo externo (efectivo, transferencia, Nequi, otro) para completar la compra."
+                ));
+            }
+        }
+
         // Convertir DTO a Map<Integer, Integer> que espera PedidoService
         Map<Integer, Integer> carrito = request.getItems().stream()
                 .collect(Collectors.toMap(
@@ -134,25 +162,8 @@ public class PedidoApiController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
 
-        String metodoPago = request.getMetodoPago();
-        if (metodoPago != null && METODOS_EXTERNOS.contains(metodoPago.toUpperCase())) {
+        if (esAcuerdoExterno) {
             return crearPedidoConAcuerdoExterno(pedido, metodoPago.toUpperCase());
-        }
-
-        // El pago va directo a la cuenta de MercadoPago del vendedor del pedido (ver
-        // MercadoPagoOAuthService) — si no la conectó, no hay a dónde mandar el dinero y el
-        // pedido se rechaza (no queda un "PENDIENTE" fantasma; el stock recién baja al
-        // confirmarse el pago, así que rechazar acá no deja nada inconsistente).
-        User vendedorPedido = resolverVendedorDelPedido(pedido);
-        String accessTokenVendedor = vendedorPedido != null
-                ? mercadoPagoOAuthService.obtenerAccessTokenVigente(vendedorPedido).orElse(null)
-                : null;
-        if (accessTokenVendedor == null) {
-            pedido.setEstado("RECHAZADO");
-            pedidoRepository.save(pedido);
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Este vendedor no tiene MercadoPago conectado. Elige un acuerdo externo (efectivo, transferencia, Nequi, otro) para completar la compra."
-            ));
         }
 
         // Generar preferencia de MercadoPago con back_urls al frontend React
