@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getMiPerfil, actualizarPerfil, cambiarPassword } from '../api/usuario'
+import { getMiPerfil, actualizarPerfil, cambiarPassword, getMisEnlaces, actualizarEnlaces } from '../api/usuario'
 import PasswordInput from '../components/PasswordInput'
-import type { PerfilUsuario } from '../types'
+import type { PerfilUsuario, EnlaceSocial } from '../types'
+
+const MAX_ENLACES = 6
+
+// El vendedor puede escribir "instagram.com/mitienda" sin protocolo — se le antepone https://
+// antes de guardar para que el link del perfil público sea siempre una URL absoluta válida.
+function normalizarUrl(url: string) {
+  const limpia = url.trim()
+  return /^https?:\/\//i.test(limpia) ? limpia : `https://${limpia}`
+}
 
 const VOLVER_POR_ROL: Record<string, { to: string; label: string }> = {
   CLIENTE: { to: '/cliente/dashboard', label: 'Mi cuenta' },
@@ -27,6 +36,10 @@ export default function EditarPerfilPage() {
   const [passMsg, setPassMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [passCargando, setPassCargando] = useState(false)
 
+  const [enlaces, setEnlaces] = useState<EnlaceSocial[]>([])
+  const [enlacesMsg, setEnlacesMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
+  const [enlacesCargando, setEnlacesCargando] = useState(false)
+
   useEffect(() => {
     getMiPerfil()
       .then(r => {
@@ -39,7 +52,39 @@ export default function EditarPerfilPage() {
         })
       })
       .finally(() => setLoading(false))
+    // Vacío para clientes (el backend ya lo resuelve así), no hace falta condicionar el fetch.
+    getMisEnlaces().then(r => setEnlaces(r.data)).catch(() => {})
   }, [])
+
+  function agregarEnlace() {
+    if (enlaces.length >= MAX_ENLACES) return
+    setEnlaces(prev => [...prev, { etiqueta: '', url: '' }])
+  }
+
+  function quitarEnlace(idx: number) {
+    setEnlaces(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function actualizarEnlace(idx: number, campo: keyof EnlaceSocial, valor: string) {
+    setEnlaces(prev => prev.map((en, i) => (i === idx ? { ...en, [campo]: valor } : en)))
+  }
+
+  async function handleEnlaces(e: React.FormEvent) {
+    e.preventDefault()
+    setEnlacesMsg(null)
+    setEnlacesCargando(true)
+    try {
+      const normalizados = enlaces.map(en => ({ etiqueta: en.etiqueta.trim(), url: normalizarUrl(en.url) }))
+      const r = await actualizarEnlaces(normalizados)
+      setEnlaces(r.data)
+      setEnlacesMsg({ tipo: 'ok', texto: 'Enlaces guardados correctamente.' })
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? 'Error al guardar los enlaces.'
+      setEnlacesMsg({ tipo: 'error', texto: msg })
+    } finally {
+      setEnlacesCargando(false)
+    }
+  }
 
   async function handleDatos(e: React.FormEvent) {
     e.preventDefault()
@@ -163,6 +208,70 @@ export default function EditarPerfilPage() {
           </div>
         </form>
       </div>
+
+      {/* Redes sociales — solo vendedores */}
+      {perfil.rol === 'VENDEDOR' && (
+        <div className="card mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">Redes sociales</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Agrega enlaces a tus redes o tu sitio web — se muestran en tu perfil público. Hasta {MAX_ENLACES}.
+          </p>
+
+          {enlacesMsg && (
+            <div className={`text-sm rounded-lg px-4 py-3 mb-4 ${
+              enlacesMsg.tipo === 'ok'
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-red-50 border border-red-200 text-red-700'
+            }`}>
+              {enlacesMsg.texto}
+            </div>
+          )}
+
+          <form onSubmit={handleEnlaces} className="flex flex-col gap-3">
+            {enlaces.map((en, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <input
+                  className="input flex-1"
+                  placeholder="Etiqueta (ej. Instagram)"
+                  value={en.etiqueta}
+                  onChange={e => actualizarEnlace(idx, 'etiqueta', e.target.value)}
+                  maxLength={30}
+                  required
+                />
+                <input
+                  className="input flex-[2]"
+                  placeholder="URL (ej. instagram.com/mitienda)"
+                  value={en.url}
+                  onChange={e => actualizarEnlace(idx, 'url', e.target.value)}
+                  maxLength={300}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => quitarEnlace(idx)}
+                  className="text-red-500 hover:text-red-700 text-sm px-2 py-2"
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={agregarEnlace}
+                disabled={enlaces.length >= MAX_ENLACES}
+                className="btn-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                + Agregar enlace
+              </button>
+              <button type="submit" className="btn-primary" disabled={enlacesCargando}>
+                {enlacesCargando ? 'Guardando...' : 'Guardar enlaces'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Cambiar contraseña */}
       <div className="card">

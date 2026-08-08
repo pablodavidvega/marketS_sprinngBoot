@@ -4,6 +4,7 @@ import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.DetallePedidoRepository;
+import com.example.MarketS.repository.EnlaceSocialRepository;
 import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.UserRepository;
@@ -32,6 +33,7 @@ public class VendedorPublicController {
     private final ResenaRepository       resenaRepository;
     private final DetallePedidoRepository detallePedidoRepository;
     private final ReputacionService      reputacionService;
+    private final EnlaceSocialRepository enlaceSocialRepository;
 
     // GET /api/vendedores/{id}/perfil — información pública del vendedor
     @GetMapping("/{id}/perfil")
@@ -49,6 +51,11 @@ public class VendedorPublicController {
                     resp.put("reputacion",      reputacionService.calcularVendedor(u.getId()));
                     resp.put("totalVentas",     detallePedidoRepository.countPedidosDistinctByVendedorAndEstadoIn(u.getId(), ESTADOS_VENTA_CONCRETADA));
                     resp.put("unidadesVendidas", detallePedidoRepository.sumUnidadesByVendedorAndEstadoIn(u.getId(), ESTADOS_VENTA_CONCRETADA));
+                    resp.put("enlaces", u.getVendedor() != null
+                            ? enlaceSocialRepository.findByVendedorId(u.getVendedor().getId()).stream()
+                                    .map(e -> Map.of("etiqueta", e.getEtiqueta(), "url", e.getUrl()))
+                                    .toList()
+                            : List.<Map<String, String>>of());
                     return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());

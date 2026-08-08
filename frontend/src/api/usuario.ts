@@ -1,5 +1,5 @@
 import api from './axios'
-import type { AuthResponse, PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga, ReporteCatalogo, EmbudoAdmin, EstadisticasComunidad } from '../types'
+import type { AuthResponse, PerfilUsuario, DashboardCliente, DashboardAdmin, DashboardVendedor, VendedorEstadisticas, ResultadoCarga, ReporteCatalogo, EmbudoAdmin, EstadisticasComunidad, EnlaceSocial } from '../types'
 
 export const getMiPerfil = () =>
   api.get<PerfilUsuario>('/api/me')
@@ -19,6 +19,12 @@ export const cambiarPassword = (data: {
   newPassword: string
   confirmPassword: string
 }) => api.put<{ mensaje: string }>('/api/me/password', data)
+
+export const getMisEnlaces = () =>
+  api.get<EnlaceSocial[]>('/api/me/enlaces')
+
+export const actualizarEnlaces = (enlaces: EnlaceSocial[]) =>
+  api.put<EnlaceSocial[]>('/api/me/enlaces', { enlaces })
 
 export const getDashboardCliente = () =>
   api.get<DashboardCliente>('/api/cliente/dashboard')

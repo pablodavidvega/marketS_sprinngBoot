@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { getPerfilVendedor, getProductosVendedor } from '../api/vendedores'
 import ProductoCard from '../components/ProductoCard'
 import ReputacionBar from '../components/ReputacionBar'
+import { iconoRedSocial } from '../utils/redSocial'
 import type { PerfilVendedor, Producto } from '../types'
 
 function AvatarLetra({ username }: { username: string }) {
@@ -122,6 +123,22 @@ export default function VendedorPerfilPage() {
                 Miembro desde {formatFecha(perfil.miembroDesde)}
               </span>
             </div>
+
+            {perfil.enlaces.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {perfil.enlaces.map((en, i) => (
+                  <a
+                    key={i}
+                    href={en.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    <span>{iconoRedSocial(en.etiqueta)}</span> {en.etiqueta}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Stats: productos, ventas, unidades vendidas */}

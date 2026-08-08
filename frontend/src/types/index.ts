@@ -67,6 +67,11 @@ export interface Producto {
   reputacionVendedor?: Reputacion | null
 }
 
+export interface EnlaceSocial {
+  etiqueta: string
+  url: string
+}
+
 export interface PerfilVendedor {
   id: number
   username: string
@@ -76,6 +81,7 @@ export interface PerfilVendedor {
   reputacion: Reputacion
   totalVentas: number
   unidadesVendidas: number
+  enlaces: EnlaceSocial[]
 }
 
 export interface PuntoSemana {
