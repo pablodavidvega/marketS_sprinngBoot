@@ -30,6 +30,24 @@ public class FrontendLinkBuilder {
         return frontendUrl + "/vendedor/pagos?conectado=" + exito;
     }
 
+    public String conectarMercadoPago() {
+        return frontendUrl + "/vendedor/pagos";
+    }
+
+    // Destino del correo de bienvenida: el panel propio de cada rol (mismo mapeo que
+    // EditarPerfilPage#VOLVER_POR_ROL). ADMIN/MODERADOR no se autoregistran hoy (ver
+    // AuthApiController/GoogleAuthApiController: tipoUsuario solo admite CLIENTE/VENDEDOR),
+    // pero se contemplan por si ese registro se habilita más adelante.
+    public String bienvenida(String rolname) {
+        String ruta = switch (rolname) {
+            case "ROLE_VENDEDOR" -> "/vendedor";
+            case "ROLE_ADMIN" -> "/admin/dashboard";
+            case "ROLE_MODERADOR" -> "/moderador/dashboard";
+            default -> "/cliente/dashboard";
+        };
+        return frontendUrl + ruta;
+    }
+
     private String rutaPedidos(boolean esVendedor) {
         return esVendedor ? "/vendedor/pedidos" : "/cliente/mis-pedidos";
     }

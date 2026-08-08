@@ -172,6 +172,7 @@ public class AuthApiController {
             if (token != null && !token.isBlank()) {
                 invitacionService.usarToken(token);
             }
+            emailService.enviarBienvenida(creado.getEmail(), creado.getUsername(), rol.getRolname());
             return ResponseEntity.ok(PerfilResponseDTO.from(creado));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo o nombre de usuario ya está en uso"));

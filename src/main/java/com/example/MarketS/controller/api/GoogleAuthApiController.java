@@ -10,6 +10,7 @@ import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.GoogleTokenVerifierService;
 import com.example.MarketS.security.JwtTokenProvider;
+import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
 import com.example.MarketS.service.RegistroElegibilidadService;
 import com.example.MarketS.service.UserService;
@@ -64,6 +65,7 @@ public class GoogleAuthApiController {
     private final UserService userService;
     private final RegistroElegibilidadService elegibilidadService;
     private final InvitacionService invitacionService;
+    private final EmailService emailService;
 
     public GoogleAuthApiController(GoogleTokenVerifierService googleTokenVerifier,
                                     JwtTokenProvider tokenProvider,
@@ -72,7 +74,8 @@ public class GoogleAuthApiController {
                                     RolRepository rolRepository,
                                     UserService userService,
                                     RegistroElegibilidadService elegibilidadService,
-                                    InvitacionService invitacionService) {
+                                    InvitacionService invitacionService,
+                                    EmailService emailService) {
         this.googleTokenVerifier = googleTokenVerifier;
         this.tokenProvider = tokenProvider;
         this.cookieService = cookieService;
@@ -81,6 +84,7 @@ public class GoogleAuthApiController {
         this.userService = userService;
         this.elegibilidadService = elegibilidadService;
         this.invitacionService = invitacionService;
+        this.emailService = emailService;
     }
 
     // POST /api/auth/google — login directo si el usuario ya existe (por googleId o por
@@ -197,6 +201,7 @@ public class GoogleAuthApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo o nombre de usuario ya está en uso"));
         }
 
+        emailService.enviarBienvenida(creado.getEmail(), creado.getUsername(), rol.getRolname());
         return emitirCookieYResponder(creado, response);
     }
 
