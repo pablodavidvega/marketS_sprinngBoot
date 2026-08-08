@@ -140,7 +140,7 @@ export default function EditarPerfilPage() {
   // Cuentas creadas con Google reciben una password aleatoria que nunca ven (ver
   // GoogleAuthApiController.completar) — para esas, `passwordEstablecida` llega en false y el
   // formulario ofrece "crear" en vez de "cambiar" contraseña, sin pedir una actual que no conocen.
-  const tienePasswordPropia = perfil.passwordEstablecida !== false
+  const tienePasswordPropia = perfil?.passwordEstablecida !== false
 
   async function handlePassword(e: React.FormEvent) {
     e.preventDefault()

@@ -168,38 +168,43 @@ export default function ProductoCard({ producto }: Props) {
         </button>
       </div>
 
-      <Link to={`/productos/${producto.id}`} className="block flex-1">
-        {/* ── Info del producto ─────────────────────────────────────────── */}
-        {producto.categoriaNombre && (
-          <span className="badge badge-primary text-[10px] mb-0.5 inline-block">
-            {producto.categoriaNombre}
-          </span>
-        )}
-        <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-0.5">
-          {producto.nombre}
-        </h3>
+      {/* Info del producto — partido en dos <Link> hermanos del <Link> al vendedor (en vez de
+          uno solo envolviendo todo) para no anidar <a> dentro de <a>, igual que el botón de
+          favorito más arriba. */}
+      <div className="block flex-1">
+        <Link to={`/productos/${producto.id}`} className="block">
+          {producto.categoriaNombre && (
+            <span className="badge badge-primary text-[10px] mb-0.5 inline-block">
+              {producto.categoriaNombre}
+            </span>
+          )}
+          <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-0.5">
+            {producto.nombre}
+          </h3>
+        </Link>
         {producto.vendedorId && producto.vendedorUsername && (
           <Link
             to={`/vendedores/${producto.vendedorId}`}
-            onClick={e => e.stopPropagation()}
             className="text-xs text-primary-600 hover:text-primary-700 hover:underline transition-colors mb-0.5 inline-block"
           >
             @{producto.vendedorUsername}
           </Link>
         )}
-        {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
-          <div className="flex items-center gap-1 mb-0.5">
-            <span className="text-yellow-400 text-xs leading-none">
-              {'★'.repeat(Math.round(producto.promedioCalificacion))}
-              {'☆'.repeat(5 - Math.round(producto.promedioCalificacion))}
-            </span>
-            <span className="text-[10px] text-gray-400">({producto.totalResenas})</span>
-          </div>
-        )}
-        <p className="text-primary-600 font-bold text-base">
-          ${producto.precio.toLocaleString('es-CO')}
-        </p>
-      </Link>
+        <Link to={`/productos/${producto.id}`} className="block">
+          {producto.promedioCalificacion != null && producto.totalResenas != null && producto.totalResenas > 0 && (
+            <div className="flex items-center gap-1 mb-0.5">
+              <span className="text-yellow-400 text-xs leading-none">
+                {'★'.repeat(Math.round(producto.promedioCalificacion))}
+                {'☆'.repeat(5 - Math.round(producto.promedioCalificacion))}
+              </span>
+              <span className="text-[10px] text-gray-400">({producto.totalResenas})</span>
+            </div>
+          )}
+          <p className="text-primary-600 font-bold text-base">
+            ${producto.precio.toLocaleString('es-CO')}
+          </p>
+        </Link>
+      </div>
 
       <button
         onClick={handleAgregar}
