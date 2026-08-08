@@ -57,19 +57,36 @@ public class MercadoPagoOAuthService {
 
     // Recibe el code+state que MP devuelve por el redirect_uri, los cambia por un access_token
     // propio del vendedor y los guarda. Devuelve true si la conexión quedó completa.
+    //
+    // Logueado paso a paso (antes solo se sabía "falló", sin decir en qué punto ni por qué —
+    // ver también llamarOauthToken, que antes descartaba el body de error de MP) porque el
+    // único síntoma visible para el vendedor es un genérico "No se pudo completar la conexión"
+    // en /vendedor/pagos, sin forma de distinguir state vencido de credenciales mal
+    // configuradas (client_id/client_secret de la app OAuth, ver comentario en
+    // MercadoPagoConfig) o de un error real de la API de MP.
     public boolean manejarCallback(String code, String state) {
-        if (state == null || state.isBlank()) return false;
+        if (state == null || state.isBlank()) {
+            System.err.println("MercadoPago OAuth callback: falta el parámetro state");
+            return false;
+        }
         Optional<VendedorMercadoPago> cuentaOpt = repository.findByState(state);
-        if (cuentaOpt.isEmpty()) return false;
+        if (cuentaOpt.isEmpty()) {
+            System.err.println("MercadoPago OAuth callback: state no encontrado (¿ya se usó o nunca se generó?): " + state);
+            return false;
+        }
 
         VendedorMercadoPago cuenta = cuentaOpt.get();
         if (cuenta.getStateCreadoEn() == null
                 || cuenta.getStateCreadoEn().isBefore(LocalDateTime.now().minusMinutes(STATE_VIGENCIA_MINUTOS))) {
+            System.err.println("MercadoPago OAuth callback: state vencido para vendedor " + cuenta.getUser().getId());
             return false;
         }
 
         JsonNode tokenResponse = intercambiarCodePorToken(code);
-        if (tokenResponse == null) return false;
+        if (tokenResponse == null) {
+            System.err.println("MercadoPago OAuth callback: falló el intercambio code→token para vendedor " + cuenta.getUser().getId());
+            return false;
+        }
 
         aplicarTokenResponse(cuenta, tokenResponse);
         cuenta.setMpEmail(obtenerEmailMp(cuenta.getAccessToken()));
@@ -141,8 +158,17 @@ public class MercadoPagoOAuthService {
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
             ResponseEntity<String> response = restTemplate.exchange(
                     "https://api.mercadopago.com/oauth/token", HttpMethod.POST, request, String.class);
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return null;
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                System.err.println("MercadoPago oauth/token respondió " + response.getStatusCode() + ": " + response.getBody());
+                return null;
+            }
             return objectMapper.readTree(response.getBody());
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            // 4xx/5xx: acá viene el motivo real de MP (invalid_client, invalid_grant,
+            // redirect_uri mismatch, etc.) — RestTemplate lo tira como excepción en vez de
+            // devolverlo en response, y antes se perdía porque solo se logueaba e.getMessage().
+            System.err.println("Error en oauth/token de MercadoPago (" + e.getStatusCode() + "): " + e.getResponseBodyAsString());
+            return null;
         } catch (Exception e) {
             System.err.println("Error en oauth/token de MercadoPago: " + e.getMessage());
             return null;
