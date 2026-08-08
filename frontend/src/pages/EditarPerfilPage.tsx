@@ -3,9 +3,14 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMiPerfil, actualizarPerfil, cambiarPassword, getMisEnlaces, actualizarEnlaces } from '../api/usuario'
 import PasswordInput from '../components/PasswordInput'
+import IconoRedSocial, { REDES_BASICAS, matchRedBasica, type PlataformaBasica } from '../components/IconoRedSocial'
 import type { PerfilUsuario, EnlaceSocial } from '../types'
 
-const MAX_ENLACES = 6
+const MAX_OTROS = 4
+
+const BASICOS_VACIOS: Record<PlataformaBasica, string> = {
+  instagram: '', facebook: '', tiktok: '', x: '', youtube: '', whatsapp: '',
+}
 
 // El vendedor puede escribir "instagram.com/mitienda" sin protocolo — se le antepone https://
 // antes de guardar para que el link del perfil público sea siempre una URL absoluta válida.
@@ -36,7 +41,10 @@ export default function EditarPerfilPage() {
   const [passMsg, setPassMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [passCargando, setPassCargando] = useState(false)
 
-  const [enlaces, setEnlaces] = useState<EnlaceSocial[]>([])
+  // Instagram/Facebook/TikTok/X/YouTube tienen su propio campo fijo (con ícono de marca);
+  // cualquier otra cosa (sitio web, una red menos común) va en la lista libre "otros".
+  const [basicos, setBasicos] = useState<Record<PlataformaBasica, string>>(BASICOS_VACIOS)
+  const [otros, setOtros] = useState<EnlaceSocial[]>([])
   const [enlacesMsg, setEnlacesMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [enlacesCargando, setEnlacesCargando] = useState(false)
 
@@ -53,20 +61,34 @@ export default function EditarPerfilPage() {
       })
       .finally(() => setLoading(false))
     // Vacío para clientes (el backend ya lo resuelve así), no hace falta condicionar el fetch.
-    getMisEnlaces().then(r => setEnlaces(r.data)).catch(() => {})
+    getMisEnlaces().then(r => {
+      const nuevosBasicos = { ...BASICOS_VACIOS }
+      const nuevosOtros: EnlaceSocial[] = []
+      r.data.forEach(en => {
+        const red = matchRedBasica(en.etiqueta)
+        if (red) nuevosBasicos[red.key] = en.url
+        else nuevosOtros.push(en)
+      })
+      setBasicos(nuevosBasicos)
+      setOtros(nuevosOtros)
+    }).catch(() => {})
   }, [])
 
-  function agregarEnlace() {
-    if (enlaces.length >= MAX_ENLACES) return
-    setEnlaces(prev => [...prev, { etiqueta: '', url: '' }])
+  function actualizarBasico(key: PlataformaBasica, url: string) {
+    setBasicos(prev => ({ ...prev, [key]: url }))
   }
 
-  function quitarEnlace(idx: number) {
-    setEnlaces(prev => prev.filter((_, i) => i !== idx))
+  function agregarOtro() {
+    if (otros.length >= MAX_OTROS) return
+    setOtros(prev => [...prev, { etiqueta: '', url: '' }])
   }
 
-  function actualizarEnlace(idx: number, campo: keyof EnlaceSocial, valor: string) {
-    setEnlaces(prev => prev.map((en, i) => (i === idx ? { ...en, [campo]: valor } : en)))
+  function quitarOtro(idx: number) {
+    setOtros(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function actualizarOtro(idx: number, campo: keyof EnlaceSocial, valor: string) {
+    setOtros(prev => prev.map((en, i) => (i === idx ? { ...en, [campo]: valor } : en)))
   }
 
   async function handleEnlaces(e: React.FormEvent) {
@@ -74,9 +96,22 @@ export default function EditarPerfilPage() {
     setEnlacesMsg(null)
     setEnlacesCargando(true)
     try {
-      const normalizados = enlaces.map(en => ({ etiqueta: en.etiqueta.trim(), url: normalizarUrl(en.url) }))
-      const r = await actualizarEnlaces(normalizados)
-      setEnlaces(r.data)
+      const desdeBasicos = REDES_BASICAS
+        .filter(red => basicos[red.key].trim() !== '')
+        .map(red => ({ etiqueta: red.etiqueta, url: normalizarUrl(basicos[red.key]) }))
+      const desdeOtros = otros.map(en => ({ etiqueta: en.etiqueta.trim(), url: normalizarUrl(en.url) }))
+
+      const r = await actualizarEnlaces([...desdeBasicos, ...desdeOtros])
+
+      const nuevosBasicos = { ...BASICOS_VACIOS }
+      const nuevosOtros: EnlaceSocial[] = []
+      r.data.forEach(en => {
+        const red = matchRedBasica(en.etiqueta)
+        if (red) nuevosBasicos[red.key] = en.url
+        else nuevosOtros.push(en)
+      })
+      setBasicos(nuevosBasicos)
+      setOtros(nuevosOtros)
       setEnlacesMsg({ tipo: 'ok', texto: 'Enlaces guardados correctamente.' })
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? 'Error al guardar los enlaces.'
@@ -214,7 +249,7 @@ export default function EditarPerfilPage() {
         <div className="card mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-1">Redes sociales</h2>
           <p className="text-sm text-gray-500 mb-4">
-            Agrega enlaces a tus redes o tu sitio web — se muestran en tu perfil público. Hasta {MAX_ENLACES}.
+            Se muestran en tu perfil público. Dejá vacío lo que no uses.
           </p>
 
           {enlacesMsg && (
@@ -227,44 +262,64 @@ export default function EditarPerfilPage() {
             </div>
           )}
 
-          <form onSubmit={handleEnlaces} className="flex flex-col gap-3">
-            {enlaces.map((en, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  className="input flex-1"
-                  placeholder="Etiqueta (ej. Instagram)"
-                  value={en.etiqueta}
-                  onChange={e => actualizarEnlace(idx, 'etiqueta', e.target.value)}
-                  maxLength={30}
-                  required
-                />
-                <input
-                  className="input flex-[2]"
-                  placeholder="URL (ej. instagram.com/mitienda)"
-                  value={en.url}
-                  onChange={e => actualizarEnlace(idx, 'url', e.target.value)}
-                  maxLength={300}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => quitarEnlace(idx)}
-                  className="text-red-500 hover:text-red-700 text-sm px-2 py-2"
-                >
-                  Quitar
-                </button>
-              </div>
-            ))}
+          <form onSubmit={handleEnlaces} className="flex flex-col gap-5">
+            {/* Redes principales — campo fijo con ícono de marca */}
+            <div className="flex flex-col gap-2">
+              {REDES_BASICAS.map(red => (
+                <div key={red.key} className="flex gap-2 items-center">
+                  <IconoRedSocial plataforma={red.key} />
+                  <input
+                    className="input flex-1"
+                    placeholder={red.placeholder}
+                    value={basicos[red.key]}
+                    onChange={e => actualizarBasico(red.key, e.target.value)}
+                    maxLength={300}
+                  />
+                </div>
+              ))}
+            </div>
 
-            <div className="flex justify-between items-center">
+            {/* Otros enlaces — etiqueta libre (sitio web, otra red, lo que sea) */}
+            <div className="flex flex-col gap-2 pt-1 border-t border-gray-100">
+              <p className="text-sm font-medium text-gray-700 pt-3">Otros enlaces</p>
+              {otros.map((en, idx) => (
+                <div key={idx} className="flex gap-2 items-start">
+                  <input
+                    className="input flex-1"
+                    placeholder="Etiqueta (ej. Mi página web)"
+                    value={en.etiqueta}
+                    onChange={e => actualizarOtro(idx, 'etiqueta', e.target.value)}
+                    maxLength={30}
+                    required
+                  />
+                  <input
+                    className="input flex-[2]"
+                    placeholder="URL"
+                    value={en.url}
+                    onChange={e => actualizarOtro(idx, 'url', e.target.value)}
+                    maxLength={300}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => quitarOtro(idx)}
+                    className="text-red-500 hover:text-red-700 text-sm px-2 py-2"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
               <button
                 type="button"
-                onClick={agregarEnlace}
-                disabled={enlaces.length >= MAX_ENLACES}
-                className="btn-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={agregarOtro}
+                disabled={otros.length >= MAX_OTROS}
+                className="btn-secondary text-sm w-fit disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                + Agregar enlace
+                + Agregar otro enlace
               </button>
+            </div>
+
+            <div className="flex justify-end">
               <button type="submit" className="btn-primary" disabled={enlacesCargando}>
                 {enlacesCargando ? 'Guardando...' : 'Guardar enlaces'}
               </button>
