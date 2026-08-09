@@ -186,7 +186,7 @@ function KpiCard({ icon, label, value, sub, color }: {
   icon: string; label: string; value: string; sub?: string; color: string
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 bg-white border border-gray-100 shadow-sm`}>
+    <div className="card relative overflow-hidden p-5">
       <div className={`absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 -mt-6 -mr-6 ${color}`} />
       <span className="text-2xl">{icon}</span>
       <p className="text-xs text-gray-400 mt-2 uppercase tracking-wide font-medium">{label}</p>
@@ -320,7 +320,7 @@ export default function ReportesPage() {
             </div>
 
             {data.ventasPorMes.length === 0 && data.ventasPorProducto.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+              <div className="card p-12 text-center">
                 <span className="text-5xl">📊</span>
                 <p className="text-gray-500 mt-4 font-medium">Sin ventas en este período</p>
                 <p className="text-gray-400 text-sm mt-1">Prueba seleccionando un período más amplio</p>
@@ -331,7 +331,7 @@ export default function ReportesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
                   {/* Area chart — tendencia por mes */}
-                  <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  <div className="lg:col-span-2 card">
                     <h2 className="font-semibold text-gray-800 mb-1">
                       {metrica === 'ganancia' ? 'Ganancia mensual' : 'Unidades vendidas por mes'}
                     </h2>
@@ -367,7 +367,7 @@ export default function ReportesPage() {
                   </div>
 
                   {/* Donut — distribución */}
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  <div className="card">
                     <h2 className="font-semibold text-gray-800 mb-1">Distribución</h2>
                     <p className="text-xs text-gray-400 mb-4">Por producto</p>
                     {data.ventasPorProducto.length === 0 ? (
@@ -403,7 +403,7 @@ export default function ReportesPage() {
                 </div>
 
                 {/* Bar chart — top productos */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                <div className="card mb-6">
                   <h2 className="font-semibold text-gray-800 mb-1">Top productos</h2>
                   <p className="text-xs text-gray-400 mb-4">
                     {metrica === 'ganancia' ? 'Ranking por ganancia neta' : 'Ranking por unidades vendidas'}
@@ -433,7 +433,7 @@ export default function ReportesPage() {
                 </div>
 
                 {/* Tabla detallada + descarga CSV */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="card p-0 overflow-hidden">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <div>
                       <h2 className="font-semibold text-gray-800">Detalle por producto</h2>

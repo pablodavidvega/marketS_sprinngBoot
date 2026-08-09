@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
 
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link to="/admin/estadisticas-comunidad" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/estadisticas-comunidad" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl group-hover:bg-red-200 transition-colors">
               📈
@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/usuarios" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/usuarios" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 text-xl group-hover:bg-primary-200 transition-colors">
               👥
@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/categorias" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/categorias" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center text-teal-600 text-xl group-hover:bg-teal-200 transition-colors">
               🗃️
@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/correos" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/correos" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 text-xl group-hover:bg-orange-200 transition-colors">
               ✉️
@@ -258,7 +258,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/soporte" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/soporte" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl group-hover:bg-blue-200 transition-colors">
               💬
@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/reportes/vendedores" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/reportes/vendedores" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 text-xl group-hover:bg-green-200 transition-colors">
               📊
@@ -280,7 +280,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/reportes/catalogo" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/reportes/catalogo" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xl group-hover:bg-indigo-200 transition-colors">
               🗂️
@@ -291,7 +291,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/carga-usuarios" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/carga-usuarios" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl group-hover:bg-purple-200 transition-colors">
               📤
@@ -302,7 +302,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/invitaciones" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/invitaciones" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl group-hover:bg-amber-200 transition-colors">
               🎟️
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/banners-slider" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/banners-slider" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 text-xl group-hover:bg-pink-200 transition-colors">
               🖼️
@@ -324,7 +324,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/admin/configuracion" className="card hover:shadow-md transition-shadow group">
+        <Link to="/admin/configuracion" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 text-xl group-hover:bg-slate-200 transition-colors">
               ⚙️
@@ -335,7 +335,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/moderador/productos" className="card hover:shadow-md transition-shadow group">
+        <Link to="/moderador/productos" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl group-hover:bg-cyan-200 transition-colors">
               📦
@@ -346,7 +346,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </Link>
-        <Link to="/moderador/pedidos" className="card hover:shadow-md transition-shadow group">
+        <Link to="/moderador/pedidos" className="card card-hoverable group">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-lime-100 rounded-lg flex items-center justify-center text-lime-600 text-xl group-hover:bg-lime-200 transition-colors">
               🧾

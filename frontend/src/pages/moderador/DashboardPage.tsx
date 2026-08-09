@@ -62,7 +62,7 @@ export default function ModeradorDashboardPage() {
 
       {/* Accesos rápidos */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link to="/moderador/productos" className="card hover:shadow-md transition-shadow group">
+        <Link to="/moderador/productos" className="card card-hoverable group">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,7 +75,7 @@ export default function ModeradorDashboardPage() {
           <p className="text-sm text-gray-500">Ver y activar/desactivar productos de todos los vendedores.</p>
         </Link>
 
-        <Link to="/moderador/pedidos" className="card hover:shadow-md transition-shadow group">
+        <Link to="/moderador/pedidos" className="card card-hoverable group">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -88,7 +88,7 @@ export default function ModeradorDashboardPage() {
           <p className="text-sm text-gray-500">Ver todos los pedidos de la plataforma (solo lectura).</p>
         </Link>
 
-        <Link to="/moderador/reportes" className="card hover:shadow-md transition-shadow group">
+        <Link to="/moderador/reportes" className="card card-hoverable group">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
