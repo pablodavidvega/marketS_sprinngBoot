@@ -85,34 +85,37 @@ public class MercadoPagoService {
                     // Parsear JSON de respuesta
                     JsonNode root = objectMapper.readTree(responseBody);
 
-                    String sandboxUrl = "";
+                    String paymentUrl = "";
                     String preferenceId = "";
-
-                    if (root.has("sandbox_init_point")) {
-                        sandboxUrl = root.get("sandbox_init_point").asText();
-                        System.out.println("Sandbox URL encontrada: " + sandboxUrl);
-                    }
 
                     if (root.has("id")) {
                         preferenceId = root.get("id").asText();
                         System.out.println("Preference ID: " + preferenceId);
                     }
 
-                    // También intentar con init_point si sandbox no está
-                    if (sandboxUrl.isEmpty() && root.has("init_point")) {
-                        sandboxUrl = root.get("init_point").asText();
-                        System.out.println("Usando init_point: " + sandboxUrl);
+                    // init_point es el checkout real de MercadoPago; se prioriza sobre
+                    // sandbox_init_point (antes era al revés) porque mandar una compra real al
+                    // checkout de pruebas muestra el banner "Sandbox ¿cómo usarlo?" y ahí métodos
+                    // como transferencia bancaria/PSE no redirigen a ningún banco real ya que no
+                    // hay conexión bancaria de verdad en modo sandbox. Solo se cae a sandbox si MP
+                    // no devolvió init_point (pasa con tokens de test TEST-...).
+                    if (root.has("init_point")) {
+                        paymentUrl = root.get("init_point").asText();
+                        System.out.println("Checkout URL (producción): " + paymentUrl);
+                    } else if (root.has("sandbox_init_point")) {
+                        paymentUrl = root.get("sandbox_init_point").asText();
+                        System.out.println("Checkout URL (sandbox, no vino init_point): " + paymentUrl);
                     }
 
-                    if (!sandboxUrl.isEmpty()) {
+                    if (!paymentUrl.isEmpty()) {
                         Map<String, Object> resultado = new HashMap<>();
                         resultado.put("success", true);
-                        resultado.put("paymentUrl", sandboxUrl);
+                        resultado.put("paymentUrl", paymentUrl);
                         resultado.put("preferenceId", preferenceId);
                         resultado.put("rawResponse", responseBody);
 
                         System.out.println("¡PREFERENCIA CREADA EXITOSAMENTE!");
-                        System.out.println("URL de pago: " + sandboxUrl);
+                        System.out.println("URL de pago: " + paymentUrl);
                         System.out.println("ID de preferencia: " + preferenceId);
 
                         return resultado;
