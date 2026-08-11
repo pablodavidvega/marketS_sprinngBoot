@@ -10,16 +10,25 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Configuration
 public class DataSeeder {
 
+    // Solo crea un admin cuando la tabla users está completamente vacía (arranque en frío o
+    // reset total de datos), nunca con un email/password fijos: así no queda una credencial
+    // adivinable corriendo en cada arranque de producción, pero el sistema sigue pudiendo
+    // arrancarse solo tras un reset (nadie más puede crear el primer admin, ya que crear
+    // admins requiere ya ser admin).
     @Bean
     public CommandLineRunner seedAdmin(UserRepository userRepository,
                                        RolRepository rolRepository,
                                        PasswordEncoder passwordEncoder) {
         return args -> {
-            // Verificar si ya existe el rol ADMIN
+            if (userRepository.count() > 0) {
+                return;
+            }
+
             Rol adminRol = rolRepository.findByRolname("ROLE_ADMIN")
                     .orElseGet(() -> {
                         Rol newRol = new Rol();
@@ -27,24 +36,30 @@ public class DataSeeder {
                         return rolRepository.save(newRol);
                     });
 
-            // Verificar si ya existe un admin con ese correo
-            String adminEmail = "admin@pablovega.com";
-            if (userRepository.findByEmail(adminEmail).isEmpty()) {
-                User admin = new User();
-                admin.setUsername("Admin Pablo");
-                admin.setEmail(adminEmail);
-                admin.setPassword(passwordEncoder.encode("admin123"));
-                admin.setPhone("123456789");
-                admin.setAddress("cll201iw");
-                admin.setRol(adminRol);
-                admin.setCreatedAt(LocalDateTime.now());
-                admin.setUpdatedAt(LocalDateTime.now());
+            String adminEmail = "admin@marketS.local";
+            String tempPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
 
-                userRepository.save(admin);
-                System.out.println("✅ Admin user creado: " + adminEmail);
-            } else {
-                System.out.println("ℹ️ Admin user ya existe: " + adminEmail);
-            }
+            User admin = new User();
+            admin.setUsername("Admin");
+            admin.setEmail(adminEmail);
+            admin.setPassword(passwordEncoder.encode(tempPassword));
+            admin.setPhone("000000000");
+            admin.setAddress("");
+            admin.setRol(adminRol);
+            admin.setActive(true);
+            admin.setAceptoTerminos(true);
+            admin.setCreatedAt(LocalDateTime.now());
+            admin.setUpdatedAt(LocalDateTime.now());
+
+            userRepository.save(admin);
+
+            System.out.println("======================================================");
+            System.out.println("Base de datos de usuarios vacía: se creó un admin inicial");
+            System.out.println("Email:    " + adminEmail);
+            System.out.println("Password: " + tempPassword);
+            System.out.println("Iniciá sesión y cambiá esta contraseña de inmediato.");
+            System.out.println("Este mensaje no vuelve a salir mientras exista un usuario.");
+            System.out.println("======================================================");
         };
     }
 }
