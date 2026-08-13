@@ -1,7 +1,10 @@
 package com.example.MarketS.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +19,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex) {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
@@ -28,5 +33,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ArchivoInvalidoException.class)
     public ResponseEntity<?> handleArchivoInvalido(ArchivoInvalidoException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    // Body del request ilegible (JSON malformado, tipo equivocado, etc.) — es un error del
+    // cliente, no del servidor; sin este handler caía en el catch-all de abajo como 500.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<?> handleMensajeIlegible(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Solicitud inválida"));
+    }
+
+    // Red de seguridad final: cualquier excepción no contemplada arriba. El mensaje real de la
+    // excepción (que puede filtrar detalles internos — nombres de tabla/columna en errores SQL,
+    // rutas de archivo, stack traces) nunca se manda al cliente; queda solo en el log del
+    // servidor. Complementa a server.error.include-message=never en prod (esto cubre lo mismo
+    // desde el lado de Spring MVC, para no depender solo de esa propiedad).
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGenerico(Exception ex) {
+        log.error("Excepción no manejada en un endpoint de la API", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error interno del servidor"));
     }
 }
