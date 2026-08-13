@@ -1,9 +1,7 @@
 package com.example.MarketS.service;
 
-import com.example.MarketS.config.MercadoPagoConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -15,41 +13,23 @@ import java.util.Map;
 @Service
 public class MercadoPagoService {
 
-    @Autowired
-    private MercadoPagoConfig config;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
-                                                String descripcion, String email) {
-        return crearPreferencia(pedidoId, monto, descripcion, email, null, null, null, null);
-    }
-
-    public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
-                                                String descripcion, String email,
-                                                String successUrl, String failureUrl, String pendingUrl) {
-        return crearPreferencia(pedidoId, monto, descripcion, email, successUrl, failureUrl, pendingUrl, null);
-    }
-
     // accessTokenVendedor: token OAuth propio del vendedor dueño del pedido (ver
-    // MercadoPagoOAuthService), para que el pago vaya directo a su cuenta. Si viene null, se usa
-    // el token de la propia plataforma (compatibilidad con los overloads de arriba).
+    // MercadoPagoOAuthService), para que el pago vaya directo a su cuenta.
     public Map<String, Object> crearPreferencia(Long pedidoId, Double monto,
                                                 String descripcion, String email,
                                                 String successUrl, String failureUrl, String pendingUrl,
                                                 String accessTokenVendedor) {
         try {
-            String token = (accessTokenVendedor != null && !accessTokenVendedor.isBlank())
-                    ? accessTokenVendedor
-                    : config.getAccessToken();
-
-            if (token == null || token.isEmpty()) {
+            if (accessTokenVendedor == null || accessTokenVendedor.isBlank()) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("success", false);
                 error.put("error", "Token de MercadoPago no configurado");
                 return error;
             }
+            String token = accessTokenVendedor;
 
             String requestJson = buildPreferenceJson(pedidoId, monto, descripcion, successUrl, failureUrl, pendingUrl);
 
@@ -157,20 +137,14 @@ public class MercadoPagoService {
      * Consulta la API de MP para verificar que un pago existe, está aprobado
      * y pertenece al pedido indicado. Nunca confiar solo en los query params del callback.
      */
-    public Map<String, Object> verificarPago(String paymentId) {
-        return verificarPago(paymentId, null);
-    }
-
     // accessTokenVendedor: el pago se consulta con el token de la cuenta de MP que lo recibió
-    // (el vendedor dueño del pedido) — si viene null, se usa el token de la plataforma.
+    // (el vendedor dueño del pedido).
     public Map<String, Object> verificarPago(String paymentId, String accessTokenVendedor) {
         try {
-            String token = (accessTokenVendedor != null && !accessTokenVendedor.isBlank())
-                    ? accessTokenVendedor
-                    : config.getAccessToken();
-            if (token == null || token.isEmpty()) {
+            if (accessTokenVendedor == null || accessTokenVendedor.isBlank()) {
                 return Map.of("valido", false, "motivo", "Token MP no configurado");
             }
+            String token = accessTokenVendedor;
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + token);
@@ -197,23 +171,6 @@ public class MercadoPagoService {
 
         } catch (Exception e) {
             return Map.of("valido", false, "motivo", "Error consultando MP: " + e.getMessage());
-        }
-    }
-
-    public String pruebaConexion() {
-        try {
-            String token = config.getAccessToken();
-            if (token == null || token.isEmpty()) {
-                return "Token no configurado";
-            }
-
-            String tokenStart = token.substring(0, Math.min(10, token.length()));
-            boolean isTestToken = token.startsWith("TEST") || token.startsWith("APP_USR");
-
-            return "Token encontrado (inicio: " + tokenStart + ")\n" +
-                    "Es token de test: " + isTestToken;
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
         }
     }
 
