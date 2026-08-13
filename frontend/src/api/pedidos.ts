@@ -34,9 +34,6 @@ export const getPedido = (id: number) =>
 export const getMisPedidos = (page = 0, size = 30) =>
   api.get<MisPedidosResponse>('/api/pedidos/mis-pedidos', { params: { page, size } })
 
-export const simularPago = (id: number) =>
-  api.post<{ mensaje: string; estado: string }>(`/api/pedidos/${id}/simular-pago`)
-
 export const getPedidosVendedor = (page = 0, size = 30) =>
   api.get<PedidosVendedorResponse>('/api/vendedor/pedidos', { params: { page, size } })
 

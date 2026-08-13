@@ -506,40 +506,6 @@ public class PedidoApiController {
     }
 
     // -------------------------------------------------------------------------
-    // Simulación de pago exitoso — solo para desarrollo/sandbox
-    // -------------------------------------------------------------------------
-
-    @PostMapping("/{id}/simular-pago")
-    public ResponseEntity<?> simularPago(@PathVariable Long id, Authentication auth) {
-        User usuario = resolverUsuario(auth);
-
-        Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
-        if (pedido == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!pedido.getUsuario().getId().equals(usuario.getId())) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
-        }
-        if ("PAGADO".equals(pedido.getEstado())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El pedido ya está pagado"));
-        }
-
-        pedido.setEstado("PAGADO");
-        pedidoRepository.save(pedido);
-
-        pedido.getDetalles().forEach(d -> {
-            try {
-                productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
-            } catch (Exception e) {
-                avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
-            }
-        });
-        notificarPagoAprobado(pedido);
-
-        return ResponseEntity.ok(Map.of("mensaje", "Pago simulado correctamente", "estado", "PAGADO"));
-    }
-
-    // -------------------------------------------------------------------------
     // Callbacks de MercadoPago — públicos, el browser del usuario aterriza aquí
     // y el backend procesa el estado antes de redirigir al frontend React.
     // -------------------------------------------------------------------------
