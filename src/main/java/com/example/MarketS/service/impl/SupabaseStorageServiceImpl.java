@@ -1,5 +1,6 @@
 package com.example.MarketS.service.impl;
 
+import com.example.MarketS.exception.ArchivoInvalidoException;
 import com.example.MarketS.service.CloudStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -38,6 +39,11 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
             throw new IllegalStateException("La propiedad 'supabase.key' no está configurada. Por favor añádela en tu application.properties");
         }
 
+        byte[] contenido = archivo.getBytes();
+        if (!ArchivoMultimediaValidator.esImagenOVideoValido(contenido)) {
+            throw new ArchivoInvalidoException("El archivo no es una imagen o video válido");
+        }
+
         String originalFilename = archivo.getOriginalFilename();
         String extension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf('.'))
@@ -62,7 +68,7 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
                     .header("Authorization", "Bearer " + supabaseKey)
                     .header("apikey", supabaseKey)
                     .contentType(MediaType.parseMediaType(archivo.getContentType() != null ? archivo.getContentType() : "application/octet-stream"))
-                    .bodyValue(archivo.getBytes())
+                    .bodyValue(contenido)
                     .retrieve()
                     .toBodilessEntity()
                     .block(); // Síncrono para el hilo del controlador de Spring Boot
@@ -84,6 +90,10 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
 
         if (supabaseKey == null || supabaseKey.isBlank()) {
             throw new IllegalStateException("La propiedad 'supabase.key' no está configurada.");
+        }
+
+        if (!ArchivoMultimediaValidator.esImagenOVideoValido(bytes)) {
+            throw new ArchivoInvalidoException("El archivo '" + nombreOriginal + "' no es una imagen o video válido");
         }
 
         String nombreBase = nombreOriginal != null ? nombreOriginal : "archivo";

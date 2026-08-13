@@ -24,4 +24,9 @@ public class GlobalExceptionHandler {
                 .orElse("Datos inválidos");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", mensaje));
     }
+
+    @ExceptionHandler(ArchivoInvalidoException.class)
+    public ResponseEntity<?> handleArchivoInvalido(ArchivoInvalidoException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
 }
