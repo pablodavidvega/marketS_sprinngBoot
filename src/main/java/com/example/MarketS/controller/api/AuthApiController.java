@@ -9,11 +9,13 @@ import com.example.MarketS.model.Vendedor;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.JwtTokenProvider;
+import com.example.MarketS.security.RateLimitService;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.RegistroElegibilidadService;
 import com.example.MarketS.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +59,7 @@ public class AuthApiController {
     private final InvitacionService invitacionService;
     private final RegistroElegibilidadService elegibilidadService;
     private final AuthCookieService cookieService;
+    private final RateLimitService rateLimitService;
 
     public AuthApiController(AuthenticationManager authenticationManager,
                               JwtTokenProvider tokenProvider,
@@ -66,7 +69,8 @@ public class AuthApiController {
                               NotificacionService notificacionService,
                               InvitacionService invitacionService,
                               RegistroElegibilidadService elegibilidadService,
-                              AuthCookieService cookieService) {
+                              AuthCookieService cookieService,
+                              RateLimitService rateLimitService) {
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
         this.userService = userService;
@@ -76,13 +80,17 @@ public class AuthApiController {
         this.invitacionService = invitacionService;
         this.elegibilidadService = elegibilidadService;
         this.cookieService = cookieService;
+        this.rateLimitService = rateLimitService;
     }
 
     // POST /api/auth/login — devuelve el JWT tanto en cookie httpOnly (funciona same-site/dev)
     // como en el body (para que el frontend lo mande como Authorization: Bearer cuando frontend
     // y backend están en dominios distintos — Safari/iOS bloquea la cookie cross-site por ITP)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletRequest request, HttpServletResponse response) {
+        if (!rateLimitService.permitirLogin(request, loginDTO.getEmail())) {
+            return ResponseEntity.status(429).body(Map.of("error", "Demasiados intentos. Probá de nuevo en unos minutos."));
+        }
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
@@ -121,7 +129,10 @@ public class AuthApiController {
 
     // POST /api/auth/registro
     @PostMapping("/registro")
-    public ResponseEntity<?> registro(@Valid @RequestBody RegistroVendedorDTO dto) {
+    public ResponseEntity<?> registro(@Valid @RequestBody RegistroVendedorDTO dto, HttpServletRequest request) {
+        if (!rateLimitService.permitirRegistro(request)) {
+            return ResponseEntity.status(429).body(Map.of("error", "Demasiados intentos. Probá de nuevo en un rato."));
+        }
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Las contraseñas no coinciden"));
         }
@@ -193,10 +204,16 @@ public class AuthApiController {
 
     // POST /api/auth/forgot-password — genera token y envía email con link al frontend React
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String email = body.get("email");
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo es requerido"));
+        }
+
+        if (!rateLimitService.permitirForgotPassword(request, email)) {
+            // Misma respuesta genérica que el resto del endpoint, para no revelar que se activó
+            // un límite (que a su vez podría filtrar si el correo existe).
+            return ResponseEntity.ok(Map.of("mensaje", "Si el correo está registrado, recibirás un enlace en breve"));
         }
 
         var userOpt = userService.buscarPorEmail(email.trim());
