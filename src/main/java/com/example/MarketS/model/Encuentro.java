@@ -43,11 +43,16 @@ public class Encuentro {
     @Column(columnDefinition = "TEXT")
     private String nota;
 
-    // columnDefinition con DEFAULT: permite que Hibernate agregue esta columna NOT NULL sobre
-    // una tabla "encuentros" que ya tiene filas (ver mismo patrón en User.aceptoTerminos).
+    // El "default 'PENDIENTE'" en columnDefinition ya cumplió su propósito (permitir agregar
+    // esta columna NOT NULL sobre una tabla "encuentros" que ya tenía filas, mismo patrón que
+    // User.aceptoTerminos) y se saca: con la columna ya creada, Hibernate lo reinterpretaba en
+    // cada arranque como "alter column estado set data type varchar(20) default 'PENDIENTE'",
+    // sintaxis inválida en Postgres (el DEFAULT no puede ir pegado a un SET DATA TYPE). El
+    // default real lo sigue poniendo el código Java (acá y en EncuentroApiController), la base
+    // nunca dependió del default a nivel SQL.
     // PENDIENTE hasta que la contraparte confirma; cualquier edición de lugar/hora/nota vuelve
     // a poner el encuentro en PENDIENTE porque cambiaron los términos acordados.
-    @Column(nullable = false, columnDefinition = "varchar(20) default 'PENDIENTE'")
+    @Column(nullable = false, columnDefinition = "varchar(20)")
     private String estado = "PENDIENTE";
 
     @Column(name = "fecha_creacion", nullable = false)
