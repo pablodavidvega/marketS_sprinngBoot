@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import axios from 'axios'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { getProducto, getResenas, crearResena } from '../api/productos'
 import { getPreguntas, crearPregunta, responderPregunta } from '../api/preguntas'
@@ -51,31 +52,51 @@ export default function DetallePage() {
 
   useEffect(() => {
     if (!id) return
-    getProducto(Number(id))
+    const controller = new AbortController()
+    setLoading(true)
+    getProducto(Number(id), controller.signal)
       .then(r => {
         setProducto(r.data)
         setActivoIdx(0)
+        setLoading(false)
       })
-      .catch(() => navigate('/'))
-      .finally(() => setLoading(false))
+      .catch(err => {
+        if (axios.isCancel(err)) return
+        navigate('/')
+        setLoading(false)
+      })
+    // Al cambiar de "id" rápido (ej. desde un producto relacionado) sin esperar a que la
+    // respuesta anterior llegue, se cancela esa request vieja para que su .then no pise el
+    // producto que corresponde al id actual con datos del anterior.
+    return () => controller.abort()
   }, [id, navigate])
 
   useEffect(() => {
     if (!id) return
+    const controller = new AbortController()
     setResenas(null)
     setPaginaResenas(0)
-    getResenas(Number(id))
+    getResenas(Number(id), 0, 30, controller.signal)
       .then(r => setResenas(r.data))
-      .catch(() => setResenas({ promedio: 0, total: 0, puedeResenar: false, yaReseno: false, resenas: [], paginaActual: 0, totalPaginas: 0 }))
+      .catch(err => {
+        if (axios.isCancel(err)) return
+        setResenas({ promedio: 0, total: 0, puedeResenar: false, yaReseno: false, resenas: [], paginaActual: 0, totalPaginas: 0 })
+      })
+    return () => controller.abort()
   }, [id, user?.email])
 
   useEffect(() => {
     if (!id) return
+    const controller = new AbortController()
     setPreguntas(null)
     setPaginaPreguntas(0)
-    getPreguntas(Number(id))
+    getPreguntas(Number(id), 0, 30, controller.signal)
       .then(r => setPreguntas(r.data))
-      .catch(() => setPreguntas({ total: 0, puedeResponder: false, preguntas: [], paginaActual: 0, totalPaginas: 0 }))
+      .catch(err => {
+        if (axios.isCancel(err)) return
+        setPreguntas({ total: 0, puedeResponder: false, preguntas: [], paginaActual: 0, totalPaginas: 0 })
+      })
+    return () => controller.abort()
   }, [id, user?.email])
 
   function handleVerMasResenas() {

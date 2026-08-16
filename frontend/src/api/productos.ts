@@ -1,8 +1,8 @@
 import api from './axios'
 import type { Producto, Categoria, SugerenciaProducto, VendedorProductosResponse, ResenasResponse, Resena } from '../types'
 
-export const getProductos = (q?: string, limit = 30) =>
-  api.get<Producto[]>('/api/productos', { params: { q, limit } })
+export const getProductos = (q?: string, limit = 30, signal?: AbortSignal) =>
+  api.get<Producto[]>('/api/productos', { params: { q, limit }, signal })
 
 export const getProductosRecientes = (limit = 10) =>
   api.get<Producto[]>('/api/productos/recientes', { params: { limit } })
@@ -15,11 +15,11 @@ export const getProductosRecientesPaginado = (page = 0, size = 30) =>
 export const getSugerencias = (q: string) =>
   api.get<SugerenciaProducto[]>('/api/productos/sugerencias', { params: { q } })
 
-export const getProducto = (id: number) =>
-  api.get<Producto>(`/api/productos/${id}`)
+export const getProducto = (id: number, signal?: AbortSignal) =>
+  api.get<Producto>(`/api/productos/${id}`, { signal })
 
-export const getProductosPorCategoria = (categoriaId: number, page = 0, size = 30) =>
-  api.get<VendedorProductosResponse>(`/api/productos/categoria/${categoriaId}`, { params: { page, size } })
+export const getProductosPorCategoria = (categoriaId: number, page = 0, size = 30, signal?: AbortSignal) =>
+  api.get<VendedorProductosResponse>(`/api/productos/categoria/${categoriaId}`, { params: { page, size }, signal })
 
 export const getCategorias = () =>
   api.get<Categoria[]>('/api/categorias')
@@ -59,8 +59,8 @@ export const actualizarProducto = (
   })
 
 // Reseñas
-export const getResenas = (productoId: number, page = 0, size = 30) =>
-  api.get<ResenasResponse>(`/api/productos/${productoId}/resenas`, { params: { page, size } })
+export const getResenas = (productoId: number, page = 0, size = 30, signal?: AbortSignal) =>
+  api.get<ResenasResponse>(`/api/productos/${productoId}/resenas`, { params: { page, size }, signal })
 
 export const crearResena = (productoId: number, data: { calificacion: number; comentario?: string }) =>
   api.post<Resena>(`/api/productos/${productoId}/resenas`, data)

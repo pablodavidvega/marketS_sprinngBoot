@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import axios from 'axios'
 import { getProductos, getProductosPorCategoria, getCategorias } from '../api/productos'
 import type { Producto, Categoria } from '../types'
 import ProductoCard from '../components/ProductoCard'
@@ -33,30 +34,43 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setError('')
     setVisibles(PRODUCTOS_POR_PAGINA)
 
+    // Cambiar de categoría o de búsqueda rápido (antes de que la respuesta anterior llegue)
+    // cancela esa request vieja, para que no pise el resultado del filtro actual con datos
+    // del filtro anterior.
     if (categoriaActiva) {
-      getProductosPorCategoria(categoriaActiva, 0, PRODUCTOS_POR_PAGINA)
+      getProductosPorCategoria(categoriaActiva, 0, PRODUCTOS_POR_PAGINA, controller.signal)
         .then(r => {
           setProductos(r.data.contenido)
           setPagina(r.data.paginaActual)
           setTotalPaginas(r.data.totalPaginas)
+          setLoading(false)
         })
-        .catch(() => setError('Error al cargar productos'))
-        .finally(() => setLoading(false))
-      return
+        .catch(err => {
+          if (axios.isCancel(err)) return
+          setError('Error al cargar productos')
+          setLoading(false)
+        })
+      return () => controller.abort()
     }
 
-    getProductos(filtro || undefined, 200)
+    getProductos(filtro || undefined, 200, controller.signal)
       .then(r => {
         setProductos(r.data)
         setPagina(0)
         setTotalPaginas(1)
+        setLoading(false)
       })
-      .catch(() => setError('Error al cargar productos'))
-      .finally(() => setLoading(false))
+      .catch(err => {
+        if (axios.isCancel(err)) return
+        setError('Error al cargar productos')
+        setLoading(false)
+      })
+    return () => controller.abort()
   }, [categoriaActiva, filtro])
 
   function handleVerMas() {
