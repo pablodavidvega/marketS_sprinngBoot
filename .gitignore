@@ -25,6 +25,7 @@ src/main/resources/static/img/
 node_modules/
 .env
 src/main/resources/application-dev.properties
+/backups/
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
