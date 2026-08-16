@@ -31,14 +31,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", mensaje));
     }
 
-    @ExceptionHandler(ArchivoInvalidoException.class)
-    public ResponseEntity<?> handleArchivoInvalido(ArchivoInvalidoException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(UsuarioConRelacionesException.class)
-    public ResponseEntity<?> handleUsuarioConRelaciones(UsuarioConRelacionesException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    // Handler único para toda la jerarquía de excepciones de negocio (ArchivoInvalidoException,
+    // UsuarioConRelacionesException, y las que se vayan agregando): cada una ya sabe a qué
+    // HttpStatus traducirse, así que no hace falta un @ExceptionHandler por tipo.
+    @ExceptionHandler(NegocioException.class)
+    public ResponseEntity<?> handleNegocio(NegocioException ex) {
+        return ResponseEntity.status(ex.getStatus()).body(Map.of("error", ex.getMessage()));
     }
 
     // Red de seguridad para cualquier borrado/operación que rompa una foreign key y que no
