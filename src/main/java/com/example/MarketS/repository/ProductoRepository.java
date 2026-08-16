@@ -135,6 +135,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 //    Método para contar productos por categoría
     int countByCategoriasId(Long categoriaId);
 
+    // Conteo por categoría en una sola query (evita el N+1 de llamar countByCategoriasId
+    // una vez por cada categoría — ver ReporteAdminService.generarReporte).
+    @Query("SELECT p.categorias.id, COUNT(p) FROM Producto p WHERE p.categorias IS NOT NULL GROUP BY p.categorias.id")
+    List<Object[]> countProductosGroupByCategoria();
+
     long countByVendedorId(Long vendedorId);
 
     // Embudo admin: cuántos vendedores distintos han publicado al menos un producto.
