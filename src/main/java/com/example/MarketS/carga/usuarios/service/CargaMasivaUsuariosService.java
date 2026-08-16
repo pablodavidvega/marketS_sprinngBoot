@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -16,7 +17,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +31,10 @@ public class CargaMasivaUsuariosService {
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // Fila ya parseada en un User candidato, pendiente de la validación de duplicados en batch.
+    private record Candidato(int fila, User usuario) {}
+
+    @Transactional
     public DTOResultadoCarga procesar(MultipartFile archivo) {
 
         String nombreArchivo = archivo.getOriginalFilename() != null
@@ -45,7 +54,10 @@ public class CargaMasivaUsuariosService {
 
     private DTOResultadoCarga procesarCsv(MultipartFile archivo) {
         List<String> errores = new ArrayList<>();
-        int total = 0, correctos = 0;
+        List<Candidato> candidatos = new ArrayList<>();
+        int total = 0;
+
+        Map<String, Rol> rolesPorNombre = precargarRoles();
 
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(archivo.getInputStream(), StandardCharsets.UTF_8))) {
@@ -56,14 +68,11 @@ public class CargaMasivaUsuariosService {
                 if (fila == 0) { fila++; continue; } // saltar cabecera
                 if (linea.isBlank()) { fila++; continue; }
                 total++;
-                final int filaActual = fila;
                 try {
                     String[] datos = parseLineaCsv(linea);
-                    User u = construirUsuario(datos, filaActual);
-                    guardarUsuario(u, filaActual, errores);
-                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + filaActual))) correctos++;
+                    candidatos.add(new Candidato(fila, construirUsuario(datos, rolesPorNombre)));
                 } catch (Exception e) {
-                    errores.add("Fila " + filaActual + ": " + e.getMessage());
+                    errores.add("Fila " + fila + ": " + e.getMessage());
                 }
                 fila++;
             }
@@ -71,15 +80,18 @@ public class CargaMasivaUsuariosService {
             return new DTOResultadoCarga(0, 0, 0, List.of("Error al leer el CSV: " + e.getMessage()));
         }
 
-        int fallidos = total - correctos;
-        return new DTOResultadoCarga(total, correctos, fallidos, errores);
+        int correctos = guardarValidos(candidatos, errores);
+        return new DTOResultadoCarga(total, correctos, total - correctos, errores);
     }
 
     // ── Excel ─────────────────────────────────────────────────────────────────
 
     private DTOResultadoCarga procesarExcel(MultipartFile archivo) {
         List<String> errores = new ArrayList<>();
-        int total = 0, correctos = 0;
+        List<Candidato> candidatos = new ArrayList<>();
+        int total = 0;
+
+        Map<String, Rol> rolesPorNombre = precargarRoles();
 
         try (Workbook workbook = WorkbookFactory.create(archivo.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -88,15 +100,12 @@ public class CargaMasivaUsuariosService {
                 if (fila == 0) { fila++; continue; } // saltar cabecera
                 if (isFilaVacia(row)) { fila++; continue; }
                 total++;
-                final int filaActual = fila;
                 try {
                     String[] datos = new String[6];
                     for (int i = 0; i < 6; i++) datos[i] = getCeldaValor(row, i);
-                    User u = construirUsuario(datos, filaActual);
-                    guardarUsuario(u, filaActual, errores);
-                    if (errores.stream().noneMatch(e -> e.startsWith("Fila " + filaActual))) correctos++;
+                    candidatos.add(new Candidato(fila, construirUsuario(datos, rolesPorNombre)));
                 } catch (Exception e) {
-                    errores.add("Fila " + filaActual + ": " + e.getMessage());
+                    errores.add("Fila " + fila + ": " + e.getMessage());
                 }
                 fila++;
             }
@@ -104,13 +113,68 @@ public class CargaMasivaUsuariosService {
             return new DTOResultadoCarga(0, 0, 0, List.of("Error al leer el Excel: " + e.getMessage()));
         }
 
-        int fallidos = total - correctos;
-        return new DTOResultadoCarga(total, correctos, fallidos, errores);
+        int correctos = guardarValidos(candidatos, errores);
+        return new DTOResultadoCarga(total, correctos, total - correctos, errores);
+    }
+
+    // ── Precarga / dedupe / guardado en batch ───────────────────────────────────
+
+    // Los roles son un puñado de filas fijas (CLIENTE/VENDEDOR/...): se cargan una sola vez en
+    // vez de una query por fila (antes: rolRepository.findByRolname por cada usuario del archivo).
+    private Map<String, Rol> precargarRoles() {
+        Map<String, Rol> roles = new HashMap<>();
+        rolRepository.findAll().forEach(r -> roles.put(r.getRolname(), r));
+        return roles;
+    }
+
+    // Descarta duplicados (contra la BD y entre filas del propio archivo) con 2 queries en vez
+    // de 2 por fila, y guarda todo lo válido en un solo saveAll en vez de un save por fila.
+    private int guardarValidos(List<Candidato> candidatos, List<String> errores) {
+        if (candidatos.isEmpty()) return 0;
+
+        Set<String> usernames = candidatos.stream().map(c -> c.usuario().getUsername())
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> emails = candidatos.stream().map(c -> c.usuario().getEmail())
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> usernamesExistentes = new HashSet<>(userRepository.findExistingUsernames(usernames));
+        Set<String> emailsExistentes = new HashSet<>(userRepository.findExistingEmails(emails));
+
+        List<User> validos = new ArrayList<>();
+        Set<String> usernamesEnLote = new HashSet<>();
+        Set<String> emailsEnLote = new HashSet<>();
+
+        for (Candidato c : candidatos) {
+            User u = c.usuario();
+            if (usernamesExistentes.contains(u.getUsername()) || !usernamesEnLote.add(u.getUsername())) {
+                errores.add("Fila " + c.fila() + ": username '" + u.getUsername() + "' ya existe");
+                continue;
+            }
+            if (emailsExistentes.contains(u.getEmail()) || !emailsEnLote.add(u.getEmail())) {
+                errores.add("Fila " + c.fila() + ": email '" + u.getEmail() + "' ya existe");
+                continue;
+            }
+            u.setPassword(passwordEncoder.encode(u.getPassword()));
+            u.setCreatedAt(LocalDateTime.now());
+            u.setUpdatedAt(LocalDateTime.now());
+            validos.add(u);
+        }
+
+        if (validos.isEmpty()) return 0;
+
+        try {
+            userRepository.saveAll(validos);
+            return validos.size();
+        } catch (Exception e) {
+            // Caso raro (ej. choque con un registro creado justo entre la validación y el
+            // guardado): se reporta como fallo de lote en vez de dejar un 500 sin explicación.
+            errores.add("Error al guardar el lote en la base de datos: " + e.getMessage());
+            return 0;
+        }
     }
 
     // ── Construcción del usuario ──────────────────────────────────────────────
 
-    private User construirUsuario(String[] datos, int fila) {
+    private User construirUsuario(String[] datos, Map<String, Rol> rolesPorNombre) {
         String username = col(datos, 0);
         String email    = col(datos, 1);
         String password = col(datos, 2);
@@ -143,33 +207,18 @@ public class CargaMasivaUsuariosService {
         User u = new User();
         u.setUsername(username);
         u.setEmail(email);
-        u.setPassword(password); // se encripta en guardarUsuario
+        u.setPassword(password); // se encripta en guardarValidos, una vez que pasó la dedupe
         u.setPhone(phone.isBlank() ? "" : phone);
         u.setAddress(address.isBlank() ? null : address);
         u.setActive(true);
 
         // Rol: CLIENTE por defecto, acepta CLIENTE o VENDEDOR
         String rolname = rolInput.equals("VENDEDOR") ? "ROLE_VENDEDOR" : "ROLE_CLIENTE";
-        Rol rol = rolRepository.findByRolname(rolname)
-                .orElseThrow(() -> new IllegalStateException("Rol '" + rolname + "' no encontrado en la BD"));
+        Rol rol = rolesPorNombre.get(rolname);
+        if (rol == null) throw new IllegalStateException("Rol '" + rolname + "' no encontrado en la BD");
         u.setRol(rol);
 
         return u;
-    }
-
-    private void guardarUsuario(User u, int fila, List<String> errores) {
-        if (userRepository.existsByUsername(u.getUsername())) {
-            errores.add("Fila " + fila + ": username '" + u.getUsername() + "' ya existe");
-            return;
-        }
-        if (userRepository.existsByEmail(u.getEmail())) {
-            errores.add("Fila " + fila + ": email '" + u.getEmail() + "' ya existe");
-            return;
-        }
-        u.setPassword(passwordEncoder.encode(u.getPassword()));
-        u.setCreatedAt(LocalDateTime.now());
-        u.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(u);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

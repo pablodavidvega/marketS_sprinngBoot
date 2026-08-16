@@ -1,6 +1,8 @@
 package com.example.MarketS.carga.service;
 
 import com.example.MarketS.carga.dto.DTOResultadoCarga;
+import com.example.MarketS.model.Categorias;
+import com.example.MarketS.model.Marca;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.CategoriaRepository;
@@ -10,6 +12,7 @@ import com.example.MarketS.service.CloudStorageService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -29,6 +32,11 @@ public class CargaMasivaVendedorService {
     private final MarcaRepository marcaRepository;
     private final CloudStorageService cloudStorageService;
 
+    // Transaccional acá (el punto de entrada real invocado desde el controller) y no en
+    // procesarCsv/procesarExcel: @Transactional en un método private/protected llamado por
+    // "this" desde dentro de la misma clase no lo intercepta el proxy de Spring y sería un
+    // no-op silencioso.
+    @Transactional
     public DTOResultadoCarga procesar(MultipartFile archivo, MultipartFile zip, User vendedor) {
 
         Map<String, String> mediaMap = new HashMap<>();
@@ -75,7 +83,11 @@ public class CargaMasivaVendedorService {
 
     private DTOResultadoCarga procesarCsv(MultipartFile archivo, Map<String, String> mediaMap, User vendedor) {
         List<String> errores = new ArrayList<>();
-        int total = 0, correctos = 0;
+        List<Producto> productos = new ArrayList<>();
+        int total = 0;
+
+        Map<String, Categorias> categoriasPorNombre = precargarCategorias();
+        Map<String, Marca> marcasPorNombre = precargarMarcas();
 
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(archivo.getInputStream(), StandardCharsets.UTF_8))) {
@@ -88,9 +100,7 @@ public class CargaMasivaVendedorService {
                 total++;
                 try {
                     String[] datos = linea.split("[;,]", -1);
-                    Producto p = construirProducto(datos, mediaMap, vendedor);
-                    productoRepository.save(p);
-                    correctos++;
+                    productos.add(construirProducto(datos, mediaMap, vendedor, categoriasPorNombre, marcasPorNombre));
                 } catch (Exception e) {
                     errores.add("Fila " + fila + ": " + e.getMessage());
                 }
@@ -100,6 +110,7 @@ public class CargaMasivaVendedorService {
             return new DTOResultadoCarga(0, 0, 0, List.of("Error al leer el CSV: " + e.getMessage()));
         }
 
+        int correctos = guardarTodos(productos, errores);
         return new DTOResultadoCarga(total, correctos, total - correctos, errores);
     }
 
@@ -107,7 +118,11 @@ public class CargaMasivaVendedorService {
 
     private DTOResultadoCarga procesarExcel(MultipartFile archivo, Map<String, String> mediaMap, User vendedor) {
         List<String> errores = new ArrayList<>();
-        int total = 0, correctos = 0;
+        List<Producto> productos = new ArrayList<>();
+        int total = 0;
+
+        Map<String, Categorias> categoriasPorNombre = precargarCategorias();
+        Map<String, Marca> marcasPorNombre = precargarMarcas();
 
         try (Workbook workbook = WorkbookFactory.create(archivo.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -119,9 +134,7 @@ public class CargaMasivaVendedorService {
                 try {
                     String[] datos = new String[10];
                     for (int i = 0; i < 10; i++) datos[i] = getCeldaValor(row, i);
-                    Producto p = construirProducto(datos, mediaMap, vendedor);
-                    productoRepository.save(p);
-                    correctos++;
+                    productos.add(construirProducto(datos, mediaMap, vendedor, categoriasPorNombre, marcasPorNombre));
                 } catch (Exception e) {
                     errores.add("Fila " + fila + ": " + e.getMessage());
                 }
@@ -131,12 +144,44 @@ public class CargaMasivaVendedorService {
             return new DTOResultadoCarga(0, 0, 0, List.of("Error al leer el Excel: " + e.getMessage()));
         }
 
+        int correctos = guardarTodos(productos, errores);
         return new DTOResultadoCarga(total, correctos, total - correctos, errores);
+    }
+
+    // ── Precarga / guardado en batch ────────────────────────────────────────────
+
+    // Categorías y marcas son catálogos chicos y acotados: se cargan enteros una sola vez en
+    // vez de una query por fila (antes: categoriaRepository.findByNombreCategoria /
+    // marcaRepository.findByNombreMarca por cada producto del archivo).
+    private Map<String, Categorias> precargarCategorias() {
+        Map<String, Categorias> mapa = new HashMap<>();
+        categoriaRepository.findAll().forEach(c -> mapa.put(c.getNombreCategoria(), c));
+        return mapa;
+    }
+
+    private Map<String, Marca> precargarMarcas() {
+        Map<String, Marca> mapa = new HashMap<>();
+        marcaRepository.findAll().forEach(m -> mapa.put(m.getNombreMarca(), m));
+        return mapa;
+    }
+
+    private int guardarTodos(List<Producto> productos, List<String> errores) {
+        if (productos.isEmpty()) return 0;
+        try {
+            productoRepository.saveAll(productos);
+            return productos.size();
+        } catch (Exception e) {
+            // Caso raro de fallo a nivel BD durante el guardado en lote (ej. constraint
+            // inesperado): se reporta como fallo de lote en vez de dejar un 500 sin explicación.
+            errores.add("Error al guardar el lote en la base de datos: " + e.getMessage());
+            return 0;
+        }
     }
 
     // ── Construcción del producto ─────────────────────────────────────────────
 
-    private Producto construirProducto(String[] datos, Map<String, String> mediaMap, User vendedor) {
+    private Producto construirProducto(String[] datos, Map<String, String> mediaMap, User vendedor,
+                                        Map<String, Categorias> categoriasPorNombre, Map<String, Marca> marcasPorNombre) {
         String nombre    = col(datos, 0);
         String precioStr = col(datos, 1);
         String desc      = col(datos, 2);
@@ -157,12 +202,16 @@ public class CargaMasivaVendedorService {
         p.setVendedor(vendedor);
 
         String catNombre = col(datos, 4);
-        if (!catNombre.isBlank())
-            categoriaRepository.findByNombreCategoria(catNombre).ifPresent(p::setCategorias);
+        if (!catNombre.isBlank()) {
+            Categorias categoria = categoriasPorNombre.get(catNombre);
+            if (categoria != null) p.setCategorias(categoria);
+        }
 
         String marcaNombre = col(datos, 5);
-        if (!marcaNombre.isBlank())
-            marcaRepository.findByNombreMarca(marcaNombre).ifPresent(p::setMarca);
+        if (!marcaNombre.isBlank()) {
+            Marca marca = marcasPorNombre.get(marcaNombre);
+            if (marca != null) p.setMarca(marca);
+        }
 
         p.setImagen(resolverMedia(col(datos, 6), mediaMap));
         p.setImagen2(resolverMedia(col(datos, 7), mediaMap));
