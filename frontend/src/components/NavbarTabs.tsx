@@ -17,7 +17,7 @@ export default function NavbarTabs() {
 
           {isAuthenticated && hasRole('VENDEDOR') && (
             <NavLink to="/vendedor" end className={linkClass}>
-              Dashboard
+              Dashboard Vendedor
             </NavLink>
           )}
 
@@ -33,7 +33,7 @@ export default function NavbarTabs() {
 
           {isAuthenticated && (hasRole('CLIENTE') || hasRole('VENDEDOR')) && (
             <NavLink to="/cliente/dashboard" className={linkClass}>
-              Mi cuenta
+              Mi cuenta Comprador
             </NavLink>
           )}
 

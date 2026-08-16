@@ -113,7 +113,7 @@ export default function Navbar() {
               <Link to="/mi-perfil" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi perfil</Link>
             )}
             {isAuthenticated && hasRole('VENDEDOR') && (
-              <Link to="/vendedor" onClick={() => setOpen(false)} className="text-gray-700 py-1">Dashboard</Link>
+              <Link to="/vendedor" onClick={() => setOpen(false)} className="text-gray-700 py-1">Dashboard Vendedor</Link>
             )}
             {isAuthenticated && hasRole('CLIENTE') && (
               <Link to="/vender" onClick={() => setOpen(false)} className="text-primary-600 font-medium py-1">Vender</Link>
@@ -123,7 +123,7 @@ export default function Navbar() {
               <Link to="/favoritos" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mis favoritos</Link>
             )}
             {isAuthenticated && (hasRole('CLIENTE') || hasRole('VENDEDOR')) && (
-              <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta</Link>
+              <Link to="/cliente/dashboard" onClick={() => setOpen(false)} className="text-gray-700 py-1">Mi cuenta Comprador</Link>
             )}
             {isAuthenticated && hasRole('VENDEDOR') && VENDEDOR_LINKS.map(({ to, label }) => (
               <Link key={to} to={to} onClick={() => setOpen(false)} className="text-gray-700 py-1">{label}</Link>
