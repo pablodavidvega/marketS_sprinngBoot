@@ -1,7 +1,12 @@
 package com.example.MarketS.service.impl;
 
+import com.example.MarketS.exception.UsuarioConRelacionesException;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
+import com.example.MarketS.repository.PedidoRepository;
+import com.example.MarketS.repository.ProductoRepository;
+import com.example.MarketS.repository.ResenaCompradorRepository;
+import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.service.UserService;
@@ -11,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,13 +27,25 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RolRepository rolRepository;
+    private final ProductoRepository productoRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ResenaRepository resenaRepository;
+    private final ResenaCompradorRepository resenaCompradorRepository;
 
     public UserServiceImpl(UserRepository userRepository,
                            RolRepository rolRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           ProductoRepository productoRepository,
+                           PedidoRepository pedidoRepository,
+                           ResenaRepository resenaRepository,
+                           ResenaCompradorRepository resenaCompradorRepository) {
         this.userRepository = userRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
+        this.productoRepository = productoRepository;
+        this.pedidoRepository = pedidoRepository;
+        this.resenaRepository = resenaRepository;
+        this.resenaCompradorRepository = resenaCompradorRepository;
     }
 
     @Override
@@ -168,6 +186,30 @@ public class UserServiceImpl implements UserService {
         if (!userRepository.existsById(id)) {
             throw new IllegalArgumentException("Usuario no encontrado con ID " + id);
         }
+
+        List<String> motivos = new ArrayList<>();
+        if (productoRepository.countByVendedorId(id) > 0) {
+            motivos.add("tiene productos publicados");
+        }
+        if (pedidoRepository.existsByUsuarioId(id)) {
+            motivos.add("tiene pedidos como comprador");
+        }
+        if (pedidoRepository.existsByProductoVendedorId(id)) {
+            motivos.add("tiene ventas registradas");
+        }
+        if (resenaRepository.existsByCompradorId(id)) {
+            motivos.add("dejó reseñas de productos");
+        }
+        if (resenaCompradorRepository.countByCompradorId(id) > 0 || resenaCompradorRepository.existsByVendedorId(id)) {
+            motivos.add("tiene calificaciones de reputación (como comprador o vendedor)");
+        }
+
+        if (!motivos.isEmpty()) {
+            throw new UsuarioConRelacionesException(
+                    "No se puede eliminar el usuario: " + String.join(", ", motivos) + "."
+            );
+        }
+
         userRepository.deleteById(id);
     }
 

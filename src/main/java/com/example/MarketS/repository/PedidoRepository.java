@@ -25,6 +25,16 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Buscar pedidos por usuario
     List<Pedido> findByUsuario(User usuario);
 
+    // Usado al validar si un usuario se puede borrar (ver UserServiceImpl.eliminarUsuario):
+    // un pedido conserva el historial de compra aunque el comprador se elimine, así que no
+    // se puede borrar sin antes decidir qué hacer con esos pedidos.
+    boolean existsByUsuarioId(Long usuarioId);
+
+    // Mismo motivo que existsByUsuarioId, pero para pedidos que contienen productos DE este
+    // usuario como vendedor (join vía DetallePedido -> Producto -> vendedor).
+    @Query("SELECT COUNT(p) > 0 FROM Pedido p WHERE EXISTS (SELECT 1 FROM DetallePedido d WHERE d.pedido = p AND d.producto.vendedor.id = :vendedorId)")
+    boolean existsByProductoVendedorId(@Param("vendedorId") Long vendedorId);
+
     // Pedidos del usuario con detalles y productos cargados en una sola query.
     // OJO: no se hace JOIN FETCH de pr.vendedor (el User del vendedor) a propósito — cargar
     // un User completo dispara, por cada uno, una consulta extra a "vendedores" (OneToOne

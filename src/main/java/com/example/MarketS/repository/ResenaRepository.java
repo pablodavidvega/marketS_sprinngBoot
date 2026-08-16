@@ -17,6 +17,9 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
     boolean existsByProductoIdAndCompradorId(Long productoId, Long compradorId);
 
+    // Usado al validar si un usuario se puede borrar (ver UserServiceImpl.eliminarUsuario).
+    boolean existsByCompradorId(Long compradorId);
+
     // Batch: de una lista de productos, cuáles ya calificó este comprador — usado por
     // PedidoApiController.misPedidos para mostrar el botón "Calificar" solo donde falta.
     @Query("SELECT r.producto.id FROM Resena r WHERE r.comprador.id = :compradorId AND r.producto.id IN :productoIds")

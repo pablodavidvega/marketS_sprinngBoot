@@ -13,6 +13,10 @@ public interface ResenaCompradorRepository extends JpaRepository<ResenaComprador
 
     long countByCompradorId(Long compradorId);
 
+    // Usado al validar si un usuario se puede borrar (ver UserServiceImpl.eliminarUsuario):
+    // calificaciones que otros vendedores le dejaron a este usuario como comprador.
+    boolean existsByVendedorId(Long vendedorId);
+
     @Query("SELECT COALESCE(AVG(r.calificacion), 0.0) FROM ResenaComprador r WHERE r.comprador.id = :compradorId")
     Double avgCalificacionByCompradorId(@Param("compradorId") Long compradorId);
 

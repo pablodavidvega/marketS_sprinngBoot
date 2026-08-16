@@ -2,6 +2,7 @@ package com.example.MarketS.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -33,6 +34,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ArchivoInvalidoException.class)
     public ResponseEntity<?> handleArchivoInvalido(ArchivoInvalidoException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UsuarioConRelacionesException.class)
+    public ResponseEntity<?> handleUsuarioConRelaciones(UsuarioConRelacionesException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
+
+    // Red de seguridad para cualquier borrado/operación que rompa una foreign key y que no
+    // haya sido detectada de antemano por una validación explícita (ver
+    // UserServiceImpl.eliminarUsuario) — evita que se cuele como 500 genérico sin explicación.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleIntegridadReferencial(DataIntegrityViolationException ex) {
+        log.warn("Violación de integridad referencial: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "error", "No se puede completar la operación: el registro tiene datos asociados en otra parte del sistema."
+        ));
     }
 
     // Body del request ilegible (JSON malformado, tipo equivocado, etc.) — es un error del
