@@ -1,50 +1,65 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
+// HomePage se importa eager (no lazy): es la ruta de entrada de cualquier visitante anónimo,
+// así que tiene que renderizar con el bundle inicial sin un round-trip extra a buscar su chunk.
+// El resto de las páginas se cargan bajo demanda (code-splitting por ruta) para no obligar a
+// todo el mundo a bajar, por ejemplo, recharts/jspdf (reportes) o el flujo de carga masiva solo
+// por visitar el catálogo público.
 import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
-import RegistroPage from './pages/RegistroPage'
-import CompletarRegistroGooglePage from './pages/CompletarRegistroGooglePage'
-import DetallePage from './pages/DetallePage'
-import CarritoPage from './pages/CarritoPage'
-import ConfirmacionPage from './pages/pedidos/ConfirmacionPage'
-import PagoPendientePage from './pages/pedidos/PagoPendientePage'
-import PagoFallidoPage from './pages/pedidos/PagoFallidoPage'
-import ClienteDashboardPage from './pages/cliente/DashboardPage'
-import VendedorDashboardPage from './pages/vendedor/DashboardPage'
-import VendedorProductosPage from './pages/vendedor/ProductosPage'
-import VendedorPedidosPage from './pages/vendedor/PedidosPage'
-import VendedorReportesPage from './pages/vendedor/ReportesPage'
-import CargaMasivaPage from './pages/vendedor/CargaMasivaPage'
-import VendedorMercadoPagoPage from './pages/vendedor/MercadoPagoPage'
-import MisPedidosPage from './pages/cliente/MisPedidosPage'
-import EditarPerfilPage from './pages/EditarPerfilPage'
-import VenderPage from './pages/VenderPage'
-import AdminDashboardPage from './pages/admin/DashboardPage'
-import EstadisticasComunidadPage from './pages/admin/EstadisticasComunidadPage'
-import UsuariosPage from './pages/admin/UsuariosPage'
-import SoporteAdminPage from './pages/admin/SoportePage'
-import ReportesVendedoresPage from './pages/admin/ReportesVendedoresPage'
-import ReportesCatalogoPage from './pages/admin/ReportesCatalogoPage'
-import CargaMasivaUsuariosPage from './pages/admin/CargaMasivaUsuariosPage'
-import EnviarCorreosPage from './pages/admin/EnviarCorreosPage'
-import InvitacionesPage from './pages/admin/InvitacionesPage'
-import ConfiguracionAppPage from './pages/admin/ConfiguracionAppPage'
-import BannerSliderPage from './pages/admin/BannerSliderPage'
-import CategoriasPage from './pages/admin/CategoriasPage'
-import UltimosProductosPage from './pages/UltimosProductosPage'
-import ModeradorDashboardPage from './pages/moderador/DashboardPage'
-import ModeradorProductosPage from './pages/moderador/ProductosPage'
-import ModeradorPedidosPage from './pages/moderador/PedidosPage'
-import ServicioClientePage from './pages/ServicioClientePage'
-import TerminosPage from './pages/TerminosPage'
-import MisFavoritosPage from './pages/MisFavoritosPage'
-import VendedorPerfilPage from './pages/VendedorPerfilPage'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import NotificacionesPage from './pages/NotificacionesPage'
+
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegistroPage = lazy(() => import('./pages/RegistroPage'))
+const CompletarRegistroGooglePage = lazy(() => import('./pages/CompletarRegistroGooglePage'))
+const DetallePage = lazy(() => import('./pages/DetallePage'))
+const CarritoPage = lazy(() => import('./pages/CarritoPage'))
+const ConfirmacionPage = lazy(() => import('./pages/pedidos/ConfirmacionPage'))
+const PagoPendientePage = lazy(() => import('./pages/pedidos/PagoPendientePage'))
+const PagoFallidoPage = lazy(() => import('./pages/pedidos/PagoFallidoPage'))
+const ClienteDashboardPage = lazy(() => import('./pages/cliente/DashboardPage'))
+const VendedorDashboardPage = lazy(() => import('./pages/vendedor/DashboardPage'))
+const VendedorProductosPage = lazy(() => import('./pages/vendedor/ProductosPage'))
+const VendedorPedidosPage = lazy(() => import('./pages/vendedor/PedidosPage'))
+const VendedorReportesPage = lazy(() => import('./pages/vendedor/ReportesPage'))
+const CargaMasivaPage = lazy(() => import('./pages/vendedor/CargaMasivaPage'))
+const VendedorMercadoPagoPage = lazy(() => import('./pages/vendedor/MercadoPagoPage'))
+const MisPedidosPage = lazy(() => import('./pages/cliente/MisPedidosPage'))
+const EditarPerfilPage = lazy(() => import('./pages/EditarPerfilPage'))
+const VenderPage = lazy(() => import('./pages/VenderPage'))
+const AdminDashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
+const EstadisticasComunidadPage = lazy(() => import('./pages/admin/EstadisticasComunidadPage'))
+const UsuariosPage = lazy(() => import('./pages/admin/UsuariosPage'))
+const SoporteAdminPage = lazy(() => import('./pages/admin/SoportePage'))
+const ReportesVendedoresPage = lazy(() => import('./pages/admin/ReportesVendedoresPage'))
+const ReportesCatalogoPage = lazy(() => import('./pages/admin/ReportesCatalogoPage'))
+const CargaMasivaUsuariosPage = lazy(() => import('./pages/admin/CargaMasivaUsuariosPage'))
+const EnviarCorreosPage = lazy(() => import('./pages/admin/EnviarCorreosPage'))
+const InvitacionesPage = lazy(() => import('./pages/admin/InvitacionesPage'))
+const ConfiguracionAppPage = lazy(() => import('./pages/admin/ConfiguracionAppPage'))
+const BannerSliderPage = lazy(() => import('./pages/admin/BannerSliderPage'))
+const CategoriasPage = lazy(() => import('./pages/admin/CategoriasPage'))
+const UltimosProductosPage = lazy(() => import('./pages/UltimosProductosPage'))
+const ModeradorDashboardPage = lazy(() => import('./pages/moderador/DashboardPage'))
+const ModeradorProductosPage = lazy(() => import('./pages/moderador/ProductosPage'))
+const ModeradorPedidosPage = lazy(() => import('./pages/moderador/PedidosPage'))
+const ServicioClientePage = lazy(() => import('./pages/ServicioClientePage'))
+const TerminosPage = lazy(() => import('./pages/TerminosPage'))
+const MisFavoritosPage = lazy(() => import('./pages/MisFavoritosPage'))
+const VendedorPerfilPage = lazy(() => import('./pages/VendedorPerfilPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const NotificacionesPage = lazy(() => import('./pages/NotificacionesPage'))
+
+function CargandoPagina() {
+  return (
+    <div className="flex justify-center items-center py-24">
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -52,6 +67,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <main className="flex-1">
+        <Suspense fallback={<CargandoPagina />}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -308,6 +324,7 @@ export default function App() {
 
           <Route path="*" element={<HomePage />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>
