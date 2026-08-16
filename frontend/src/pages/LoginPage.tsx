@@ -48,6 +48,7 @@ export default function LoginPage() {
 
   async function handleGoogleCredential(idToken: string) {
     setError('')
+    setLoading(true)
     try {
       const { data } = await googleLogin(idToken)
       if (!data.needsCompletion) {
@@ -66,6 +67,8 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const response = (err as { response?: { data?: { error?: string } } })?.response
       setError(response?.data?.error || 'No se pudo iniciar sesión con Google')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -120,7 +123,7 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
-        <GoogleLoginButton onCredential={handleGoogleCredential} />
+        <GoogleLoginButton onCredential={handleGoogleCredential} loading={loading} />
 
         <p className="text-center text-sm text-gray-500 mt-4">
           ¿No tienes cuenta?{' '}

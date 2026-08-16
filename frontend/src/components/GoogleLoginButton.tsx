@@ -37,7 +37,16 @@ function cargarScriptGoogle(onReady: () => void) {
   document.head.appendChild(script)
 }
 
-export default function GoogleLoginButton({ onCredential }: { onCredential: (idToken: string) => void }) {
+export default function GoogleLoginButton({
+  onCredential,
+  loading = false,
+}: {
+  onCredential: (idToken: string) => void
+  // El botón de Google es un iframe que no expone un estado de carga propio: sin esto, entre
+  // que el usuario elige su cuenta en el popup y el backend responde (~5s: crea/busca el User,
+  // arma el JWT), la pantalla se queda igual y da la sensación de que no pasó nada.
+  loading?: boolean
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const containerId = useId()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
@@ -63,5 +72,15 @@ export default function GoogleLoginButton({ onCredential }: { onCredential: (idT
 
   if (!clientId) return null
 
-  return <div ref={containerRef} id={`google-btn-${containerId}`} className="flex justify-center" />
+  return (
+    <div className="relative">
+      <div ref={containerRef} id={`google-btn-${containerId}`} className="flex justify-center" />
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-white/90 text-sm text-gray-600">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600" />
+          Conectando con Google...
+        </div>
+      )}
+    </div>
+  )
 }
