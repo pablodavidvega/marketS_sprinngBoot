@@ -231,6 +231,21 @@ public class PedidoApiController {
             }
         });
 
+        // El comprador ya recibió el correo genérico de "pedido creado" (ver
+        // PedidoService.crearPedido), pero ese se arma ANTES de saber que el acuerdo es externo,
+        // así que no menciona el método de pago ni que falta coordinar con el vendedor. Este
+        // correo aparte lo mantiene al tanto de esa parte específica del flujo.
+        User comprador = pedido.getUsuario();
+        if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+            emailService.enviarCorreo(
+                    comprador.getEmail(),
+                    "Tu pedido #" + pedido.getId() + " quedó acordado por fuera de la app - MarketS",
+                    "Tu pedido #" + pedido.getId() + " se registró con pago acordado por fuera de la app (" + metodoPago + ").\n" +
+                            "Coordiná la entrega y el pago con el vendedor por chat; una vez que se concrete, el vendedor lo marcará desde su panel." +
+                            "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(false, pedido.getId())
+            );
+        }
+
         Map<Long, String> vendedorUsernames = resolverVendedorUsernames(List.of(pedido));
         return ResponseEntity.ok(PedidoResponseDTO.from(pedido, null, null, vendedorUsernames));
     }
