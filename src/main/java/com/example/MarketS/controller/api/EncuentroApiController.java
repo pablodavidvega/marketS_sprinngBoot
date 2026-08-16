@@ -1,5 +1,8 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.exception.NoAutorizadoException;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
+import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.model.Encuentro;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.ResolucionVentaExterna;
@@ -57,9 +60,9 @@ public class EncuentroApiController {
     public ResponseEntity<?> obtener(@PathVariable Long pedidoId, @PathVariable Long vendedorId, Authentication auth) {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(pedidoId).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
         if (!autorizado(pedido, vendedorId, usuario)) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         return encuentroRepository.findByPedidoIdAndVendedorId(pedidoId, vendedorId)
@@ -73,9 +76,9 @@ public class EncuentroApiController {
                                       @RequestBody Map<String, Object> body, Authentication auth) {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(pedidoId).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
         if (!autorizado(pedido, vendedorId, usuario)) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         String lugar = body.get("lugar") instanceof String s ? s.trim() : null;
@@ -83,24 +86,24 @@ public class EncuentroApiController {
         String nota = body.get("nota") instanceof String s ? s.trim() : null;
 
         if (lugar == null || lugar.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El lugar es obligatorio"));
+            throw new SolicitudInvalidaException("El lugar es obligatorio");
         }
         if (fechaHoraStr == null || fechaHoraStr.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La fecha y hora son obligatorias"));
+            throw new SolicitudInvalidaException("La fecha y hora son obligatorias");
         }
 
         LocalDateTime fechaHora;
         try {
             fechaHora = LocalDateTime.parse(fechaHoraStr);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Fecha y hora inválidas"));
+            throw new SolicitudInvalidaException("Fecha y hora inválidas");
         }
         if (fechaHora.isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La fecha del encuentro debe ser futura"));
+            throw new SolicitudInvalidaException("La fecha del encuentro debe ser futura");
         }
 
         User vendedor = vendedorId.equals(usuario.getId()) ? usuario : userService.buscarPorId(vendedorId).orElse(null);
-        if (vendedor == null) return ResponseEntity.notFound().build();
+        if (vendedor == null) throw new RecursoNoEncontradoException("Vendedor no encontrado");
 
         Optional<Encuentro> existente = encuentroRepository.findByPedidoIdAndVendedorId(pedidoId, vendedorId);
         boolean esNuevo = existente.isEmpty();
@@ -159,18 +162,18 @@ public class EncuentroApiController {
     public ResponseEntity<?> confirmar(@PathVariable Long pedidoId, @PathVariable Long vendedorId, Authentication auth) {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(pedidoId).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
         if (!autorizado(pedido, vendedorId, usuario)) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         Encuentro encuentro = encuentroRepository.findByPedidoIdAndVendedorId(pedidoId, vendedorId).orElse(null);
-        if (encuentro == null) return ResponseEntity.notFound().build();
+        if (encuentro == null) throw new RecursoNoEncontradoException("Encuentro no encontrado");
         if (usuario.getId().equals(encuentro.getPropuestoPor().getId())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "No podés confirmar tu propia propuesta"));
+            throw new SolicitudInvalidaException("No podés confirmar tu propia propuesta");
         }
         if ("CONFIRMADO".equals(encuentro.getEstado())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El encuentro ya está confirmado"));
+            throw new SolicitudInvalidaException("El encuentro ya está confirmado");
         }
 
         encuentro.setEstado("CONFIRMADO");
@@ -189,13 +192,13 @@ public class EncuentroApiController {
     public ResponseEntity<?> cancelar(@PathVariable Long pedidoId, @PathVariable Long vendedorId, Authentication auth) {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(pedidoId).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
         if (!autorizado(pedido, vendedorId, usuario)) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         Encuentro encuentro = encuentroRepository.findByPedidoIdAndVendedorId(pedidoId, vendedorId).orElse(null);
-        if (encuentro == null) return ResponseEntity.notFound().build();
+        if (encuentro == null) throw new RecursoNoEncontradoException("Encuentro no encontrado");
 
         encuentroRepository.delete(encuentro);
 

@@ -2,6 +2,9 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.CrearPedidoRequestDTO;
 import com.example.MarketS.dto.PedidoResponseDTO;
+import com.example.MarketS.exception.NoAutorizadoException;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
+import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.ResenaComprador;
@@ -115,9 +118,7 @@ public class PedidoApiController {
         // (CarritoPage), por si se llama a este endpoint directamente.
         String rol = usuario.getRol() != null ? usuario.getRol().getRolname() : "";
         if ("ROLE_ADMIN".equals(rol) || "ROLE_MODERADOR".equals(rol)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Los administradores y moderadores no pueden realizar compras con su cuenta."
-            ));
+            throw new SolicitudInvalidaException("Los administradores y moderadores no pueden realizar compras con su cuenta.");
         }
 
         String metodoPago = request.getMetodoPago();
@@ -136,15 +137,14 @@ public class PedidoApiController {
             try {
                 vendedorCarrito = productoService.obtenerProductoPorId(request.getItems().get(0).getProductoId()).getVendedor();
             } catch (Exception e) {
-                return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+                throw new SolicitudInvalidaException(e.getMessage());
             }
             accessTokenVendedor = vendedorCarrito != null
                     ? mercadoPagoOAuthService.obtenerAccessTokenVigente(vendedorCarrito).orElse(null)
                     : null;
             if (accessTokenVendedor == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Este vendedor no tiene MercadoPago conectado. Elige un acuerdo externo (efectivo, transferencia, Nequi, otro) para completar la compra."
-                ));
+                throw new SolicitudInvalidaException(
+                        "Este vendedor no tiene MercadoPago conectado. Elige un acuerdo externo (efectivo, transferencia, Nequi, otro) para completar la compra.");
             }
         }
 
@@ -159,7 +159,7 @@ public class PedidoApiController {
         try {
             pedido = pedidoService.crearPedido(usuario, carrito);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            throw new SolicitudInvalidaException(e.getMessage());
         }
 
         if (esAcuerdoExterno) {
@@ -254,11 +254,10 @@ public class PedidoApiController {
     @GetMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> obtener(@PathVariable Long id, Authentication auth) {
         User usuario = resolverUsuario(auth);
-        return pedidoRepository.findByIdWithDetalles(id)
+        Pedido pedido = pedidoRepository.findByIdWithDetalles(id)
                 .filter(p -> p.getUsuario().getId().equals(usuario.getId()))
-                .map(p -> PedidoResponseDTO.from(p, null, null, resolverVendedorUsernames(List.of(p))))
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new RecursoNoEncontradoException("Pedido no encontrado"));
+        return ResponseEntity.ok(PedidoResponseDTO.from(pedido, null, null, resolverVendedorUsernames(List.of(pedido))));
     }
 
     // GET /api/pedidos/mis-pedidos?page=0&size=30 — historial paginado del usuario autenticado.
@@ -319,11 +318,11 @@ public class PedidoApiController {
         User usuario = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
 
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
         if (!pedido.getUsuario().getId().equals(usuario.getId()))
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         if (!"PAGADO".equals(pedido.getEstado()))
-            return ResponseEntity.badRequest().body(Map.of("error", "Solo se puede confirmar recepción de pedidos pagados"));
+            throw new SolicitudInvalidaException("Solo se puede confirmar recepción de pedidos pagados");
 
         pedido.setEstado("RECIBIDO");
         pedidoRepository.save(pedido);
@@ -376,7 +375,7 @@ public class PedidoApiController {
     private ResponseEntity<?> resolverAcuerdoExterno(Long id, Authentication auth, boolean completado) {
         User usuarioActual = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
 
         boolean esAdmin = "ROLE_ADMIN".equals(usuarioActual.getRol().getRolname());
 
@@ -389,11 +388,11 @@ public class PedidoApiController {
 
         boolean esVendedorDelPedido = vendedorIds.contains(usuarioActual.getId());
         if (!esAdmin && !esVendedorDelPedido) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         if (!METODOS_EXTERNOS.contains(pedido.getMetodoPago())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Este pedido no es un acuerdo externo"));
+            throw new SolicitudInvalidaException("Este pedido no es un acuerdo externo");
         }
 
         // El admin resuelve en nombre de TODOS los vendedores del pedido a la vez (no hay forma
@@ -409,7 +408,7 @@ public class PedidoApiController {
                 .toList();
 
         if (nuevasResoluciones.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Este pedido ya fue resuelto"));
+            throw new SolicitudInvalidaException("Este pedido ya fue resuelto");
         }
 
         nuevasResoluciones.forEach(v ->
@@ -470,13 +469,13 @@ public class PedidoApiController {
                                                  Authentication auth) {
         User vendedor = resolverUsuario(auth);
         Pedido pedido = pedidoRepository.findByIdWithDetalles(id).orElse(null);
-        if (pedido == null) return ResponseEntity.notFound().build();
+        if (pedido == null) throw new RecursoNoEncontradoException("Pedido no encontrado");
 
         boolean esVendedorDelPedido = pedido.getDetalles().stream()
                 .anyMatch(d -> d.getProducto().getVendedor() != null
                         && d.getProducto().getVendedor().getId().equals(vendedor.getId()));
         if (!esVendedorDelPedido) {
-            return ResponseEntity.status(403).body(Map.of("error", "No autorizado"));
+            throw new NoAutorizadoException("No autorizado");
         }
 
         // Para MercadoPago alcanza con el estado global (RECIBIDO no depende de otros
@@ -487,20 +486,20 @@ public class PedidoApiController {
                 .map(ResolucionVentaExterna::isCompletado)
                 .orElse(false);
         if (!"RECIBIDO".equals(pedido.getEstado()) && !completoSuParte) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Solo puedes calificar al comprador de un pedido completado"));
+            throw new SolicitudInvalidaException("Solo puedes calificar al comprador de un pedido completado");
         }
 
         if (resenaCompradorRepository.existsByPedidoIdAndVendedorId(id, vendedor.getId())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ya calificaste al comprador de este pedido"));
+            throw new SolicitudInvalidaException("Ya calificaste al comprador de este pedido");
         }
 
         Object calObj = body.get("calificacion");
         if (calObj == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La calificación es requerida"));
+            throw new SolicitudInvalidaException("La calificación es requerida");
         }
         int calificacion = Integer.parseInt(calObj.toString());
         if (calificacion < 1 || calificacion > 5) {
-            return ResponseEntity.badRequest().body(Map.of("error", "La calificación debe ser entre 1 y 5"));
+            throw new SolicitudInvalidaException("La calificación debe ser entre 1 y 5");
         }
 
         String comentario = body.get("comentario") instanceof String s ? s.trim() : null;
