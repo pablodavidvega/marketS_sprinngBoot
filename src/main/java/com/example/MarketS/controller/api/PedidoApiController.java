@@ -174,6 +174,15 @@ public class PedidoApiController {
             String mpError = mpResult.containsKey("error") ? (String) mpResult.get("error") : "Error desconocido";
             System.err.println("ERROR MercadoPago al crear preferencia: " + mpError);
             System.err.println("Detalle respuesta MP: " + mpResult);
+
+            // No se pudo iniciar el pago: el pedido no queda como PENDIENTE fantasma ni se avisa
+            // "pedido creado" para una compra que nunca tuvo forma de pagarse — se marca
+            // RECHAZADO y se reutiliza el mismo aviso que recibe un pago rechazado por MP,
+            // que ya invita a intentar de nuevo desde el carrito.
+            pedido.setEstado("RECHAZADO");
+            pedidoRepository.save(pedido);
+            notificarPagoRechazado(pedido);
+
             return ResponseEntity.status(500).body(Map.of(
                     "mensaje", "No se pudo iniciar el pago: " + mpError,
                     "pedidoId", pedido.getId()
@@ -185,20 +194,63 @@ public class PedidoApiController {
 
         pedido.setEstado("PROCESANDO_PAGO");
         pedidoRepository.save(pedido);
+        notificarPedidoConfirmado(pedido);
 
         Map<Long, String> vendedorUsernames = resolverVendedorUsernames(List.of(pedido));
         return ResponseEntity.ok(PedidoResponseDTO.from(pedido, paymentUrl, preferenceId, vendedorUsernames));
     }
 
+    // Avisa "pedido creado" al comprador (correo + notificación in-app) y "nuevo pedido" a cada
+    // vendedor afectado (notificación in-app + correo) — se llama recién cuando ya se sabe que
+    // el pedido tiene una forma válida de pagarse (preferencia de MercadoPago creada, o acuerdo
+    // externo registrado). Antes esto se disparaba al crear la fila del pedido, sin saber
+    // todavía si el pago iba a poder iniciarse (ver PedidoService.crearPedido).
+    private void notificarPedidoConfirmado(Pedido pedido) {
+        User comprador = pedido.getUsuario();
+        if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
+            emailService.enviarConfirmacionPedido(comprador.getEmail(), pedido);
+        }
+        notificacionService.crear(
+                comprador,
+                "Tu pedido #" + pedido.getId() + " fue creado. Total: $" + pedido.getTotal(),
+                "PEDIDO_CREADO",
+                pedido.getId()
+        );
+
+        String nombreComprador = comprador.getUsername();
+        pedido.getDetalles().stream()
+            .filter(d -> d.getProducto().getVendedor() != null)
+            .collect(Collectors.groupingBy(d -> d.getProducto().getVendedor()))
+            .forEach((vendedor, items) -> {
+                String productos = items.stream()
+                    .map(d -> d.getProducto().getNombre() + " (" + d.getCantidad() + " ud.)")
+                    .collect(Collectors.joining(", "));
+                notificacionService.crear(
+                    vendedor,
+                    nombreComprador + " ordenó: " + productos,
+                    "NUEVO_PEDIDO",
+                    pedido.getId()
+                );
+                if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                    emailService.enviarCorreo(
+                            vendedor.getEmail(),
+                            "Nuevo pedido #" + pedido.getId() + " - MarketS",
+                            nombreComprador + " ordenó: " + productos
+                                    + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, pedido.getId())
+                    );
+                }
+            });
+    }
+
     // La venta se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.): no se genera
     // link de pago, el pedido queda a la espera de que el vendedor confirme si se concretó o no.
-    // pedidoService.crearPedido ya notificó (in-app + correo genérico "nuevo pedido") a cada
-    // vendedor; este correo aparte es específico de que requiere una acción suya (confirmar o
-    // rechazar la venta desde su panel), no solo un aviso informativo.
     private ResponseEntity<?> crearPedidoConAcuerdoExterno(Pedido pedido, String metodoPago) {
         pedido.setMetodoPago(metodoPago);
         pedido.setEstado("ACORDADO_EXTERNO");
         pedidoRepository.save(pedido);
+        // Aviso genérico de "pedido creado" (comprador) + "nuevo pedido" (vendedores) — recién
+        // acá, ya con el acuerdo externo registrado, no al armar el pedido.
+        notificarPedidoConfirmado(pedido);
 
         // producto.getVendedor() es LAZY: solo el id es seguro de leer aquí (la sesión que
         // cargó el producto ya se cerró). Se recargan los vendedores completos aparte para
@@ -221,10 +273,9 @@ public class PedidoApiController {
             }
         });
 
-        // El comprador ya recibió el correo genérico de "pedido creado" (ver
-        // PedidoService.crearPedido), pero ese se arma ANTES de saber que el acuerdo es externo,
-        // así que no menciona el método de pago ni que falta coordinar con el vendedor. Este
-        // correo aparte lo mantiene al tanto de esa parte específica del flujo.
+        // El comprador ya recibió el correo genérico de "pedido creado" (notificarPedidoConfirmado,
+        // arriba), pero ese no menciona el método de pago ni que falta coordinar con el vendedor.
+        // Este correo aparte lo mantiene al tanto de esa parte específica del flujo.
         User comprador = pedido.getUsuario();
         if (comprador.getEmail() != null && !comprador.getEmail().isBlank()) {
             emailService.enviarCorreo(

@@ -20,7 +20,7 @@ export const ESTADO_INFO: Record<string, string> = {
   PENDIENTE_PAGO: 'MercadoPago dejó el pago pendiente de confirmar de su lado (por ejemplo, pago en efectivo o transferencia que tarda en acreditarse).',
   PAGADO: 'El pago fue aprobado y confirmado por MercadoPago.',
   RECIBIDO: 'El comprador confirmó que ya recibió el producto.',
-  RECHAZADO: 'MercadoPago rechazó el pago.',
+  RECHAZADO: 'MercadoPago rechazó el pago, o no se pudo iniciar el pago. Podés intentar de nuevo desde tu carrito.',
   CANCELADO: 'El pedido fue cancelado.',
   ACORDADO_EXTERNO: 'El pago se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.). Falta que el vendedor confirme si la venta se concretó o no.',
   COMPLETADO_EXTERNO: 'El vendedor confirmó que la venta acordada por fuera de la app sí se realizó.',
