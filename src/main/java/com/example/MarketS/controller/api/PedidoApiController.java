@@ -5,6 +5,7 @@ import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.exception.NoAutorizadoException;
 import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.exception.SolicitudInvalidaException;
+import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.ResenaComprador;
@@ -217,29 +218,34 @@ public class PedidoApiController {
                 pedido.getId()
         );
 
+        // producto.getVendedor() es LAZY y la transacción de PedidoService.crearPedido ya
+        // cerró su sesión (open-in-view=false): agrupar por id (seguro de leer del proxy sin
+        // sesión) y recargar el User completo aparte para poder leer su email — mismo patrón
+        // que usa crearPedidoConAcuerdoExterno más abajo.
         String nombreComprador = comprador.getUsername();
-        pedido.getDetalles().stream()
-            .filter(d -> d.getProducto().getVendedor() != null)
-            .collect(Collectors.groupingBy(d -> d.getProducto().getVendedor()))
-            .forEach((vendedor, items) -> {
-                String productos = items.stream()
-                    .map(d -> d.getProducto().getNombre() + " (" + d.getCantidad() + " ud.)")
-                    .collect(Collectors.joining(", "));
-                notificacionService.crear(
-                    vendedor,
-                    nombreComprador + " ordenó: " + productos,
-                    "NUEVO_PEDIDO",
-                    pedido.getId()
+        Map<Long, List<DetallePedido>> detallesPorVendedorId = pedido.getDetalles().stream()
+                .filter(d -> d.getProducto().getVendedor() != null)
+                .collect(Collectors.groupingBy(d -> d.getProducto().getVendedor().getId()));
+
+        userRepository.findAllById(detallesPorVendedorId.keySet()).forEach(vendedor -> {
+            String productos = detallesPorVendedorId.get(vendedor.getId()).stream()
+                .map(d -> d.getProducto().getNombre() + " (" + d.getCantidad() + " ud.)")
+                .collect(Collectors.joining(", "));
+            notificacionService.crear(
+                vendedor,
+                nombreComprador + " ordenó: " + productos,
+                "NUEVO_PEDIDO",
+                pedido.getId()
+            );
+            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
+                emailService.enviarCorreo(
+                        vendedor.getEmail(),
+                        "Nuevo pedido #" + pedido.getId() + " - MarketS",
+                        nombreComprador + " ordenó: " + productos
+                                + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, pedido.getId())
                 );
-                if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
-                    emailService.enviarCorreo(
-                            vendedor.getEmail(),
-                            "Nuevo pedido #" + pedido.getId() + " - MarketS",
-                            nombreComprador + " ordenó: " + productos
-                                    + "\n\nVer en MarketS: " + frontendLinkBuilder.pedido(true, pedido.getId())
-                    );
-                }
-            });
+            }
+        });
     }
 
     // La venta se acordó por fuera de la app (efectivo, transferencia, Nequi, etc.): no se genera
