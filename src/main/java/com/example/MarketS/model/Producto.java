@@ -10,7 +10,16 @@ import java.util.List;
 
 @Entity
 @Table(name = "producto", indexes = {
-        @Index(name = "idx_producto_vendedor_id", columnList = "vendedor_id")
+        @Index(name = "idx_producto_vendedor_id", columnList = "vendedor_id"),
+        // Cubre el listado por categoría (WHERE categorias_id = X AND activo = true, ver
+        // ProductoRepository.findByCategoriasIdAndActivoTrue) y, al ser categorias_id la
+        // columna líder, también sirve para filtrar/agrupar solo por categoría (ej.
+        // countProductosGroupByCategoria).
+        @Index(name = "idx_producto_categorias_id_activo", columnList = "categorias_id, activo"),
+        // activo solo, para filtros que no pasan por categoría (ej. moderador filtrando
+        // "solo inactivos" en findAllFiltrado) — ahí sí es selectivo, la mayoría de los
+        // productos quedan activos.
+        @Index(name = "idx_producto_activo", columnList = "activo")
 })
 @Getter
 @Setter
