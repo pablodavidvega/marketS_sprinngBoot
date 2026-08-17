@@ -12,6 +12,7 @@ import com.example.MarketS.service.CloudStorageService;
 import com.example.MarketS.service.ReputacionService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.repository.DetallePedidoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -436,9 +437,23 @@ public class VendedorApiController {
             return;
         }
         String nombre = marcaNombre.trim();
-        Marca marca = marcaRepository.findByNombreMarcaIgnoreCase(nombre)
-                .orElseGet(() -> marcaRepository.save(new Marca(nombre)));
-        producto.setMarca(marca);
+        producto.setMarca(obtenerOCrearMarca(nombre));
+    }
+
+    // Dos vendedores pueden escribir la misma marca nueva al mismo tiempo (ej. "Nike" recién
+    // creada en el input libre del frontend): ambos pasan el find de arriba en null y ambos
+    // intentan el insert. Con @Column(unique=true) en Marca.nombreMarca uno de los dos falla
+    // con DataIntegrityViolationException — en vez de propagar ese 409 confuso, se reintenta
+    // el find y se usa la marca que el otro request ya insertó.
+    private Marca obtenerOCrearMarca(String nombre) {
+        return marcaRepository.findByNombreMarcaIgnoreCase(nombre)
+                .orElseGet(() -> {
+                    try {
+                        return marcaRepository.save(new Marca(nombre));
+                    } catch (DataIntegrityViolationException e) {
+                        return marcaRepository.findByNombreMarcaIgnoreCase(nombre).orElseThrow(() -> e);
+                    }
+                });
     }
 
     private String guardarArchivo(MultipartFile archivo, String prefijo) throws IOException {

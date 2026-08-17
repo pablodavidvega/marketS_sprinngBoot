@@ -4,6 +4,7 @@ import com.example.MarketS.dto.CategoriaAdminDTO;
 import com.example.MarketS.model.Categorias;
 import com.example.MarketS.repository.CategoriaRepository;
 import com.example.MarketS.repository.ProductoRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,8 +51,15 @@ public class CategoriaAdminApiController {
 
         Categorias categoria = new Categorias();
         categoria.setNombreCategoria(nombre);
-        Categorias guardada = categoriaRepository.save(categoria);
-        return ResponseEntity.ok(CategoriaAdminDTO.from(guardada, 0));
+        try {
+            Categorias guardada = categoriaRepository.save(categoria);
+            return ResponseEntity.ok(CategoriaAdminDTO.from(guardada, 0));
+        } catch (DataIntegrityViolationException e) {
+            // Dos requests pasaron el chequeo de arriba antes de que cualquiera de los dos
+            // insertara — el @Column(unique=true) en Categorias.nombreCategoria corta la
+            // duplicada acá en vez de dejar dos categorías con el mismo nombre.
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe una categoría con ese nombre"));
+        }
     }
 
     // PUT /api/admin/categorias/{id} — renombrar categoría existente
@@ -74,8 +82,12 @@ public class CategoriaAdminApiController {
         }
 
         categoria.setNombreCategoria(nombre);
-        Categorias guardada = categoriaRepository.save(categoria);
-        return ResponseEntity.ok(CategoriaAdminDTO.from(guardada, productoRepository.countByCategoriasId(id)));
+        try {
+            Categorias guardada = categoriaRepository.save(categoria);
+            return ResponseEntity.ok(CategoriaAdminDTO.from(guardada, productoRepository.countByCategoriasId(id)));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe una categoría con ese nombre"));
+        }
     }
 
     // DELETE /api/admin/categorias/{id} — elimina solo si no tiene productos asociados
