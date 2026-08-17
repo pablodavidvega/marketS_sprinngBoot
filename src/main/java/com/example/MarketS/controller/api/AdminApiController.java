@@ -16,6 +16,7 @@ import com.example.MarketS.repository.ProductoRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.repository.VendedorRepository;
+import com.example.MarketS.service.DashboardStatsService;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.ReporteAdminService;
@@ -77,6 +78,9 @@ public class AdminApiController {
     @Autowired
     private NotificacionService notificacionService;
 
+    @Autowired
+    private DashboardStatsService dashboardStatsService;
+
     public AdminApiController(UserService userService, RolRepository rolRepository, UserRepository userRepository,
                                ReputacionService reputacionService, ProductoRepository productoRepository,
                                PedidoRepository pedidoRepository, VendedorRepository vendedorRepository,
@@ -99,35 +103,16 @@ public class AdminApiController {
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard() {
-        // Map.ofEntries en vez de Map.of: con 12 pares se pasa del máximo de 10 que soporta Map.of.
-        return ResponseEntity.ok(Map.ofEntries(
-                Map.entry("totalUsuarios",    userService.contarTodos()),
-                Map.entry("totalClientes",    userService.contarPorRol("ROLE_CLIENTE")),
-                Map.entry("totalVendedores",  userService.contarPorRol("ROLE_VENDEDOR")),
-                Map.entry("totalModeradores", userService.contarPorRol("ROLE_MODERADOR")),
-                Map.entry("totalAdmins",      userService.contarPorRol("ROLE_ADMIN")),
-                Map.entry("totalProductos",   productoRepository.count()),
-                Map.entry("productosActivos", productoRepository.countByActivoTrue()),
-                Map.entry("totalPedidos",     pedidoRepository.count()),
-                Map.entry("reputacionVendedores",  distribucionReputacion("ROLE_VENDEDOR", true)),
-                Map.entry("reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false)),
-                Map.entry("totalFavoritos",      favoritoRepository.count()),
-                Map.entry("productoMasGuardado", productoMasGuardado())
-        ));
-    }
-
-    // Producto con más favoritos guardados en toda la plataforma. Map.of(...) no admite valores
-    // null, así que si todavía nadie ha guardado nada se devuelve un mapa vacío en vez de null
-    // (el frontend lo trata igual: ausencia de "id" = sin datos aún).
-    private Map<String, Object> productoMasGuardado() {
-        List<Object[]> top = favoritoRepository.findProductosMasGuardados(PageRequest.of(0, 1));
-        if (top.isEmpty()) return Map.of();
-        Object[] row = top.get(0);
-        return Map.of(
-                "id", ((Number) row[0]).longValue(),
-                "nombre", (String) row[1],
-                "totalFavoritos", ((Number) row[2]).longValue()
-        );
+        // Arranca del subconjunto base compartido con ModeradorApiController.dashboard() (ver
+        // DashboardStatsService) y le agrega encima las métricas propias de admin: desglose de
+        // usuarios por rol y distribución de reputación.
+        Map<String, Object> stats = new java.util.LinkedHashMap<>(dashboardStatsService.estadisticasBase());
+        stats.put("totalClientes", userService.contarPorRol("ROLE_CLIENTE"));
+        stats.put("totalModeradores", userService.contarPorRol("ROLE_MODERADOR"));
+        stats.put("totalAdmins", userService.contarPorRol("ROLE_ADMIN"));
+        stats.put("reputacionVendedores", distribucionReputacion("ROLE_VENDEDOR", true));
+        stats.put("reputacionCompradores", distribucionReputacion("ROLE_CLIENTE", false));
+        return ResponseEntity.ok(stats);
     }
 
     // Cuenta cuántos usuarios de un rol caen en cada nivel de reputación (incluye "NUEVO").
