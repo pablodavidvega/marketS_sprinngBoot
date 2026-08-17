@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Notificacion;
 import com.example.MarketS.model.User;
 import com.example.MarketS.security.UsuarioPrincipal;
@@ -71,7 +72,7 @@ public class NotificacionApiController {
 
     private User resolverUsuario(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado");
         return usuario;
     }
 

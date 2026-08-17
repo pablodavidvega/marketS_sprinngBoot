@@ -2,6 +2,7 @@ package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.PedidoResponseDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
@@ -78,7 +79,7 @@ public class ClienteApiController {
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> dashboard(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado");
 
         List<Pedido> pedidosEntidad = pedidoRepository.findByUsuarioWithDetails(usuario);
 
@@ -139,10 +140,10 @@ public class ClienteApiController {
         }
 
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado");
 
         Rol rolVendedor = rolRepository.findByRolname("ROLE_VENDEDOR")
-                .orElseThrow(() -> new IllegalStateException("Rol VENDEDOR no configurado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Rol VENDEDOR no configurado"));
 
         Vendedor vendedor = new Vendedor();
         vendedor.setCity(city.trim());

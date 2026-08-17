@@ -7,6 +7,7 @@ import com.example.MarketS.dto.RegistroUsuarioDTO;
 import com.example.MarketS.dto.ReporteAdminDTO;
 import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.VendedorEstadisticasDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.EncuentroRepository;
@@ -314,7 +315,7 @@ public class AdminApiController {
         }
 
         Rol rolAdmin = rolRepository.findByRolname("ROLE_ADMIN")
-                .orElseThrow(() -> new IllegalStateException("Rol ADMIN no configurado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Rol ADMIN no configurado"));
 
         User user = new User();
         user.setUsername(dto.getUsername());

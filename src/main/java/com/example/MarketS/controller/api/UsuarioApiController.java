@@ -4,6 +4,7 @@ import com.example.MarketS.dto.ActualizarEnlacesRequestDTO;
 import com.example.MarketS.dto.ActualizarPerfilRequestDTO;
 import com.example.MarketS.dto.CambiarPasswordRequestDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.EnlaceSocial;
 import com.example.MarketS.model.User;
 import com.example.MarketS.model.Vendedor;
@@ -132,7 +133,7 @@ public class UsuarioApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Solo los vendedores pueden agregar enlaces"));
         }
         Vendedor vendedor = vendedorRepository.findById(user.getVendedor().getId())
-                .orElseThrow(() -> new RuntimeException("Vendedor no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Vendedor no encontrado"));
 
         vendedor.getEnlaces().clear();
         List<EnlaceSocial> nuevos = new ArrayList<>();
@@ -156,7 +157,7 @@ public class UsuarioApiController {
 
     private User resolverUsuario(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado");
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado");
         return usuario;
     }
 }

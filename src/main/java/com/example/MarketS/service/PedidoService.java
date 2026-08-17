@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
+import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.model.Producto;
@@ -72,7 +74,7 @@ public class PedidoService {
                 Producto producto = productoRepository.findById(item.getKey().longValue())
                         .orElseThrow(() -> {
                             System.out.println("❌ Producto no encontrado ID: " + item.getKey());
-                            return new RuntimeException("Producto no encontrado");
+                            return new RecursoNoEncontradoException("Producto no encontrado");
                         });
 
                 int cantidad = item.getValue();
@@ -80,7 +82,7 @@ public class PedidoService {
 
                 int stockDisponible = producto.getStock() != null ? producto.getStock() : 0;
                 if (cantidad > stockDisponible) {
-                    throw new RuntimeException("Stock insuficiente para \"" + producto.getNombre()
+                    throw new SolicitudInvalidaException("Stock insuficiente para \"" + producto.getNombre()
                             + "\". Disponible: " + stockDisponible + ", solicitado: " + cantidad);
                 }
 
@@ -113,7 +115,7 @@ public class PedidoService {
                     .distinct()
                     .count();
             if (vendedoresDistintos > 1) {
-                throw new RuntimeException("Todos los productos de un pedido deben ser del mismo vendedor");
+                throw new SolicitudInvalidaException("Todos los productos de un pedido deben ser del mismo vendedor");
             }
 
             // Asegurar que la lista de detalles no sea null

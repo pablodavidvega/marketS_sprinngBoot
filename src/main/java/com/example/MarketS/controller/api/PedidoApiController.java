@@ -133,12 +133,7 @@ public class PedidoApiController {
         // resolver el vendedor del primer ítem.
         String accessTokenVendedor = null;
         if (!esAcuerdoExterno) {
-            User vendedorCarrito;
-            try {
-                vendedorCarrito = productoService.obtenerProductoPorId(request.getItems().get(0).getProductoId()).getVendedor();
-            } catch (Exception e) {
-                throw new SolicitudInvalidaException(e.getMessage());
-            }
+            User vendedorCarrito = productoService.obtenerProductoPorId(request.getItems().get(0).getProductoId()).getVendedor();
             accessTokenVendedor = vendedorCarrito != null
                     ? mercadoPagoOAuthService.obtenerAccessTokenVigente(vendedorCarrito).orElse(null)
                     : null;
@@ -155,12 +150,7 @@ public class PedidoApiController {
                         CrearPedidoRequestDTO.ItemCarritoDTO::getCantidad
                 ));
 
-        Pedido pedido;
-        try {
-            pedido = pedidoService.crearPedido(usuario, carrito);
-        } catch (Exception e) {
-            throw new SolicitudInvalidaException(e.getMessage());
-        }
+        Pedido pedido = pedidoService.crearPedido(usuario, carrito);
 
         if (esAcuerdoExterno) {
             return crearPedidoConAcuerdoExterno(pedido, metodoPago.toUpperCase());
@@ -737,7 +727,7 @@ public class PedidoApiController {
 
     private User resolverUsuario(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
         return usuario;
     }
 

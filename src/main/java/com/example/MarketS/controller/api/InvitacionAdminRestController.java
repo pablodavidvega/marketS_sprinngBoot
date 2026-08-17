@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Invitacion;
 import com.example.MarketS.model.User;
 import com.example.MarketS.security.UsuarioPrincipal;
@@ -57,7 +58,7 @@ public class InvitacionAdminRestController {
             Authentication auth) {
 
         User admin = UsuarioPrincipal.from(auth);
-        if (admin == null) throw new RuntimeException("Admin no encontrado");
+        if (admin == null) throw new RecursoNoEncontradoException("Admin no encontrado");
 
         String descripcion = (String) body.getOrDefault("descripcion", null);
         Integer maxUsos = body.get("maxUsos") != null

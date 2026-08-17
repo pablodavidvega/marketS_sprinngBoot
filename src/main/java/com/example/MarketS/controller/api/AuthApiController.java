@@ -3,6 +3,7 @@ package com.example.MarketS.controller.api;
 import com.example.MarketS.dto.LoginDTO;
 import com.example.MarketS.dto.PerfilResponseDTO;
 import com.example.MarketS.dto.RegistroVendedorDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.model.Vendedor;
@@ -162,7 +163,7 @@ public class AuthApiController {
         }
 
         Rol rol = rolRepository.findByRolname("ROLE_" + tipoRol)
-                .orElseThrow(() -> new IllegalStateException("Rol no configurado: " + tipoRol));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Rol no configurado: " + tipoRol));
 
         User user = new User();
         user.setUsername(dto.getUsername());

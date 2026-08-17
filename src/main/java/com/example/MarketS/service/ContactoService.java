@@ -1,5 +1,6 @@
 package com.example.MarketS.service;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Contacto;
 import com.example.MarketS.model.EstadoContacto;
 import com.example.MarketS.model.User;
@@ -40,7 +41,7 @@ public class ContactoService {
 
     public Contacto responder(Long id, String respuesta) {
         Contacto contacto = contactoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Solicitud no encontrada"));
         contacto.setRespuesta(respuesta);
         contacto.setEstado(EstadoContacto.RESUELTO);
         contacto.setFechaRespuesta(LocalDateTime.now());
@@ -49,7 +50,7 @@ public class ContactoService {
 
     public Contacto cambiarEstado(Long id, EstadoContacto estado) {
         Contacto contacto = contactoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Solicitud no encontrada"));
         contacto.setEstado(estado);
         return contactoRepository.save(contacto);
     }

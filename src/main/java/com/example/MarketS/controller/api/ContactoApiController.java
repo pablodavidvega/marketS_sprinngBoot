@@ -1,6 +1,7 @@
 package com.example.MarketS.controller.api;
 
 import com.example.MarketS.dto.ContactoResponseDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.Contacto;
 import com.example.MarketS.model.EstadoContacto;
 import com.example.MarketS.model.User;
@@ -68,7 +69,7 @@ public class ContactoApiController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
         User user = UsuarioPrincipal.from(auth);
-        if (user == null) throw new RuntimeException("Usuario no encontrado");
+        if (user == null) throw new RecursoNoEncontradoException("Usuario no encontrado");
         Page<Contacto> pagina = contactoService.listarPorUsuarioPaginado(user, PageRequest.of(page, size));
         List<ContactoResponseDTO> contenido = pagina.getContent().stream().map(ContactoResponseDTO::from).toList();
 

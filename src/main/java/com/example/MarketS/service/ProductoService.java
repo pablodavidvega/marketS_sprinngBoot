@@ -1,5 +1,7 @@
 package com.example.MarketS.service;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
+import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.TallaStock;
 import com.example.MarketS.model.User;
@@ -48,15 +50,15 @@ public class ProductoService {
     @Transactional
     public void reducirStock(Long productoId, Integer cantidad) {
         Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
         // Verificar que haya suficiente stock
         if (producto.getStock() == null) {
-            throw new RuntimeException("El producto no tiene stock definido");
+            throw new SolicitudInvalidaException("El producto no tiene stock definido");
         }
 
         if (producto.getStock() < cantidad) {
-            throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre()
+            throw new SolicitudInvalidaException("Stock insuficiente para el producto: " + producto.getNombre()
                     + ". Stock disponible: " + producto.getStock() + ", solicitado: " + cantidad);
         }
 
@@ -84,11 +86,11 @@ public class ProductoService {
     public void reducirStockPorTalla(Long productoId, String talla, Integer cantidad) {
         // Buscar la talla específica
         TallaStock tallaStock = tallaStockRepository.findByProductoIdAndTalla(productoId, talla)
-                .orElseThrow(() -> new RuntimeException("Talla " + talla + " no encontrada para el producto ID: " + productoId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Talla " + talla + " no encontrada para el producto ID: " + productoId));
 
         // Verificar stock suficiente
         if (tallaStock.getStock() < cantidad) {
-            throw new RuntimeException("Stock insuficiente para la talla " + talla
+            throw new SolicitudInvalidaException("Stock insuficiente para la talla " + talla
                     + ". Stock disponible: " + tallaStock.getStock() + ", solicitado: " + cantidad);
         }
 
@@ -98,7 +100,7 @@ public class ProductoService {
 
         // Actualizar stock general del producto
         Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
 
         int stockAnterior = producto.getStock() != null ? producto.getStock() : 0;
 
@@ -124,7 +126,7 @@ public class ProductoService {
      */
     public boolean verificarStockSuficiente(Long productoId, Integer cantidad) {
         Producto producto = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
 
         return producto.getStock() != null && producto.getStock() >= cantidad;
     }
@@ -143,7 +145,7 @@ public class ProductoService {
      */
     public Producto obtenerProductoPorId(Long id) {
         return productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado"));
     }
 
     /**

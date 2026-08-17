@@ -1,5 +1,6 @@
 package com.example.MarketS.controller.api;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.ChatMensaje;
 import com.example.MarketS.model.Pedido;
 import com.example.MarketS.model.User;
@@ -151,7 +152,7 @@ public class ChatApiController {
 
     private User resolverUsuario(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
         return usuario;
     }
 

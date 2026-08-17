@@ -1,5 +1,6 @@
 package com.example.MarketS.service.impl;
 
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.exception.UsuarioConRelacionesException;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
@@ -164,17 +165,17 @@ public class UserServiceImpl implements UserService {
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         } else {
-            throw new IllegalArgumentException("Usuario no encontrado para actualizar");
+            throw new RecursoNoEncontradoException("Usuario no encontrado para actualizar");
         }
     }
 
     @Override
     public void cambiarRol(Long userId, Long rolId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
         Rol nuevoRol = rolRepository.findById(rolId)
-                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con id " + rolId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Rol no encontrado con id " + rolId));
 
         user.setRol(nuevoRol);
         user.setUpdatedAt(LocalDateTime.now());
@@ -184,7 +185,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void eliminarUsuario(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("Usuario no encontrado con ID " + id);
+            throw new RecursoNoEncontradoException("Usuario no encontrado con ID " + id);
         }
 
         List<String> motivos = new ArrayList<>();
@@ -221,7 +222,7 @@ public class UserServiceImpl implements UserService {
     // 🔹 MÉTODO ADICIONAL: Para activar/desactivar usuario
     public void cambiarEstado(Long userId, boolean activo) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
         user.setActive(activo);
         user.setUpdatedAt(LocalDateTime.now());

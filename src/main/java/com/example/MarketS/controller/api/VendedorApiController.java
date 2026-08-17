@@ -4,6 +4,7 @@ import com.example.MarketS.dto.PedidoVendedorDTO;
 import com.example.MarketS.dto.ProductoResponseDTO;
 import com.example.MarketS.dto.ReputacionDTO;
 import com.example.MarketS.dto.TallasStockDTO;
+import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.model.*;
 import com.example.MarketS.repository.*;
 import com.example.MarketS.service.ProductoService;
@@ -413,7 +414,7 @@ public class VendedorApiController {
 
     private User resolverUsuario(Authentication auth) {
         User usuario = UsuarioPrincipal.from(auth);
-        if (usuario == null) throw new RuntimeException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
+        if (usuario == null) throw new RecursoNoEncontradoException("Usuario no encontrado: " + (auth != null ? auth.getName() : "anónimo"));
         return usuario;
     }
 
