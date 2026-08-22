@@ -14,6 +14,7 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import { extraerMensajeError } from '../../utils/errores'
 import { formatMoneda } from '../../utils/formato'
+import { useModalA11y } from '../../hooks/useModalA11y'
 import Paginador from '../../components/Paginador'
 import MarcaAutocomplete from '../../components/MarcaAutocomplete'
 
@@ -131,6 +132,7 @@ export default function VendedorProductosPage() {
   const [guardando, setGuardando]   = useState(false)
   const [uploadPct, setUploadPct]   = useState(0)   // 0–100, progreso de subida
   const [accionId, setAccionId]     = useState<number | null>(null)
+  const modalRef = useModalA11y(modalOpen, () => setModalOpen(false))
 
   // ── Carga de lista ────────────────────────────────────────────────────────
   const cargarProductos = useCallback(
@@ -374,10 +376,17 @@ export default function VendedorProductosPage() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setModalOpen(false)}
         >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="producto-modal-titulo"
+            className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold text-gray-800">
+              <h2 id="producto-modal-titulo" className="text-lg font-semibold text-gray-800">
                 {editando ? 'Editar producto' : 'Nuevo producto'}
               </h2>
               <button

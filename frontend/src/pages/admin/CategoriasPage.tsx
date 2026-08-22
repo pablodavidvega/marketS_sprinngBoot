@@ -7,6 +7,7 @@ import {
   eliminarCategoria,
 } from '../../api/categoriasAdmin'
 import type { CategoriaAdmin } from '../../types'
+import { useModalA11y } from '../../hooks/useModalA11y'
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<CategoriaAdmin[]>([])
@@ -18,6 +19,7 @@ export default function CategoriasPage() {
   const [nombre, setNombre] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [formError, setFormError] = useState('')
+  const modalRef = useModalA11y(modalOpen, () => setModalOpen(false))
 
   function cargar() {
     setLoading(true)
@@ -129,9 +131,16 @@ export default function CategoriasPage() {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setModalOpen(false)}
         >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="categoria-modal-titulo"
+            className="bg-white rounded-xl shadow-xl w-full max-w-md"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-5 border-b">
-              <h2 className="text-lg font-semibold text-gray-800">
+              <h2 id="categoria-modal-titulo" className="text-lg font-semibold text-gray-800">
                 {editando ? 'Editar categoría' : 'Nueva categoría'}
               </h2>
               <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">

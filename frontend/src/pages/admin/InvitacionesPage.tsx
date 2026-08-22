@@ -6,6 +6,7 @@ import {
   getConfigRegistro, setConfigRegistro,
 } from '../../api/invitaciones'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import { useModalA11y } from '../../hooks/useModalA11y'
 import Paginador from '../../components/Paginador'
 import type { Invitacion, ConfigRegistro } from '../../types'
 
@@ -71,6 +72,7 @@ function ModalGenerarInvitacion({ onClose, onCreada }: ModalProps) {
   const [fechaExpiracion, setFechaExpiracion] = useState('')
   const [loading,         setLoading]         = useState(false)
   const [error,           setError]           = useState('')
+  const modalRef = useModalA11y(true, onClose)
 
   async function handleCrear() {
     setLoading(true); setError('')
@@ -91,8 +93,15 @@ function ModalGenerarInvitacion({ onClose, onCreada }: ModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Generar link de invitación</h2>
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invitacion-modal-titulo"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 id="invitacion-modal-titulo" className="text-lg font-semibold text-gray-800 mb-4">Generar link de invitación</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
