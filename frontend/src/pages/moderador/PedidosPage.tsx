@@ -5,6 +5,7 @@ import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import Paginador from '../../components/Paginador'
+import { formatMonedaEntera } from '../../utils/formato'
 
 interface PedidoMod {
   id: number
@@ -123,7 +124,7 @@ export default function ModeradorPedidosPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-800">
-                        ${p.total.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                        {formatMonedaEntera(p.total)}
                       </td>
                     </tr>
                   ))}
@@ -136,7 +137,7 @@ export default function ModeradorPedidosPage() {
             <p className="text-sm text-gray-500">
               {data?.totalElementos ?? 0} pedidos en total · Suma de esta página:{' '}
               <span className="font-semibold text-gray-800">
-                ${totalMostrado.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                {formatMonedaEntera(totalMostrado)}
               </span>
             </p>
             <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />

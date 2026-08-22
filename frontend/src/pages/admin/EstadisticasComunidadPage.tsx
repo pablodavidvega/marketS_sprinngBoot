@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getEstadisticasComunidad } from '../../api/usuario'
+import { formatMonedaEntera } from '../../utils/formato'
 import type { EstadisticasComunidad, PuntoSemanaTransaccion } from '../../types'
 
 // Mismo hue secuencial reservado para magnitud/ratio que usa el resto del panel admin
 // (ver admin/DashboardPage.tsx) — no es una serie categórica, así que un solo color fijo.
 const COLOR_SECUENCIAL = '#2a78d6'
-
-function fmtMoneda(valor: number) {
-  return `$${Math.round(valor).toLocaleString('es-CO')}`
-}
 
 function StatCard({ label, valor, sub }: { label: string; valor: string; sub?: string }) {
   return (
@@ -43,7 +40,7 @@ function GraficoTransacciones({ puntos }: { puntos: PuntoSemanaTransaccion[] }) 
                   height: `${Math.max(4, (p.total / max) * 100)}%`,
                   backgroundColor: COLOR_SECUENCIAL,
                 }}
-                title={`Semana del ${new Date(p.semana).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}: ${p.total} transacción(es), ${fmtMoneda(p.monto)}`}
+                title={`Semana del ${new Date(p.semana).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}: ${p.total} transacción(es), ${formatMonedaEntera(p.monto)}`}
               />
               <span className="text-[10px] text-gray-400 whitespace-nowrap">
                 {new Date(p.semana).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
@@ -96,7 +93,7 @@ export default function EstadisticasComunidadPage() {
           sub={data.tasaAdopcion != null ? `${Math.round(data.tasaAdopcion * 100)}% de adopción` : undefined}
         />
         <StatCard label="Transacciones concretadas" valor={String(data.totalTransacciones)} />
-        <StatCard label="Monto total movido (GMV)" valor={fmtMoneda(data.gmvTotal)} />
+        <StatCard label="Monto total movido (GMV)" valor={formatMonedaEntera(data.gmvTotal)} />
         <StatCard label="Favoritos guardados" valor={String(data.totalFavoritos)} />
         <StatCard label="Encuentros agendados" valor={String(data.totalEncuentros)} />
       </div>

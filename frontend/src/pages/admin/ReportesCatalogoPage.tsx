@@ -8,10 +8,9 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { getReporteCatalogo, descargarExcelCatalogo } from '../../api/usuario'
 import Paginador from '../../components/Paginador'
+import { formatMonedaEntera } from '../../utils/formato'
+import { CHART_COLORS } from '../../config/chartColors'
 import type { ReporteCatalogo } from '../../types'
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
-const fmt = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
 
 export default function ReportesCatalogoPage() {
   const [data, setData] = useState<ReporteCatalogo | null>(null)
@@ -121,7 +120,7 @@ export default function ReportesCatalogoPage() {
       ['Productos', String(data!.totalProductos)],
       ['Categorías', String(data!.totalCategorias)],
       ['Marcas', String(data!.totalMarcas)],
-      ['Precio prom.', fmt(data!.promedioPrecio)],
+      ['Precio prom.', formatMonedaEntera(data!.promedioPrecio)],
       ['Stock prom.', data!.promedioStock.toFixed(1)],
     ]
     cards.forEach(([label, value], i) => {
@@ -211,7 +210,7 @@ export default function ReportesCatalogoPage() {
           <p className="text-sm text-gray-500 mt-1">Marcas</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-green-600">{fmt(data.promedioPrecio)}</p>
+          <p className="text-2xl font-bold text-green-600">{formatMonedaEntera(data.promedioPrecio)}</p>
           <p className="text-sm text-gray-500 mt-1">Precio promedio</p>
         </div>
         <div className="card text-center">
@@ -240,7 +239,7 @@ export default function ReportesCatalogoPage() {
                 <Tooltip />
                 <Bar dataKey="value" name="Productos" radius={[3, 3, 0, 0]}>
                   {categoriasBar.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
@@ -265,7 +264,7 @@ export default function ReportesCatalogoPage() {
                   fontSize={9}
                 >
                   {categoriasPie.slice(0, 8).map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => [v, 'Productos']} />

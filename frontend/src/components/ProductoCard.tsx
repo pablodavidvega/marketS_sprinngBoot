@@ -5,6 +5,7 @@ import { useCarrito } from '../context/CarritoContext'
 import { useFavoritos } from '../context/FavoritosContext'
 import { useAuth } from '../context/AuthContext'
 import { buildImageUrl } from '../utils/image'
+import { formatMoneda } from '../utils/formato'
 
 interface Props {
   producto: Producto
@@ -201,7 +202,7 @@ export default function ProductoCard({ producto }: Props) {
             </div>
           )}
           <p className="text-primary-600 font-bold text-base">
-            ${producto.precio.toLocaleString('es-CO')}
+            {formatMoneda(producto.precio)}
           </p>
         </Link>
       </div>

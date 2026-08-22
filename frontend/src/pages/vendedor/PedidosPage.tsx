@@ -8,6 +8,7 @@ import Stars from '../../components/Stars'
 import Paginador from '../../components/Paginador'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import { formatMoneda } from '../../utils/formato'
 
 export default function PedidosVendedorPage() {
   const [searchParams] = useSearchParams()
@@ -230,13 +231,13 @@ export default function PedidosVendedorPage() {
                               {item.productoNombre}
                             </Link>
                             <p className="text-sm text-gray-500">
-                              {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
+                              {item.cantidad} × {formatMoneda(item.precioUnitario)}
                             </p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="text-xs text-gray-400">Tu ganancia</p>
                             <p className="font-semibold text-green-600">
-                              ${(item.gananciaVendedor ?? item.precioUnitario * item.cantidad).toLocaleString('es-CO')}
+                              {formatMoneda(item.gananciaVendedor ?? item.precioUnitario * item.cantidad)}
                             </p>
                           </div>
                         </div>

@@ -6,6 +6,7 @@ import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import Stars from '../../components/Stars'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { formatMoneda } from '../../utils/formato'
 
 // Mismo criterio que ResenaApiController/PedidoApiController.calificarComprador: estados que
 // representan una venta concretada (por MercadoPago o por fuera de la app).
@@ -177,7 +178,7 @@ export default function MisPedidosPage() {
                     {pedido.estado.replace(/_/g, ' ')}
                   </span>
                   <span className="font-bold text-gray-800 text-lg">
-                    ${pedido.total.toLocaleString('es-CO')}
+                    {formatMoneda(pedido.total)}
                   </span>
                   <span className="text-gray-400 text-sm">
                     {expandido === pedido.pedidoId ? '▲' : '▼'}
@@ -215,11 +216,11 @@ export default function MisPedidosPage() {
                               {item.productoNombre}
                             </Link>
                             <p className="text-sm text-gray-500">
-                              {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
+                              {item.cantidad} × {formatMoneda(item.precioUnitario)}
                             </p>
                           </div>
                           <span className="font-semibold text-gray-700 flex-shrink-0">
-                            ${item.subtotal.toLocaleString('es-CO')}
+                            {formatMoneda(item.subtotal)}
                           </span>
                         </div>
 

@@ -4,6 +4,7 @@ import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { crearPedido, type MetodoPago } from '../api/pedidos'
 import type { CarritoItem } from '../types'
+import { formatMoneda } from '../utils/formato'
 
 const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
   { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
@@ -109,7 +110,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-gray-800 truncate">{item.nombre}</h3>
-                <p className="text-primary-600 font-semibold">${item.precio.toLocaleString('es-CO')}</p>
+                <p className="text-primary-600 font-semibold">{formatMoneda(item.precio)}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex items-center border border-gray-300 rounded">
                     <button
@@ -135,7 +136,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
                 </div>
               </div>
               <p className="font-bold text-gray-800 flex-shrink-0">
-                ${(item.precio * item.cantidad).toLocaleString('es-CO')}
+                {formatMoneda(item.precio * item.cantidad)}
               </p>
             </div>
           ))}
@@ -145,12 +146,12 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
         <div className="h-fit">
           <div className="flex justify-between text-gray-600 mb-2">
             <span>Subtotal</span>
-            <span>${grupo.subtotal.toLocaleString('es-CO')}</span>
+            <span>{formatMoneda(grupo.subtotal)}</span>
           </div>
           <div className="border-t border-gray-200 my-3" />
           <div className="flex justify-between font-bold text-gray-800 text-lg mb-4">
             <span>Total</span>
-            <span>${grupo.subtotal.toLocaleString('es-CO')}</span>
+            <span>{formatMoneda(grupo.subtotal)}</span>
           </div>
 
           <div className="mb-4">
@@ -252,7 +253,7 @@ export default function CarritoPage() {
 
       {grupos.length > 1 && (
         <div className="mt-6 text-right text-sm text-gray-500">
-          Total general: <span className="font-semibold text-gray-700">${total.toLocaleString('es-CO')}</span>
+          Total general: <span className="font-semibold text-gray-700">{formatMoneda(total)}</span>
         </div>
       )}
     </div>

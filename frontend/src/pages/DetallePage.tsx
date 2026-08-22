@@ -8,6 +8,7 @@ import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { useFavoritos } from '../context/FavoritosContext'
 import { buildImageUrl } from '../utils/image'
+import { formatMoneda } from '../utils/formato'
 import Stars from '../components/Stars'
 import ReputacionBar from '../components/ReputacionBar'
 
@@ -363,7 +364,7 @@ export default function DetallePage() {
           )}
 
           <p className="text-3xl font-bold text-primary-600">
-            ${producto.precio.toLocaleString('es-CO')}
+            {formatMoneda(producto.precio)}
           </p>
 
           {producto.totalVendido != null && producto.totalVendido > 0 && (

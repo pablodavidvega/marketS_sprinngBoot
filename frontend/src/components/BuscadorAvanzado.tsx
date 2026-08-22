@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getSugerencias } from '../api/productos'
 import type { SugerenciaProducto } from '../types'
 import { buildImageUrl } from '../utils/image'
+import { formatMoneda } from '../utils/formato'
 
 interface Props {
   onSearch: (q: string) => void
@@ -183,7 +184,7 @@ export default function BuscadorAvanzado({ onSearch, initialValue = '' }: Props)
 
                   {/* Precio */}
                   <span className="text-sm font-semibold text-primary-600 flex-shrink-0">
-                    ${s.precio.toLocaleString('es-CO')}
+                    {formatMoneda(s.precio)}
                   </span>
                 </button>
               </li>

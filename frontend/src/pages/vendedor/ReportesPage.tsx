@@ -8,6 +8,8 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import api from '../../api/axios'
 import Paginador from '../../components/Paginador'
+import { formatMonedaEntera } from '../../utils/formato'
+import { CHART_COLORS } from '../../config/chartColors'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface VentaProducto {
@@ -34,9 +36,6 @@ interface ReporteData {
   ventasPorMes: VentaMes[]
 }
 
-// ── Colores ───────────────────────────────────────────────────────────────────
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
-
 const PERIODOS = [
   { key: '7d',  label: '7 días' },
   { key: '30d', label: '30 días' },
@@ -46,8 +45,6 @@ const PERIODOS = [
   { key: 'all', label: 'Todo' },
 ]
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
 
 function formatMes(periodo: string) {
   const [y, m] = periodo.split('-')
@@ -78,11 +75,11 @@ function descargarPDF(data: ReporteData, periodo: string) {
   doc.text('Resumen', 14, 44)
 
   const kpis = [
-    ['Ganancia neta', fmt(data.resumen.gananciaTotal)],
+    ['Ganancia neta', formatMonedaEntera(data.resumen.gananciaTotal)],
     ['Unidades vendidas', String(data.resumen.totalUnidades)],
     ['Producto estrella', data.resumen.productoTop],
     ['Total pedidos', String(data.resumen.totalPedidos)],
-    ['Valor promedio por pedido', fmt(data.resumen.valorPromedioPedido)],
+    ['Valor promedio por pedido', formatMonedaEntera(data.resumen.valorPromedioPedido)],
   ]
   autoTable(doc, {
     startY: 48,
@@ -103,7 +100,7 @@ function descargarPDF(data: ReporteData, periodo: string) {
   autoTable(doc, {
     startY: y1 + 4,
     head: [['#', 'Producto', 'Unidades', 'Ingresos brutos']],
-    body: data.ventasPorProducto.map((p, i) => [i + 1, p.nombre, p.unidades, fmt(p.ingresos)]),
+    body: data.ventasPorProducto.map((p, i) => [i + 1, p.nombre, p.unidades, formatMonedaEntera(p.ingresos)]),
     theme: 'striped',
     headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
     styles: { fontSize: 9 },
@@ -124,7 +121,7 @@ function descargarPDF(data: ReporteData, periodo: string) {
     autoTable(doc, {
       startY: y2 + 4,
       head: [['Período', 'Ganancia neta', 'Unidades']],
-      body: data.ventasPorMes.map(m => [formatMes(m.periodo), fmt(m.ganancia), m.unidades]),
+      body: data.ventasPorMes.map(m => [formatMes(m.periodo), formatMonedaEntera(m.ganancia), m.unidades]),
       theme: 'striped',
       headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
       styles: { fontSize: 9 },
@@ -175,7 +172,7 @@ function CustomTooltip({ active, payload, label, metrica }: {
       <p className="text-gray-300 mb-1 font-medium">{label}</p>
       {payload.map((p, i) => (
         <p key={i} className="text-white font-bold">
-          {metrica === 'ganancia' ? fmt(p.value) : `${p.value} uds.`}
+          {metrica === 'ganancia' ? formatMonedaEntera(p.value) : `${p.value} uds.`}
         </p>
       ))}
     </div>
@@ -272,7 +269,7 @@ export default function ReportesPage() {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <KpiCard
                 icon="💰" label="Ganancia neta"
-                value={fmt(data.resumen.gananciaTotal)}
+                value={formatMonedaEntera(data.resumen.gananciaTotal)}
                 color="bg-blue-500"
               />
               <KpiCard
@@ -292,7 +289,7 @@ export default function ReportesPage() {
               />
               <KpiCard
                 icon="🎯" label="Valor promedio por pedido"
-                value={fmt(data.resumen.valorPromedioPedido)}
+                value={formatMonedaEntera(data.resumen.valorPromedioPedido)}
                 color="bg-purple-500"
               />
             </div>
@@ -385,11 +382,11 @@ export default function ReportesPage() {
                             paddingAngle={3}
                           >
                             {data.ventasPorProducto.slice(0, 6).map((_, i) => (
-                              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                              <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                             ))}
                           </Pie>
                           <Tooltip
-                            formatter={(v) => { const n = Number(v); return metrica === 'ganancia' ? fmt(n) : `${n} uds.` }}
+                            formatter={(v) => { const n = Number(v); return metrica === 'ganancia' ? formatMonedaEntera(n) : `${n} uds.` }}
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}
                           />
                           <Legend
@@ -425,7 +422,7 @@ export default function ReportesPage() {
                         <Tooltip content={<CustomTooltip metrica={metrica} />} />
                         <Bar dataKey={metrica} radius={[0, 6, 6, 0]} maxBarSize={28}>
                           {data.ventasPorProducto.map((_, i) => (
-                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                            <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -475,13 +472,13 @@ export default function ReportesPage() {
                               <tr key={idx} className="hover:bg-gray-50/60 transition-colors">
                                 <td className="px-6 py-4">
                                   <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                                    style={{ background: COLORS[idx % COLORS.length] }}>
+                                    style={{ background: CHART_COLORS[idx % CHART_COLORS.length] }}>
                                     {idx + 1}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 font-medium text-gray-800 max-w-[200px] truncate">{p.nombre}</td>
                                 <td className="px-6 py-4 text-right text-gray-600">{p.unidades.toLocaleString('es-CO')}</td>
-                                <td className="px-6 py-4 text-right font-semibold text-emerald-600">{fmt(p.ingresos)}</td>
+                                <td className="px-6 py-4 text-right font-semibold text-emerald-600">{formatMonedaEntera(p.ingresos)}</td>
                               </tr>
                             )
                           })}

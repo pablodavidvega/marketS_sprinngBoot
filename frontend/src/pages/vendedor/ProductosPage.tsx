@@ -13,6 +13,7 @@ import { buildImageUrl } from '../../utils/image'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import { extraerMensajeError } from '../../utils/errores'
+import { formatMoneda } from '../../utils/formato'
 import Paginador from '../../components/Paginador'
 import MarcaAutocomplete from '../../components/MarcaAutocomplete'
 
@@ -318,7 +319,7 @@ export default function VendedorProductosPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-primary-600 font-semibold">
-                      ${p.precio.toLocaleString('es-CO')}
+                      {formatMoneda(p.precio)}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{p.stock}</td>
                     <td className="px-4 py-3">

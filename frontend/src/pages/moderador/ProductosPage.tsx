@@ -5,6 +5,7 @@ import { buildImageUrl } from '../../utils/image'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import Paginador from '../../components/Paginador'
+import { formatMoneda } from '../../utils/formato'
 import type { Producto } from '../../types'
 
 type FiltroEstado = 'todos' | 'activos' | 'inactivos'
@@ -147,7 +148,7 @@ export default function ModeradorProductosPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-500">{p.categoriaNombre ?? '—'}</td>
                       <td className="px-4 py-3 text-right font-medium text-gray-800">
-                        ${p.precio.toLocaleString('es-CO')}
+                        {formatMoneda(p.precio)}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">{p.stock}</td>
                       <td className="px-4 py-3 text-center">

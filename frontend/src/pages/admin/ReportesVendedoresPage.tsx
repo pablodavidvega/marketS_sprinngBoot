@@ -8,10 +8,9 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { getReporteVendedores } from '../../api/usuario'
 import Paginador from '../../components/Paginador'
+import { formatMonedaEntera } from '../../utils/formato'
+import { CHART_COLORS } from '../../config/chartColors'
 import type { VendedorEstadisticas } from '../../types'
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
-const fmt = (n: number) => '$' + n.toLocaleString('es-CO', { maximumFractionDigits: 0 })
 
 // ── Canvas helpers para PDF ──────────────────────────────────────────────────
 function dibujarBarras(data: VendedorEstadisticas[], campo: keyof VendedorEstadisticas): string {
@@ -38,7 +37,7 @@ function dibujarBarras(data: VendedorEstadisticas[], campo: keyof VendedorEstadi
     ctx.fillStyle = '#94a3b8'
     ctx.font = '10px Arial'
     ctx.textAlign = 'right'
-    ctx.fillText(fmt((maxVal * i) / 4), 36, y + 3)
+    ctx.fillText(formatMonedaEntera((maxVal * i) / 4), 36, y + 3)
   }
 
   top5.forEach((v, i) => {
@@ -46,7 +45,7 @@ function dibujarBarras(data: VendedorEstadisticas[], campo: keyof VendedorEstadi
     const barH = (val / maxVal) * chartH
     const x = 50 + i * (barW + gap)
     const y = baseY - barH
-    ctx.fillStyle = COLORS[i % COLORS.length]
+    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length]
     ctx.fillRect(x, y, barW, barH)
     ctx.fillStyle = '#1e293b'
     ctx.font = '10px Arial'
@@ -75,7 +74,7 @@ function dibujarTorta(data: VendedorEstadisticas[], campo: keyof VendedorEstadis
     ctx.moveTo(120, 130)
     ctx.arc(120, 130, 100, angle, angle + slice)
     ctx.closePath()
-    ctx.fillStyle = COLORS[i % COLORS.length]
+    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length]
     ctx.fill()
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 2
@@ -86,7 +85,7 @@ function dibujarTorta(data: VendedorEstadisticas[], campo: keyof VendedorEstadis
   // Leyenda
   top6.forEach((v, i) => {
     const ly = 20 + i * 38
-    ctx.fillStyle = COLORS[i % COLORS.length]
+    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length]
     ctx.fillRect(200, ly, 14, 14)
     ctx.fillStyle = '#1e293b'
     ctx.font = '10px Arial'
@@ -178,7 +177,7 @@ export default function ReportesVendedoresPage() {
     const cards = [
       ['Vendedores activos', String(data.length)],
       ['Unidades vendidas', String(totalUnidades)],
-      ['Ingresos totales', fmt(totalIngresos)],
+      ['Ingresos totales', formatMonedaEntera(totalIngresos)],
       ['Top vendedor', topVendedor],
     ]
     cards.forEach(([label, value], i) => {
@@ -225,9 +224,9 @@ export default function ReportesVendedoresPage() {
         v.email,
         v.totalProductos,
         v.totalUnidades,
-        fmt(v.ingresosTotal),
+        formatMonedaEntera(v.ingresosTotal),
       ]),
-      foot: [['TOTAL', '', '', totalUnidades, fmt(totalIngresos)]],
+      foot: [['TOTAL', '', '', totalUnidades, formatMonedaEntera(totalIngresos)]],
       headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold', fontSize: 8 },
       footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold', fontSize: 8 },
       bodyStyles: { fontSize: 8 },
@@ -280,7 +279,7 @@ export default function ReportesVendedoresPage() {
           <p className="text-sm text-gray-500 mt-1">Vendedores activos</p>
         </div>
         <div className="card text-center">
-          <p className="text-3xl font-bold text-green-600">{fmt(totalIngresos)}</p>
+          <p className="text-3xl font-bold text-green-600">{formatMonedaEntera(totalIngresos)}</p>
           <p className="text-sm text-gray-500 mt-1">Ingresos totales</p>
         </div>
         <div className="card text-center">
@@ -304,7 +303,7 @@ export default function ReportesVendedoresPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" interval={0} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => '$' + (v / 1000).toFixed(0) + 'k'} />
-                <Tooltip formatter={(v) => fmt(Number(v))} />
+                <Tooltip formatter={(v) => formatMonedaEntera(Number(v))} />
                 <Bar dataKey="ingresos" name="Ingresos" fill="#3b82f6" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -316,15 +315,15 @@ export default function ReportesVendedoresPage() {
             <ResponsiveContainer width="100%" height={190}>
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} dataKey="value">
-                  {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  {pieData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(v) => fmt(Number(v))} />
+                <Tooltip formatter={(v) => formatMonedaEntera(Number(v))} />
               </PieChart>
             </ResponsiveContainer>
             <ul className="mt-2 space-y-1">
               {pieData.map((d, i) => (
                 <li key={d.name} className="flex items-center gap-2 text-xs text-gray-600">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                   <span className="truncate flex-1">{d.name}</span>
                   <span className="text-gray-400 shrink-0">{totalPie > 0 ? Math.round((d.value / totalPie) * 100) : 0}%</span>
                 </li>
@@ -360,7 +359,7 @@ export default function ReportesVendedoresPage() {
                   <td className="px-4 py-3 text-gray-500">{v.email}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{v.totalProductos}</td>
                   <td className="px-4 py-3 text-center text-gray-700">{v.totalUnidades}</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-800">{fmt(v.ingresosTotal)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-gray-800">{formatMonedaEntera(v.ingresosTotal)}</td>
                 </tr>
               ))}
             </tbody>
@@ -370,7 +369,7 @@ export default function ReportesVendedoresPage() {
                 <td className="px-4 py-3 text-center font-bold text-gray-700">
                   {totalUnidades}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-gray-800">{fmt(totalIngresos)}</td>
+                <td className="px-4 py-3 text-right font-bold text-gray-800">{formatMonedaEntera(totalIngresos)}</td>
               </tr>
             </tfoot>
           </table>

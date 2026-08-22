@@ -7,6 +7,7 @@ import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardCliente } from '../../types'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { formatMoneda } from '../../utils/formato'
 
 export default function ClienteDashboardPage() {
   const [data, setData] = useState<DashboardCliente | null>(null)
@@ -61,7 +62,7 @@ export default function ClienteDashboardPage() {
           <p className="text-sm text-gray-500 mt-1">Pedidos pagados</p>
         </div>
         <div className="card text-center">
-          <p className="text-3xl font-bold text-primary-600">${data.gastoTotal.toLocaleString('es-CO')}</p>
+          <p className="text-3xl font-bold text-primary-600">{formatMoneda(data.gastoTotal)}</p>
           <p className="text-sm text-gray-500 mt-1">Gasto total</p>
         </div>
       </div>
@@ -136,7 +137,7 @@ export default function ClienteDashboardPage() {
                         {pedido.estado.replace(/_/g, ' ')}
                       </span>
                       <span className="font-semibold text-gray-800">
-                        ${pedido.total.toLocaleString('es-CO')}
+                        {formatMoneda(pedido.total)}
                       </span>
                       <span className="text-gray-400 text-sm">
                         {expandido === pedido.pedidoId ? '▲' : '▼'}
@@ -166,11 +167,11 @@ export default function ClienteDashboardPage() {
                               {item.productoNombre}
                             </Link>
                             <p className="text-xs text-gray-500">
-                              {item.cantidad} × ${item.precioUnitario.toLocaleString('es-CO')}
+                              {item.cantidad} × {formatMoneda(item.precioUnitario)}
                             </p>
                           </div>
                           <span className="font-semibold text-gray-700 text-sm flex-shrink-0">
-                            ${item.subtotal.toLocaleString('es-CO')}
+                            {formatMoneda(item.subtotal)}
                           </span>
                         </div>
                       ))}

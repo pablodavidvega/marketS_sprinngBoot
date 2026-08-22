@@ -4,6 +4,7 @@ import { getProductosRecientes } from '../api/productos'
 import { getBannersActivos } from '../api/banners'
 import type { Producto, BannerSlide } from '../types'
 import { buildImageUrl } from '../utils/image'
+import { formatMoneda } from '../utils/formato'
 
 const DURACION_MIN = 3000
 const DURACION_MAX = 5000
@@ -182,7 +183,7 @@ export default function ProductosRecientesSlider() {
 
                         <div className="relative w-full text-center">
                           <p className="text-white font-bold text-sm line-clamp-2 drop-shadow">{p.nombre}</p>
-                          <p className="text-white/90 font-bold text-base mt-0.5">${p.precio.toLocaleString('es-CO')}</p>
+                          <p className="text-white/90 font-bold text-base mt-0.5">{formatMoneda(p.precio)}</p>
                         </div>
 
                         <span className="absolute bottom-3 right-3 text-white/80 text-lg leading-none">→</span>

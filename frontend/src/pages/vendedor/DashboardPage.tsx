@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getDashboardVendedor } from '../../api/usuario'
 import ReputacionBar from '../../components/ReputacionBar'
 import { VENDEDOR_LINKS } from '../../config/vendedorLinks'
+import { formatMonedaEntera } from '../../utils/formato'
 import type { DashboardVendedor } from '../../types'
 
 function StatCard({
@@ -28,10 +29,6 @@ function StatCard({
       </div>
     </div>
   )
-}
-
-function fmt(n: number) {
-  return '$' + n.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 export default function VendedorDashboardPage() {
@@ -73,7 +70,7 @@ export default function VendedorDashboardPage() {
             <StatCard
               icon="💰"
               label="Ganancias totales"
-              value={fmt(stats.gananciaTotal)}
+              value={formatMonedaEntera(stats.gananciaTotal)}
               color="text-green-600"
               borderColor="border-green-500"
             />
