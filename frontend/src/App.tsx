@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import ScrollToTop from './components/ScrollToTop'
 import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
 // HomePage se importa eager (no lazy): es la ruta de entrada de cualquier visitante anónimo,
@@ -64,6 +65,7 @@ function CargandoPagina() {
 export default function App() {
   return (
     <ToastProvider>
+    <ScrollToTop />
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <main className="flex-1">
