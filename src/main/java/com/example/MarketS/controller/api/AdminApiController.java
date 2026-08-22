@@ -18,8 +18,6 @@ import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
 import com.example.MarketS.repository.VendedorRepository;
 import com.example.MarketS.service.DashboardStatsService;
-import com.example.MarketS.service.EmailService;
-import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.ReporteAdminService;
 import com.example.MarketS.service.ReportePdfService;
 import com.example.MarketS.service.ReputacionService;
@@ -72,12 +70,6 @@ public class AdminApiController {
 
     @Autowired
     private ReportePdfService reportePdfService;
-
-    @Autowired
-    private EmailService emailService;
-
-    @Autowired
-    private NotificacionService notificacionService;
 
     @Autowired
     private DashboardStatsService dashboardStatsService;
@@ -335,7 +327,9 @@ public class AdminApiController {
         }
     }
 
-    // PUT /api/admin/usuarios/{id}/rol — cambiar rol de un usuario
+    // PUT /api/admin/usuarios/{id}/rol — cambiar rol de un usuario. La regla de negocio (un
+    // vendedor no puede degradarse a cliente) y el aviso de MercadoPago al ascender a vendedor
+    // viven en UserService.cambiarRol — este endpoint solo parsea el request y mapea la respuesta.
     @PutMapping("/usuarios/{id}/rol")
     public ResponseEntity<?> cambiarRol(@PathVariable Long id,
                                          @RequestBody Map<String, Long> body) {
@@ -344,42 +338,7 @@ public class AdminApiController {
             return ResponseEntity.badRequest().body(Map.of("error", "Se requiere rolId"));
         }
 
-        User usuario = userService.buscarPorId(id).orElse(null);
-        if (usuario == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Rol rolNuevo = rolRepository.findById(rolId).orElse(null);
-        if (rolNuevo == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Rol no encontrado"));
-        }
-
-        // ── Regla de negocio: un vendedor NO puede degradarse a cliente ──────
-        // Sus productos publicados quedarían sin administrador.
-        String rolActual = usuario.getRol() != null ? usuario.getRol().getRolname() : "";
-        if ("ROLE_VENDEDOR".equals(rolActual) && "ROLE_CLIENTE".equals(rolNuevo.getRolname())) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "No se puede cambiar un vendedor a cliente. " +
-                         "El vendedor tiene productos publicados que quedarían sin administrador."
-            ));
-        }
-
-        userService.cambiarRol(id, rolId);
-
-        // Solo si REALMENTE pasa a ser vendedor recién ahora (no en cada guardado si ya lo era) —
-        // mismo aviso que recibe alguien que se registra como vendedor o usa "Convertirme en
-        // vendedor" (ver AuthApiController.registro / ClienteApiController.convertirVendedor).
-        if (!"ROLE_VENDEDOR".equals(rolActual) && "ROLE_VENDEDOR".equals(rolNuevo.getRolname())) {
-            emailService.enviarGuiaMercadoPago(usuario.getEmail(), usuario.getUsername());
-            notificacionService.crear(usuario,
-                    "Ahora sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
-                    "VENDEDOR_CONFIGURAR_MP", null);
-        }
-
-        return userService.buscarPorId(id)
-                .map(PerfilResponseDTO::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(PerfilResponseDTO.from(userService.cambiarRol(id, rolId)));
     }
 
     // DELETE /api/admin/usuarios/{id}

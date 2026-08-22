@@ -1,6 +1,7 @@
 package com.example.MarketS.service.impl;
 
 import com.example.MarketS.exception.RecursoNoEncontradoException;
+import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.exception.UsuarioConRelacionesException;
 import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
@@ -10,6 +11,8 @@ import com.example.MarketS.repository.ResenaCompradorRepository;
 import com.example.MarketS.repository.ResenaRepository;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
+import com.example.MarketS.service.EmailService;
+import com.example.MarketS.service.NotificacionService;
 import com.example.MarketS.service.UserService;
 
 import jakarta.transaction.Transactional;
@@ -32,6 +35,8 @@ public class UserServiceImpl implements UserService {
     private final PedidoRepository pedidoRepository;
     private final ResenaRepository resenaRepository;
     private final ResenaCompradorRepository resenaCompradorRepository;
+    private final EmailService emailService;
+    private final NotificacionService notificacionService;
 
     public UserServiceImpl(UserRepository userRepository,
                            RolRepository rolRepository,
@@ -39,7 +44,9 @@ public class UserServiceImpl implements UserService {
                            ProductoRepository productoRepository,
                            PedidoRepository pedidoRepository,
                            ResenaRepository resenaRepository,
-                           ResenaCompradorRepository resenaCompradorRepository) {
+                           ResenaCompradorRepository resenaCompradorRepository,
+                           EmailService emailService,
+                           NotificacionService notificacionService) {
         this.userRepository = userRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
@@ -47,6 +54,8 @@ public class UserServiceImpl implements UserService {
         this.pedidoRepository = pedidoRepository;
         this.resenaRepository = resenaRepository;
         this.resenaCompradorRepository = resenaCompradorRepository;
+        this.emailService = emailService;
+        this.notificacionService = notificacionService;
     }
 
     @Override
@@ -170,16 +179,37 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void cambiarRol(Long userId, Long rolId) {
+    public User cambiarRol(Long userId, Long rolId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
         Rol nuevoRol = rolRepository.findById(rolId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Rol no encontrado con id " + rolId));
 
+        // Regla de negocio: un vendedor no puede degradarse a cliente — sus productos
+        // publicados quedarían sin administrador.
+        String rolActual = user.getRol() != null ? user.getRol().getRolname() : "";
+        if ("ROLE_VENDEDOR".equals(rolActual) && "ROLE_CLIENTE".equals(nuevoRol.getRolname())) {
+            throw new SolicitudInvalidaException(
+                    "No se puede cambiar un vendedor a cliente. " +
+                    "El vendedor tiene productos publicados que quedarían sin administrador.");
+        }
+
         user.setRol(nuevoRol);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // Solo si REALMENTE pasa a ser vendedor recién ahora (no en cada guardado si ya lo
+        // era) — mismo aviso que recibe alguien que se registra como vendedor o usa
+        // "Convertirme en vendedor" (ver AuthApiController.registro / ClienteApiController.convertirVendedor).
+        if (!"ROLE_VENDEDOR".equals(rolActual) && "ROLE_VENDEDOR".equals(nuevoRol.getRolname())) {
+            emailService.enviarGuiaMercadoPago(user.getEmail(), user.getUsername());
+            notificacionService.crear(user,
+                    "Ahora sos vendedor en MarketS. Configurá tu cuenta de MercadoPago para poder cobrar tus ventas.",
+                    "VENDEDOR_CONFIGURAR_MP", null);
+        }
+
+        return user;
     }
 
     @Override

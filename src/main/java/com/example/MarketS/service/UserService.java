@@ -36,7 +36,10 @@ public interface UserService {
 
     void actualizar(User user); // opcionalmente igual a guardar()
 
-    void cambiarRol(Long userId, Long rolId);
+    // Valida la regla de negocio (un vendedor no puede degradarse a cliente) y, si el cambio es
+    // hacia vendedor, dispara el aviso de configuración de MercadoPago. Devuelve el usuario ya
+    // actualizado.
+    User cambiarRol(Long userId, Long rolId);
 
     void eliminarUsuario(Long id);
 }
