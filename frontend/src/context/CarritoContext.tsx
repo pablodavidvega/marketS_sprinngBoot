@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from 'react'
 import type { CarritoItem } from '../types'
 import { useAuth } from './AuthContext'
+import { useDebounce } from '../hooks/useDebounce'
 
 interface CarritoState {
   items: CarritoItem[]
@@ -87,6 +88,9 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const prevEmailRef = useRef<string | null>(user?.email ?? null)
   const [state, dispatch] = useReducer(reducer, undefined, () => loadFromStorage(user?.email))
+  // El estado en memoria (items, cantidadTotal, total) se actualiza al toque en cada dispatch —
+  // solo se retrasa la escritura a localStorage, para no golpear el disco en cada click de +/-.
+  const debouncedState = useDebounce(state, 400)
 
   useEffect(() => {
     const email = user?.email ?? null
@@ -96,8 +100,8 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'CARGAR', payload: saved.items })
       return
     }
-    localStorage.setItem(storageKey(email), JSON.stringify(state))
-  }, [user?.email, state])
+    localStorage.setItem(storageKey(email), JSON.stringify(debouncedState))
+  }, [user?.email, debouncedState])
 
   const cantidadTotal = state.items.reduce((sum, i) => sum + i.cantidad, 0)
   const total = state.items.reduce((sum, i) => sum + i.precio * i.cantidad, 0)
