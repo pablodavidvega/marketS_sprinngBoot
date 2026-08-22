@@ -45,15 +45,14 @@ export default function UsuariosPage() {
 
   // Filtrar por rol y buscar por texto son mutuamente excluyentes: el rol, al ser una
   // coincidencia exacta, tiene prioridad sobre la búsqueda inteligente por texto.
-  function parametrosBusqueda(): [string | undefined, string | undefined] {
+  const parametrosBusqueda = useCallback((): [string | undefined, string | undefined] => {
     return rolFiltro ? ['rol', rolFiltro] : [undefined, busquedaDebounced || undefined]
-  }
+  }, [rolFiltro, busquedaDebounced])
 
   const cargarUsuarios = useCallback((p: number) => {
     const [tipo, valor] = parametrosBusqueda()
     return getUsuarios(tipo, valor, p, 30)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rolFiltro, busquedaDebounced])
+  }, [parametrosBusqueda])
 
   const { data, loading, error, setError, pagina, setPagina, recargar: cargar } =
     usePaginatedResource<UsuariosPaginadosResponse>(cargarUsuarios, 'Error al cargar usuarios')
