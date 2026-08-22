@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getInvitaciones, crearInvitacion, revocarInvitacion,
   reactivarInvitacion, eliminarInvitacion,
   getConfigRegistro, setConfigRegistro,
 } from '../../api/invitaciones'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import Paginador from '../../components/Paginador'
 import type { Invitacion, ConfigRegistro } from '../../types'
 
 // ── Tipos y helpers ───────────────────────────────────────────────────────────
@@ -133,37 +135,24 @@ function ModalGenerarInvitacion({ onClose, onCreada }: ModalProps) {
 type Filtro = 'todas' | EstadoInv
 
 export default function InvitacionesPage() {
-  const [data,         setData]        = useState<InvitacionesResponse | null>(null)
   const [config,       setConfig]      = useState<ConfigRegistro>({ modo: 'ABIERTO', dominio: '' })
-  const [loading,      setLoading]     = useState(true)
   const [guardando,    setGuardando]   = useState(false)
   const [copiado,      setCopiado]     = useState<number | null>(null)
   const [modal,        setModal]       = useState(false)
-  const [pagina,       setPagina]      = useState(0)
   const [filtro,       setFiltro]      = useState<Filtro>('todas')
-  const [error,        setError]       = useState('')
   const [exito,        setExito]       = useState('')
 
-  function cargar() {
-    setLoading(true)
-    setError('')
-    Promise.all([
-      getInvitaciones<InvitacionesResponse>({
-        estado: filtro === 'todas' ? undefined : filtro,
-        page: pagina,
-        size: 30,
-      }),
-      getConfigRegistro(),
-    ])
-      .then(([invRes, cfgRes]) => {
-        setData(invRes.data)
-        setConfig(cfgRes.data)
-      })
-      .catch(() => setError('Error al cargar datos'))
-      .finally(() => setLoading(false))
-  }
+  const cargarInvitaciones = useCallback((p: number) => getInvitaciones<InvitacionesResponse>({
+    estado: filtro === 'todas' ? undefined : filtro,
+    page: p,
+    size: 30,
+  }), [filtro])
 
-  useEffect(() => { cargar() }, [pagina, filtro]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { data, loading, error, setError, pagina, setPagina, recargar: cargar } =
+    usePaginatedResource<InvitacionesResponse>(cargarInvitaciones, 'Error al cargar datos')
+
+  // La configuración de registro no depende de la página ni del filtro — se carga una sola vez.
+  useEffect(() => { getConfigRegistro().then(r => setConfig(r.data)) }, [])
 
   async function guardarConfig() {
     setGuardando(true); setError(''); setExito('')
@@ -466,25 +455,7 @@ export default function InvitacionesPage() {
         {data && data.totalPaginas > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-gray-500">{data.totalElementos} invitaciones en total</p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPagina(p => p - 1)}
-                disabled={pagina === 0}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-500">
-                Página {data.paginaActual + 1} de {data.totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina(p => p + 1)}
-                disabled={pagina >= data.totalPaginas - 1}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Siguiente
-              </button>
-            </div>
+            <Paginador paginaActual={pagina} totalPaginas={data.totalPaginas} onCambiarPagina={setPagina} />
           </div>
         )}
       </div>

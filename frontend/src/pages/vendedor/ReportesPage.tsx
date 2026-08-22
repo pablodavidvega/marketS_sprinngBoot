@@ -7,6 +7,7 @@ import {
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import api from '../../api/axios'
+import Paginador from '../../components/Paginador'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface VentaProducto {
@@ -493,25 +494,11 @@ export default function ReportesPage() {
                       <p className="text-sm text-gray-500">
                         {data.ventasPorProducto.length} producto(s) en total
                       </p>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setPaginaTabla(p => p - 1)}
-                          disabled={paginaTabla === 0}
-                          className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-                        >
-                          Anterior
-                        </button>
-                        <span className="text-sm text-gray-500">
-                          Página {paginaTabla + 1} de {Math.ceil(data.ventasPorProducto.length / FILAS_POR_PAGINA)}
-                        </span>
-                        <button
-                          onClick={() => setPaginaTabla(p => p + 1)}
-                          disabled={paginaTabla >= Math.ceil(data.ventasPorProducto.length / FILAS_POR_PAGINA) - 1}
-                          className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-                        >
-                          Siguiente
-                        </button>
-                      </div>
+                      <Paginador
+                        paginaActual={paginaTabla}
+                        totalPaginas={Math.ceil(data.ventasPorProducto.length / FILAS_POR_PAGINA)}
+                        onCambiarPagina={setPaginaTabla}
+                      />
                     </div>
                   )}
                 </div>

@@ -7,6 +7,7 @@ import {
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { getReporteVendedores } from '../../api/usuario'
+import Paginador from '../../components/Paginador'
 import type { VendedorEstadisticas } from '../../types'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
@@ -376,25 +377,9 @@ export default function ReportesVendedoresPage() {
         </div>
       )}
 
-      {data.length > 0 && totalPaginasTabla > 1 && (
-        <div className="flex items-center justify-end gap-2 mt-3">
-          <button
-            onClick={() => setPagina(p => p - 1)}
-            disabled={pagina === 0}
-            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-500">
-            Página {pagina + 1} de {totalPaginasTabla}
-          </span>
-          <button
-            onClick={() => setPagina(p => p + 1)}
-            disabled={pagina >= totalPaginasTabla - 1}
-            className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-          >
-            Siguiente
-          </button>
+      {data.length > 0 && (
+        <div className="flex items-center justify-end mt-3">
+          <Paginador paginaActual={pagina} totalPaginas={totalPaginasTabla} onCambiarPagina={setPagina} />
         </div>
       )}
     </div>

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getAdminSolicitudes, responderSolicitud, cambiarEstadoSolicitud } from '../../api/contacto'
 import type { AdminContactoPaginado } from '../../api/contacto'
 import type { ContactoResponse } from '../../types'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import Paginador from '../../components/Paginador'
 
 const ESTADO_COLOR: Record<string, string> = {
   PENDIENTE:  'bg-yellow-100 text-yellow-700',
@@ -17,22 +19,18 @@ const ESTADO_LABEL: Record<string, string> = {
 }
 
 export default function SoporteAdminPage() {
-  const [data, setData] = useState<AdminContactoPaginado | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [pagina, setPagina] = useState(0)
   const [filtro, setFiltro] = useState<'TODOS' | 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO'>('TODOS')
   const [expandida, setExpandida] = useState<number | null>(null)
   const [respuestaTexto, setRespuestaTexto] = useState<Record<number, string>>({})
   const [procesando, setProcesando] = useState<number | null>(null)
 
-  function cargar() {
-    setLoading(true)
-    getAdminSolicitudes(filtro === 'TODOS' ? undefined : filtro, pagina, 30)
-      .then(r => setData(r.data))
-      .finally(() => setLoading(false))
-  }
+  const cargarSolicitudes = useCallback(
+    (p: number) => getAdminSolicitudes(filtro === 'TODOS' ? undefined : filtro, p, 30),
+    [filtro],
+  )
 
-  useEffect(() => { cargar() }, [pagina, filtro]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { data, loading, error, setError, pagina, setPagina, setData } =
+    usePaginatedResource<AdminContactoPaginado>(cargarSolicitudes, 'No se pudieron cargar las solicitudes. Intenta de nuevo.')
 
   function cambiarFiltro(f: 'TODOS' | 'PENDIENTE' | 'EN_PROCESO' | 'RESUELTO') {
     setFiltro(f)
@@ -102,6 +100,13 @@ export default function SoporteAdminPage() {
         <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">← Admin</Link>
         <h1 className="text-2xl font-bold text-gray-800">Soporte al cliente</h1>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-5 flex items-start justify-between gap-3">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 text-lg leading-none flex-shrink-0">&times;</button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -239,27 +244,9 @@ export default function SoporteAdminPage() {
           ))}
         </div>
 
-        {data.totalPaginas > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <button
-              onClick={() => setPagina(p => p - 1)}
-              disabled={pagina === 0}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-500">
-              Página {data.paginaActual + 1} de {data.totalPaginas}
-            </span>
-            <button
-              onClick={() => setPagina(p => p + 1)}
-              disabled={pagina >= data.totalPaginas - 1}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
+        <div className="flex items-center justify-center mt-6">
+          <Paginador paginaActual={pagina} totalPaginas={data.totalPaginas} onCambiarPagina={setPagina} />
+        </div>
         </>
       )}
     </div>

@@ -5,13 +5,14 @@ import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
+import Paginador from '../../components/Paginador'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 
 export default function PedidosVendedorPage() {
   const [searchParams] = useSearchParams()
-  const [data, setData] = useState<PedidosVendedorResponse | null>(null)
-  const [pagina, setPagina] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const { data, setData, loading, error, pagina, setPagina } =
+    usePaginatedResource<PedidosVendedorResponse>(getPedidosVendedor, 'No se pudieron cargar los pedidos. Intenta de nuevo.')
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<number | null>(null)
@@ -27,13 +28,6 @@ export default function PedidosVendedorPage() {
   const deepLinkAplicado = useRef<string | null>(null)
 
   const pedidos = data?.contenido ?? []
-
-  useEffect(() => {
-    setLoading(true)
-    getPedidosVendedor(pagina)
-      .then(r => setData(r.data))
-      .finally(() => setLoading(false))
-  }, [pagina])
 
   // Deep-link desde la campanita de notificaciones: ?pedido=123&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el chat (cada fila ya es por-vendedor).
@@ -114,6 +108,12 @@ export default function PedidosVendedorPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">Pedidos recibidos</h1>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 mb-5">
+          {error}
+        </div>
+      )}
 
       <button
         type="button"
@@ -343,25 +343,7 @@ export default function PedidosVendedorPage() {
           <p className="text-sm text-gray-500">
             {data.totalElementos} pedido(s) en total
           </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPagina(p => p - 1)}
-              disabled={pagina === 0}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-500">
-              Página {data.paginaActual + 1} de {data.totalPaginas}
-            </span>
-            <button
-              onClick={() => setPagina(p => p + 1)}
-              disabled={pagina >= data.totalPaginas - 1}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
+          <Paginador paginaActual={pagina} totalPaginas={data.totalPaginas} onCambiarPagina={setPagina} />
         </div>
       )}
     </div>

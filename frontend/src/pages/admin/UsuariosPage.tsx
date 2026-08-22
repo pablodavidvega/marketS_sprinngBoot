@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getUsuarios, cambiarRolUsuario, eliminarUsuario, getRoles, descargarPdfUsuarios } from '../../api/usuario'
 import { useToast } from '../../components/Toast'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import { extraerMensajeError } from '../../utils/errores'
+import Paginador from '../../components/Paginador'
 import type { PerfilUsuario } from '../../types'
 
 interface UsuariosPaginadosResponse {
@@ -32,15 +35,11 @@ function rolBadge(nombre: string): string {
 
 // ─── Página ────────────────────────────────────────────────────────────────
 export default function UsuariosPage() {
-  const [data,      setData]      = useState<UsuariosPaginadosResponse | null>(null)
   const [roles,     setRoles]     = useState<{ id: number; nombre: string }[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [pagina,         setPagina]         = useState(0)
   const [busqueda,       setBusqueda]       = useState('')
   const busquedaDebounced = useDebounce(busqueda, 350)
   const [rolFiltro,      setRolFiltro]      = useState('') // sufijo sin "ROLE_", ej. "ADMIN"
   const [accionId,       setAccionId]       = useState<number | null>(null)
-  const [error,          setError]          = useState('')
   const [descargandoPdf, setDescargandoPdf] = useState(false)
   const { showToast } = useToast()
 
@@ -50,25 +49,17 @@ export default function UsuariosPage() {
     return rolFiltro ? ['rol', rolFiltro] : [undefined, busquedaDebounced || undefined]
   }
 
-  function cargar() {
-    setLoading(true)
-    setError('')
+  const cargarUsuarios = useCallback((p: number) => {
     const [tipo, valor] = parametrosBusqueda()
-    Promise.all([
-      getUsuarios(tipo, valor, pagina, 30),
-      getRoles(),
-    ])
-      .then(([u, r]) => {
-        setData(u.data)
-        setRoles(r.data)
-      })
-      .catch(() => setError('Error al cargar usuarios'))
-      .finally(() => setLoading(false))
-  }
+    return getUsuarios(tipo, valor, p, 30)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rolFiltro, busquedaDebounced])
 
-  // Búsqueda inteligente: se dispara sola mientras el admin escribe (con debounce) o cambia el
-  // rol o de página, sin necesidad de presionar Enter ni el botón Buscar.
-  useEffect(() => { cargar() }, [pagina, rolFiltro, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { data, loading, error, setError, pagina, setPagina, recargar: cargar } =
+    usePaginatedResource<UsuariosPaginadosResponse>(cargarUsuarios, 'Error al cargar usuarios')
+
+  // Los roles no dependen de la página ni de los filtros — se cargan una sola vez.
+  useEffect(() => { getRoles().then(r => setRoles(r.data)) }, [])
 
   // ── Cambiar rol ────────────────────────────────────────────────────────────
   async function handleCambiarRol(usuario: PerfilUsuario, rolId: number) {
@@ -95,13 +86,7 @@ export default function UsuariosPage() {
       }
       cargar()
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string; message?: string } } })
-          ?.response?.data?.error ??
-        (err as { response?: { data?: { error?: string; message?: string } } })
-          ?.response?.data?.message ??
-        'Error al cambiar el rol'
-      setError(msg)
+      setError(extraerMensajeError(err, 'Error al cambiar el rol'))
     } finally {
       setAccionId(null)
     }
@@ -325,27 +310,7 @@ export default function UsuariosPage() {
           <p className="text-sm text-gray-500">
             {data?.totalElementos ?? 0} usuarios en total
           </p>
-          {data && data.totalPaginas > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPagina(p => p - 1)}
-                disabled={pagina === 0}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-500">
-                Página {data.paginaActual + 1} de {data.totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina(p => p + 1)}
-                disabled={pagina >= data.totalPaginas - 1}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
         </div>
         </>
       )}

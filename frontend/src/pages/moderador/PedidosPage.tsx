@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
 import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import Paginador from '../../components/Paginador'
 
 interface PedidoMod {
   id: number
@@ -24,31 +26,16 @@ function formatFecha(s: string) {
 }
 
 export default function ModeradorPedidosPage() {
-  const [data, setData] = useState<PedidosModResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [pagina, setPagina] = useState(0)
   const [busqueda, setBusqueda] = useState('')
   const busquedaDebounced = useDebounce(busqueda, 350)
   const [filtroEstado, setFiltroEstado] = useState('')
 
-  function cargar() {
-    setLoading(true)
-    setError('')
-    api.get<PedidosModResponse>('/api/moderador/pedidos', {
-      params: {
-        page: pagina,
-        size: 30,
-        estado: filtroEstado || undefined,
-        q: busquedaDebounced || undefined,
-      },
-    })
-      .then(res => setData(res.data))
-      .catch(() => setError('No se pudieron cargar los pedidos. Intenta de nuevo.'))
-      .finally(() => setLoading(false))
-  }
+  const cargarPedidos = useCallback((p: number) => api.get<PedidosModResponse>('/api/moderador/pedidos', {
+    params: { page: p, size: 30, estado: filtroEstado || undefined, q: busquedaDebounced || undefined },
+  }), [filtroEstado, busquedaDebounced])
 
-  useEffect(() => { cargar() }, [pagina, filtroEstado, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { data, loading, error, pagina, setPagina } =
+    usePaginatedResource<PedidosModResponse>(cargarPedidos, 'No se pudieron cargar los pedidos. Intenta de nuevo.')
 
   const pedidos = data?.contenido ?? []
   const totalMostrado = pedidos.reduce((s, p) => s + p.total, 0)
@@ -152,27 +139,7 @@ export default function ModeradorPedidosPage() {
                 ${totalMostrado.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
               </span>
             </p>
-            {data && data.totalPaginas > 1 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPagina(p => p - 1)}
-                  disabled={pagina === 0}
-                  className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-                >
-                  Anterior
-                </button>
-                <span className="text-sm text-gray-500">
-                  Página {data.paginaActual + 1} de {data.totalPaginas}
-                </span>
-                <button
-                  onClick={() => setPagina(p => p + 1)}
-                  disabled={pagina >= data.totalPaginas - 1}
-                  className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-                >
-                  Siguiente
-                </button>
-              </div>
-            )}
+            <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
           </div>
         </>
       )}

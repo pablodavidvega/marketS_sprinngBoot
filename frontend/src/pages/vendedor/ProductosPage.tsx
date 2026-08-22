@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getVendedorProductos,
@@ -11,6 +11,9 @@ import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
 import { buildImageUrl } from '../../utils/image'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginatedResource } from '../../hooks/usePaginatedResource'
+import { extraerMensajeError } from '../../utils/errores'
+import Paginador from '../../components/Paginador'
 import MarcaAutocomplete from '../../components/MarcaAutocomplete'
 
 // ─── Slot reutilizable para imagen o video ─────────────────────────────────
@@ -110,11 +113,8 @@ const emptyForm = {
 
 // ─── Página principal ──────────────────────────────────────────────────────
 export default function VendedorProductosPage() {
-  const [data, setData]         = useState<VendedorProductosResponse | null>(null)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [marcas, setMarcas]     = useState<{ id: number; nombre: string }[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [pagina, setPagina]     = useState(0)
   const [busqueda, setBusqueda]     = useState('')
   const busquedaDebounced           = useDebounce(busqueda, 350)
   const [modalOpen, setModalOpen] = useState(false)
@@ -129,16 +129,16 @@ export default function VendedorProductosPage() {
 
   const [guardando, setGuardando]   = useState(false)
   const [uploadPct, setUploadPct]   = useState(0)   // 0–100, progreso de subida
-  const [error, setError]           = useState('')
   const [accionId, setAccionId]     = useState<number | null>(null)
 
   // ── Carga de lista ────────────────────────────────────────────────────────
-  function cargar() {
-    setLoading(true)
-    getVendedorProductos({ keyword: busquedaDebounced || undefined, page: pagina, size: 10 })
-      .then(r => setData(r.data))
-      .finally(() => setLoading(false))
-  }
+  const cargarProductos = useCallback(
+    (p: number) => getVendedorProductos({ keyword: busquedaDebounced || undefined, page: p, size: 10 }),
+    [busquedaDebounced],
+  )
+
+  const { data, loading, error, setError, pagina, setPagina, recargar: cargar } =
+    usePaginatedResource<VendedorProductosResponse>(cargarProductos, 'No se pudieron cargar los productos. Intenta de nuevo.')
 
   useEffect(() => {
     Promise.all([getCategorias(), getMarcas()]).then(([c, m]) => {
@@ -146,9 +146,6 @@ export default function VendedorProductosPage() {
       setMarcas(m.data)
     })
   }, [])
-
-  // Sólo busca cuando el valor debounced cambia (no en cada tecla)
-  useEffect(() => { cargar() }, [pagina, busquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Helpers de media ───────────────────────────────────────────────────────
   function resetMedia() {
@@ -191,11 +188,10 @@ export default function VendedorProductosPage() {
       else          await activarProducto(p.id)
       cargar()
     } catch (err: unknown) {
-      const d      = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 403)      setError('No tienes permiso para modificar este producto')
       else if (status === 404) setError('Producto no encontrado')
-      else                     setError(d?.mensaje || d?.message || d?.error || 'Error al cambiar el estado del producto')
+      else                     setError(extraerMensajeError(err, 'Error al cambiar el estado del producto'))
     } finally {
       setAccionId(null)
     }
@@ -237,12 +233,11 @@ export default function VendedorProductosPage() {
       setModalOpen(false)
       cargar()
     } catch (err: unknown) {
-      const d      = (err as { response?: { data?: { mensaje?: string; message?: string; error?: string } } })?.response?.data
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 403)      setError('No tienes permiso para realizar esta acción')
       else if (status === 404) setError('Producto no encontrado')
-      else if (status === 400) setError(d?.mensaje || d?.message || 'Datos inválidos, revisa los campos')
-      else                     setError(d?.mensaje || d?.message || d?.error || 'Error al guardar el producto')
+      else if (status === 400) setError(extraerMensajeError(err, 'Datos inválidos, revisa los campos'))
+      else                     setError(extraerMensajeError(err, 'Error al guardar el producto'))
     } finally {
       setGuardando(false)
     }
@@ -366,27 +361,9 @@ export default function VendedorProductosPage() {
           </div>
 
           {/* Paginación */}
-          {data && data.totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button
-                onClick={() => setPagina(p => p - 1)}
-                disabled={pagina === 0}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-500">
-                Página {data.paginaActual + 1} de {data.totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina(p => p + 1)}
-                disabled={pagina >= data.totalPaginas - 1}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-center mt-4">
+            <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
+          </div>
         </>
       )}
 
