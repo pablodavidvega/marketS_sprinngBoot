@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
@@ -9,9 +9,12 @@ import { formatMoneda } from '../utils/formato'
 
 interface Props {
   producto: Producto
+  // La tarjeta no sabe su posición en la grilla — quien arma la lista decide si esta card cae
+  // en el primer scroll (sin lazy, para no atrasar el LCP) o más abajo (con lazy).
+  prioridad?: boolean
 }
 
-export default function ProductoCard({ producto }: Props) {
+function ProductoCard({ producto, prioridad = false }: Props) {
   const { agregar } = useCarrito()
   const { isAuthenticated } = useAuth()
   const { esFavorito, toggleFavorito } = useFavoritos()
@@ -113,6 +116,7 @@ export default function ProductoCard({ producto }: Props) {
               <img
                 src={imagenUrl}
                 alt={producto.nombre}
+                loading={prioridad ? 'eager' : 'lazy'}
                 className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
                   videoActivo ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
                 }`}
@@ -224,3 +228,5 @@ export default function ProductoCard({ producto }: Props) {
     </div>
   )
 }
+
+export default memo(ProductoCard)

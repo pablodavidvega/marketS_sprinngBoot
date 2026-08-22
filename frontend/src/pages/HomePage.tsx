@@ -166,7 +166,9 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {(categoriaActiva ? productos : productos.slice(0, visibles)).map(p => <ProductoCard key={p.id} producto={p} />)}
+            {(categoriaActiva ? productos : productos.slice(0, visibles)).map((p, i) => (
+              <ProductoCard key={p.id} producto={p} prioridad={i < 4} />
+            ))}
           </div>
           {(categoriaActiva ? pagina < totalPaginas - 1 : visibles < productos.length) && (
             <div className="flex justify-center mt-8">

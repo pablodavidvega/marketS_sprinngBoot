@@ -60,7 +60,7 @@ export default function UltimosProductosPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {productos.map(p => <ProductoCard key={p.id} producto={p} />)}
+            {productos.map((p, i) => <ProductoCard key={p.id} producto={p} prioridad={i < 4} />)}
           </div>
           {pagina < totalPaginas - 1 && (
             <div className="flex justify-center mt-8">

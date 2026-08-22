@@ -200,8 +200,8 @@ export default function VendedorPerfilPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {productosFiltrados.map(p => (
-              <ProductoCard key={p.id} producto={p} />
+            {productosFiltrados.map((p, i) => (
+              <ProductoCard key={p.id} producto={p} prioridad={i < 4} />
             ))}
           </div>
           {!busqueda.trim() && pagina < totalPaginas - 1 && (

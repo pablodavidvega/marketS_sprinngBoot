@@ -60,8 +60,8 @@ export default function MisFavoritosPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {visibles.map(p => (
-              <ProductoCard key={p.id} producto={p} />
+            {visibles.map((p, i) => (
+              <ProductoCard key={p.id} producto={p} prioridad={i < 4} />
             ))}
           </div>
           {pagina < totalPaginas - 1 && (
