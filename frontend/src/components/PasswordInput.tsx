@@ -26,6 +26,22 @@ export default function PasswordInput({
   const mostrar = () => setVisible(true)
   const ocultar = () => setVisible(false)
 
+  // Enter/Espacio replican el mismo gesto de "mantener presionado" que el mouse y el touch —
+  // se muestra en keydown y se oculta en keyup, no es un toggle de un solo tap de tecla.
+  function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      mostrar()
+    }
+  }
+
+  function handleKeyUp(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      ocultar()
+    }
+  }
+
   return (
     <div className="relative">
       <input
@@ -41,13 +57,15 @@ export default function PasswordInput({
       />
       <button
         type="button"
-        tabIndex={-1}
         onMouseDown={mostrar}
         onMouseUp={ocultar}
         onMouseLeave={ocultar}
         onTouchStart={mostrar}
         onTouchEnd={ocultar}
-        aria-label="Mantén presionado para ver la contraseña"
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onBlur={ocultar}
+        aria-label="Mantén presionado (o Enter/Espacio) para ver la contraseña"
         className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
       >
         {visible ? (
