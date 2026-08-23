@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useVendedorHover } from '../../context/VendedorHoverContext'
 import { getDashboardVendedor } from '../../api/usuario'
 import ReputacionBar from '../../components/ReputacionBar'
 import { VENDEDOR_LINKS } from '../../config/vendedorLinks'
@@ -33,6 +34,7 @@ function StatCard({
 
 export default function VendedorDashboardPage() {
   const { user } = useAuth()
+  const { hoverActivo, setHoverActivo } = useVendedorHover()
   const [stats, setStats] = useState<DashboardVendedor | null>(null)
   const [cargando, setCargando] = useState(true)
 
@@ -85,7 +87,13 @@ export default function VendedorDashboardPage() {
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Acciones</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {VENDEDOR_LINKS.map(({ to, label, icon, description, iconClass }) => (
-          <Link key={to} to={to} className="card card-hoverable group">
+          <Link
+            key={to}
+            to={to}
+            onMouseEnter={() => setHoverActivo(to)}
+            onMouseLeave={() => setHoverActivo(prev => prev === to ? null : prev)}
+            className={`card card-hoverable group ${hoverActivo === to ? 'hover-forzado' : ''}`}
+          >
             <div className="flex items-center gap-4">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl transition-colors ${iconClass}`}>
                 {icon}

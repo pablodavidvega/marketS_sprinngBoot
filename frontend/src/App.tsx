@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 import { ToastProvider } from './components/Toast'
+import { VendedorHoverProvider } from './context/VendedorHoverContext'
 import ProtectedRoute from './components/ProtectedRoute'
 // HomePage se importa eager (no lazy): es la ruta de entrada de cualquier visitante anónimo,
 // así que tiene que renderizar con el bundle inicial sin un round-trip extra a buscar su chunk.
@@ -65,6 +66,7 @@ function CargandoPagina() {
 export default function App() {
   return (
     <ToastProvider>
+    <VendedorHoverProvider>
     <ScrollToTop />
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
@@ -330,6 +332,7 @@ export default function App() {
       </main>
       <Footer />
     </div>
+    </VendedorHoverProvider>
     </ToastProvider>
   )
 }

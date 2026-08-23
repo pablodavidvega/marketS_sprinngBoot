@@ -16,7 +16,10 @@ export default function NavbarTabs() {
           </NavLink>
 
           {isAuthenticated && hasRole('VENDEDOR') && (
-            <NavLink to="/vendedor" end className={linkClass}>
+            // Sin "end": se mantiene resaltada en toda la sección de vendedor (segunda fila
+            // VendedorSubNav y sus páginas), no solo en /vendedor exacto — así el usuario ve que
+            // sigue "dentro" del perfil de vendedor al navegar a Carga masiva, Pedidos, etc.
+            <NavLink to="/vendedor" className={linkClass}>
               Dashboard Vendedor
             </NavLink>
           )}

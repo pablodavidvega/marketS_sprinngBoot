@@ -90,7 +90,8 @@
   .producto-card:active {
     transform: translateY(-2px) scale(1.005);
   }
-  .card-hoverable:hover {
+  .card-hoverable:hover,
+  .card-hoverable.hover-forzado {
     transform: translateY(-3px);
     box-shadow: 14px 14px 26px var(--clay-shadow-dark), -14px -14px 26px var(--clay-shadow-light);
   }
@@ -100,7 +101,8 @@
   .nav-tab-link {
     @apply relative inline-block transition-transform duration-200;
   }
-  .nav-tab-link:hover {
+  .nav-tab-link:hover,
+  .nav-tab-link.hover-forzado {
     transform: translateY(-2px);
   }
   .nav-tab-link::after {
@@ -116,6 +118,7 @@
     transition: transform 0.25s ease;
   }
   .nav-tab-link:hover::after,
+  .nav-tab-link.hover-forzado::after,
   .nav-tab-link.active-tab::after {
     transform: scaleX(1);
   }
