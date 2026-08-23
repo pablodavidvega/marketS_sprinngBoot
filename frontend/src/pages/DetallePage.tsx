@@ -264,7 +264,7 @@ export default function DetallePage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
         onClick={() => navigate(-1)}
-        className="text-sm text-gray-500 hover:text-primary-600 mb-4 flex items-center gap-1"
+        className="inline-flex items-center gap-1 -ml-2 pl-2 pr-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-100 transition-colors mb-4"
       >
         ← Volver
       </button>

@@ -105,7 +105,7 @@ export default function PedidosVendedorPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-2">
-        <Link to="/vendedor" className="text-gray-400 hover:text-gray-600 text-sm">
+        <Link to="/vendedor" className="inline-flex items-center gap-1 -ml-2 pl-2 pr-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-100 transition-colors">
           ← Panel vendedor
         </Link>
         <h1 className="text-2xl font-bold text-gray-800">Pedidos recibidos</h1>

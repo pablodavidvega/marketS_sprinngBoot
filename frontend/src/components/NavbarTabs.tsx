@@ -27,15 +27,15 @@ export default function NavbarTabs() {
             </NavLink>
           )}
 
-          <NavLink to="/soporte" className={linkClass}>
-            Soporte
-          </NavLink>
-
           {isAuthenticated && (hasRole('CLIENTE') || hasRole('VENDEDOR')) && (
             <NavLink to="/cliente/dashboard" className={linkClass}>
               Mi cuenta Comprador
             </NavLink>
           )}
+
+          <NavLink to="/soporte" className={linkClass}>
+            Soporte
+          </NavLink>
 
           {isAuthenticated && hasRole('MODERADOR') && !hasRole('ADMIN') && (
             <>

@@ -97,7 +97,7 @@ export default function SoporteAdminPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/admin/dashboard" className="text-gray-400 hover:text-gray-600 text-sm">← Admin</Link>
+        <Link to="/admin/dashboard" className="inline-flex items-center gap-1 -ml-2 pl-2 pr-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-100 transition-colors">← Admin</Link>
         <h1 className="text-2xl font-bold text-gray-800">Soporte al cliente</h1>
       </div>
 

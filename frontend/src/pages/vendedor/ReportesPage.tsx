@@ -225,7 +225,7 @@ export default function ReportesPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-blue-950 to-gray-900 px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-6xl mx-auto">
-          <Link to="/vendedor" className="text-blue-300 hover:text-blue-200 text-sm mb-4 inline-block">
+          <Link to="/vendedor" className="inline-flex items-center gap-1 -ml-2 pl-2 pr-3 py-1 rounded-md text-sm font-medium text-blue-300 hover:text-white hover:bg-white/10 transition-colors mb-4">
             ← Panel vendedor
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
