@@ -21,7 +21,7 @@ export default function PagoPendientePage() {
           Puedes revisar el estado de tu pedido en cualquier momento desde tu cuenta.
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/cliente/mis-pedidos" className="btn-primary">Ver mis pedidos</Link>
+          <Link to="/cliente/dashboard" className="btn-primary">Ver mis pedidos</Link>
           <Link to="/" className="btn-secondary">Seguir comprando</Link>
         </div>
       </div>

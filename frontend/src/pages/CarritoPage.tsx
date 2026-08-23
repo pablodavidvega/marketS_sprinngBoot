@@ -71,7 +71,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
           params.set('vendedor', String(grupo.vendedorId))
           params.set('foco', 'chat')
         }
-        navigate(`/cliente/mis-pedidos?${params.toString()}`)
+        navigate(`/cliente/dashboard?${params.toString()}`)
         return
       }
       navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {

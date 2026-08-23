@@ -28,7 +28,6 @@ const VendedorPedidosPage = lazy(() => import('./pages/vendedor/PedidosPage'))
 const VendedorReportesPage = lazy(() => import('./pages/vendedor/ReportesPage'))
 const CargaMasivaPage = lazy(() => import('./pages/vendedor/CargaMasivaPage'))
 const VendedorMercadoPagoPage = lazy(() => import('./pages/vendedor/MercadoPagoPage'))
-const MisPedidosPage = lazy(() => import('./pages/cliente/MisPedidosPage'))
 const EditarPerfilPage = lazy(() => import('./pages/EditarPerfilPage'))
 const VenderPage = lazy(() => import('./pages/VenderPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
@@ -110,14 +109,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={['CLIENTE', 'VENDEDOR']}>
                 <ClienteDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cliente/mis-pedidos"
-            element={
-              <ProtectedRoute roles={['CLIENTE', 'VENDEDOR']}>
-                <MisPedidosPage />
               </ProtectedRoute>
             }
           />

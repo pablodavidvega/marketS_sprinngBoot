@@ -21,7 +21,7 @@ export default function PagoFallidoPage() {
           Tu pedido sigue guardado. Puedes intentar el pago nuevamente desde tus pedidos.
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/cliente/mis-pedidos" className="btn-primary">Ver mis pedidos</Link>
+          <Link to="/cliente/dashboard" className="btn-primary">Ver mis pedidos</Link>
           <Link to="/carrito" className="btn-secondary">Volver al carrito</Link>
         </div>
       </div>

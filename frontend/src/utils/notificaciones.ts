@@ -4,7 +4,7 @@ import type { Notificacion } from '../types'
 // auto-expandir el pedido exacto y, si aplica, abrir el hilo de chat/encuentro correcto
 // (un pedido puede tener varios vendedores, por eso a veces hace falta también "vendedor").
 function destinoPedido(esVendedor: boolean, pedidoId: number, vendedorId: number | '', foco?: 'chat' | 'encuentro') {
-  const base = esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+  const base = esVendedor ? '/vendedor/pedidos' : '/cliente/dashboard'
   const params = new URLSearchParams({ pedido: String(pedidoId) })
   if (foco) params.set('foco', foco)
   if (vendedorId !== '') params.set('vendedor', String(vendedorId))
@@ -36,14 +36,14 @@ export function destinoDeNotificacion(n: Notificacion, esVendedor: boolean): str
     return n.pedidoId !== '' ? destinoPedido(true, n.pedidoId, '') : '/vendedor/pedidos'
   }
   if (TIPOS_SIEMPRE_COMPRADOR.has(n.tipo)) {
-    return n.pedidoId !== '' ? destinoPedido(false, n.pedidoId, '') : '/cliente/mis-pedidos'
+    return n.pedidoId !== '' ? destinoPedido(false, n.pedidoId, '') : '/cliente/dashboard'
   }
   if (TIPOS_HILO.has(n.tipo)) {
     const esVendedorDestino = n.rolDestino !== '' ? n.rolDestino === 'VENDEDOR' : esVendedor
     const foco = n.tipo.startsWith('ENCUENTRO_') ? 'encuentro' : 'chat'
     return n.pedidoId !== ''
       ? destinoPedido(esVendedorDestino, n.pedidoId, n.vendedorId, foco)
-      : (esVendedorDestino ? '/vendedor/pedidos' : '/cliente/mis-pedidos')
+      : (esVendedorDestino ? '/vendedor/pedidos' : '/cliente/dashboard')
   }
   switch (n.tipo) {
     case 'NUEVA_PREGUNTA':
@@ -56,7 +56,7 @@ export function destinoDeNotificacion(n: Notificacion, esVendedor: boolean): str
     case 'VENDEDOR_CONFIGURAR_MP':
       return '/vendedor/pagos'
     default:
-      return esVendedor ? '/vendedor/pedidos' : '/cliente/mis-pedidos'
+      return esVendedor ? '/vendedor/pedidos' : '/cliente/dashboard'
   }
 }
 
