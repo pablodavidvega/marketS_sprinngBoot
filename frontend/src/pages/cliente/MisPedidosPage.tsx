@@ -5,7 +5,7 @@ import { crearResena } from '../../api/productos'
 import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import Stars from '../../components/Stars'
-import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { ESTADO_COLOR, ESTADO_LABEL, ESTADO_LABEL_INFO, ESTADO_LEYENDA } from '../../config/estadosPedido'
 import { formatMoneda } from '../../utils/formato'
 
 // Mismo criterio que ResenaApiController/PedidoApiController.calificarComprador: estados que
@@ -20,7 +20,12 @@ export default function MisPedidosPage() {
   const [expandido, setExpandido] = useState<number | null>(null)
   const [confirmando, setConfirmando] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<string | null>(null)
-  const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
+  // Son solo 7 estados agrupados (ver ESTADO_LEYENDA) — se puede empezar desplegado sin abrumar.
+  const [mostrarLeyenda, setMostrarLeyenda] = useState(true)
+  // Clave `${pedidoId}-${vendedorId}` del pedido recién creado con "Acordar pago con el
+  // vendedor" (ver CarritoPage) — resalta el bloque de chat para que el comprador escriba
+  // antes de esperar a que el vendedor confirme.
+  const [resaltarEscribir, setResaltarEscribir] = useState<string | null>(null)
 
   // Calificación de producto desde la vista de pedidos (misma reseña de DetallePage, ver
   // ResenaApiController). formAbierto/formData usan como clave `${pedidoId}-${productoId}`
@@ -63,7 +68,11 @@ export default function MisPedidosPage() {
 
     const vendedorParam = searchParams.get('vendedor')
     if (searchParams.get('foco') === 'chat' && vendedorParam) {
-      setChatAbierto(`${pedidoId}-${vendedorParam}`)
+      const key = `${pedidoId}-${vendedorParam}`
+      setChatAbierto(key)
+      if (searchParams.get('nuevo') === '1') {
+        setResaltarEscribir(key)
+      }
     }
 
     requestAnimationFrame(() => {
@@ -133,12 +142,12 @@ export default function MisPedidosPage() {
       {mostrarLeyenda && (
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-x-4 gap-y-3">
-            {Object.entries(ESTADO_INFO).map(([estado, info]) => (
-              <div key={estado} className="contents">
-                <span className={`badge ${ESTADO_COLOR[estado] ?? 'bg-gray-100 text-gray-700'} self-start w-fit`}>
-                  {estado.replace(/_/g, ' ')}
+            {ESTADO_LEYENDA.map(({ label, color, texto }) => (
+              <div key={label} className="contents">
+                <span className={`badge ${color} self-start w-fit`}>
+                  {label}
                 </span>
-                <span className="text-xs text-gray-600 leading-relaxed">{info}</span>
+                <span className="text-xs text-gray-600 leading-relaxed">{texto}</span>
               </div>
             ))}
           </div>
@@ -173,9 +182,9 @@ export default function MisPedidosPage() {
                 <div className="flex items-center gap-3 shrink-0">
                   <span
                     className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'} cursor-help`}
-                    title={ESTADO_INFO[pedido.estado] ?? ''}
+                    title={ESTADO_LABEL_INFO[pedido.estado] ?? ''}
                   >
-                    {pedido.estado.replace(/_/g, ' ')}
+                    {ESTADO_LABEL[pedido.estado] ?? pedido.estado.replace(/_/g, ' ')}
                   </span>
                   <span className="font-bold text-gray-800 text-lg">
                     {formatMoneda(pedido.total)}
@@ -282,21 +291,32 @@ export default function MisPedidosPage() {
                     )
                   ).map(([vendedorId, vendedorUsername]) => {
                     const key = `${pedido.pedidoId}-${vendedorId}`
+                    const destacado = resaltarEscribir === key
                     return (
                       <div key={key} className="mt-4 pt-4 border-t border-gray-100">
-                        <button
-                          onClick={() => setChatAbierto(chatAbierto === key ? null : key)}
-                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                        >
-                          {chatAbierto === key ? '▲' : '💬'} Chat con {vendedorUsername}
-                        </button>
-                        {chatAbierto === key && (
+                        <div className={destacado ? 'rounded-lg border border-amber-300 bg-amber-50 p-3' : ''}>
+                          {destacado && (
+                            <p className="text-sm text-amber-800 mb-3">
+                              👋 Escríbele al vendedor por chat para coordinar el pago, o acuerden un punto de encuentro.
+                            </p>
+                          )}
+                          <button
+                            onClick={() => {
+                              setChatAbierto(chatAbierto === key ? null : key)
+                              setResaltarEscribir(prev => prev === key ? null : prev)
+                            }}
+                            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                          >
+                            {chatAbierto === key ? '▲' : '💬'} Chat con {vendedorUsername}
+                          </button>
+                          {chatAbierto === key && (
+                            <div className="mt-3">
+                              <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                            </div>
+                          )}
                           <div className="mt-3">
-                            <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                            <EncuentroPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
                           </div>
-                        )}
-                        <div className="mt-3">
-                          <EncuentroPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
                         </div>
                       </div>
                     )

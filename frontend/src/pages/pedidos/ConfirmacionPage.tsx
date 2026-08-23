@@ -37,27 +37,6 @@ export default function ConfirmacionPage() {
     )
   }
 
-  if (status === 'acordado') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="card max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-4xl mx-auto mb-4">
-            🤝
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Pedido registrado</h1>
-          <p className="text-gray-600 mb-2">
-            Coordina el pago y la entrega con el vendedor por chat. Cuando se concrete la venta, el vendedor la confirmará desde su panel.
-          </p>
-          {pedidoId && <p className="text-sm text-gray-400 mb-6">Pedido #{pedidoId}</p>}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/cliente/mis-pedidos" className="btn-primary">Ver mis pedidos</Link>
-            <Link to="/" className="btn-secondary">Seguir comprando</Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   if (status === 'fallo') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

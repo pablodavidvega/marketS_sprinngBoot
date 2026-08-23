@@ -2,16 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
 import { crearPedido, type MetodoPago } from '../api/pedidos'
 import type { CarritoItem } from '../types'
 import { formatMoneda } from '../utils/formato'
-
-const METODOS_EXTERNOS: { valor: MetodoPago; etiqueta: string }[] = [
-  { valor: 'EFECTIVO', etiqueta: 'Efectivo' },
-  { valor: 'TRANSFERENCIA', etiqueta: 'Transferencia' },
-  { valor: 'NEQUI', etiqueta: 'Nequi' },
-  { valor: 'OTRO', etiqueta: 'Otro acuerdo' },
-]
 
 interface GrupoVendedor {
   vendedorId: number | null
@@ -46,23 +40,24 @@ function agruparPorVendedor(items: CarritoItem[]): GrupoVendedor[] {
 function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
   const { quitar, actualizar, limpiarVendedor } = useCarrito()
   const { isAuthenticated, hasRole } = useAuth()
+  const { showToast } = useToast()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const [procesando, setProcesando] = useState<MetodoPago | null>(null)
   const [error, setError] = useState('')
-  const [metodoPago, setMetodoPago] = useState<MetodoPago>('MERCADOPAGO')
+  const loading = procesando !== null
 
   // Administradores y moderadores no compran con su propia cuenta — evita el conflicto de
   // interés de moderar/administrar el marketplace y comprar en él a la vez.
   const bloqueadoPorRol = hasRole('ADMIN') || hasRole('MODERADOR')
 
-  async function handleCheckout() {
+  async function handleCheckout(metodoPago: MetodoPago) {
     if (!isAuthenticated) {
       navigate('/login')
       return
     }
     if (bloqueadoPorRol) return
     setError('')
-    setLoading(true)
+    setProcesando(metodoPago)
     try {
       const { data } = await crearPedido(
         grupo.items.map(i => ({ productoId: i.productoId, cantidad: i.cantidad })),
@@ -70,7 +65,13 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
       )
       limpiarVendedor(grupo.vendedorId)
       if (metodoPago !== 'MERCADOPAGO') {
-        navigate(`/pedidos/confirmacion?status=acordado&pedido_id=${data.pedidoId}`)
+        showToast('Pedido registrado')
+        const params = new URLSearchParams({ pedido: String(data.pedidoId), nuevo: '1' })
+        if (grupo.vendedorId) {
+          params.set('vendedor', String(grupo.vendedorId))
+          params.set('foco', 'chat')
+        }
+        navigate(`/cliente/mis-pedidos?${params.toString()}`)
         return
       }
       navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {
@@ -86,8 +87,15 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
       }
       setError(errData?.mensaje || errData?.error || 'Error al procesar el pedido. Intenta de nuevo.')
     } finally {
-      setLoading(false)
+      setProcesando(null)
     }
+  }
+
+  function etiquetaBoton(base: string, metodo: MetodoPago) {
+    if (!isAuthenticated) return 'Ingresar para comprar'
+    if (bloqueadoPorRol) return 'No disponible para tu rol'
+    if (procesando === metodo) return 'Procesando...'
+    return base
   }
 
   return (
@@ -154,37 +162,6 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
             <span>{formatMoneda(grupo.subtotal)}</span>
           </div>
 
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">¿Cómo vas a pagar?</p>
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`metodoPago-${grupo.vendedorId ?? 'sin-vendedor'}`}
-                  checked={metodoPago === 'MERCADOPAGO'}
-                  onChange={() => setMetodoPago('MERCADOPAGO')}
-                />
-                Pagar con MercadoPago
-              </label>
-              {METODOS_EXTERNOS.map(m => (
-                <label key={m.valor} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={`metodoPago-${grupo.vendedorId ?? 'sin-vendedor'}`}
-                    checked={metodoPago === m.valor}
-                    onChange={() => setMetodoPago(m.valor)}
-                  />
-                  Acordar por fuera de la app ({m.etiqueta})
-                </label>
-              ))}
-            </div>
-            {metodoPago !== 'MERCADOPAGO' && (
-              <p className="text-xs text-gray-500 mt-2">
-                El pedido queda registrado y el vendedor confirmará cuando la venta se concrete. Coordina el pago y la entrega con el vendedor por chat.
-              </p>
-            )}
-          </div>
-
           {bloqueadoPorRol && (
             <div className="bg-blue-50 border border-blue-200 text-blue-700 text-sm rounded-lg p-3 mb-3">
               Tu cuenta es de {hasRole('ADMIN') ? 'administrador' : 'moderador'} y no puede realizar compras.
@@ -198,21 +175,22 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
             </div>
           )}
 
-          <button
-            onClick={handleCheckout}
-            disabled={loading || bloqueadoPorRol}
-            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading
-              ? 'Procesando...'
-              : bloqueadoPorRol
-                ? 'No disponible para tu rol'
-                : !isAuthenticated
-                  ? 'Ingresar para comprar'
-                  : metodoPago === 'MERCADOPAGO'
-                    ? 'Pagar con MercadoPago'
-                    : 'Registrar pedido'}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => handleCheckout('MERCADOPAGO')}
+              disabled={loading || bloqueadoPorRol}
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {etiquetaBoton('Pagar con MercadoPago', 'MERCADOPAGO')}
+            </button>
+            <button
+              onClick={() => handleCheckout('OTRO')}
+              disabled={loading || bloqueadoPorRol}
+              className="btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {etiquetaBoton('Acordar pago con el vendedor', 'OTRO')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

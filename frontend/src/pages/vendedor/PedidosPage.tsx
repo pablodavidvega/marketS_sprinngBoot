@@ -6,7 +6,7 @@ import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
 import Paginador from '../../components/Paginador'
-import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { ESTADO_COLOR, ESTADO_LABEL, ESTADO_LABEL_INFO, ESTADO_LEYENDA } from '../../config/estadosPedido'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import { formatMoneda } from '../../utils/formato'
 
@@ -14,7 +14,8 @@ export default function PedidosVendedorPage() {
   const [searchParams] = useSearchParams()
   const { data, setData, loading, error, pagina, setPagina } =
     usePaginatedResource<PedidosVendedorResponse>(getPedidosVendedor, 'No se pudieron cargar los pedidos. Intenta de nuevo.')
-  const [mostrarLeyenda, setMostrarLeyenda] = useState(false)
+  // Son solo 7 estados agrupados (ver ESTADO_LEYENDA) — se puede empezar desplegado sin abrumar.
+  const [mostrarLeyenda, setMostrarLeyenda] = useState(true)
   const [expandido, setExpandido] = useState<number | null>(null)
   const [chatAbierto, setChatAbierto] = useState<number | null>(null)
   const [resolviendo, setResolviendo] = useState<number | null>(null)
@@ -127,12 +128,12 @@ export default function PedidosVendedorPage() {
       {mostrarLeyenda && (
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-x-4 gap-y-3">
-            {Object.entries(ESTADO_INFO).map(([estado, info]) => (
-              <div key={estado} className="contents">
-                <span className={`badge ${ESTADO_COLOR[estado] ?? 'bg-gray-100 text-gray-700'} self-start w-fit`}>
-                  {estado.replace(/_/g, ' ')}
+            {ESTADO_LEYENDA.map(({ label, color, texto }) => (
+              <div key={label} className="contents">
+                <span className={`badge ${color} self-start w-fit`}>
+                  {label}
                 </span>
-                <span className="text-xs text-gray-600 leading-relaxed">{info}</span>
+                <span className="text-xs text-gray-600 leading-relaxed">{texto}</span>
               </div>
             ))}
           </div>
@@ -164,9 +165,9 @@ export default function PedidosVendedorPage() {
                 <div className="flex items-center gap-3 shrink-0">
                   <span
                     className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'} cursor-help`}
-                    title={ESTADO_INFO[pedido.estado] ?? ''}
+                    title={ESTADO_LABEL_INFO[pedido.estado] ?? ''}
                   >
-                    {pedido.estado.replace(/_/g, ' ')}
+                    {ESTADO_LABEL[pedido.estado] ?? pedido.estado.replace(/_/g, ' ')}
                   </span>
                   <span className="text-gray-400 text-sm">
                     {expandido === pedido.pedidoId ? '▲' : '▼'}

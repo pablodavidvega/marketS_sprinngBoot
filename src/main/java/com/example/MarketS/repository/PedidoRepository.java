@@ -141,6 +141,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // Embudo admin: de esos, los que siguen en un estado "sin resolver" (abandono de checkout).
     long countByFechaBeforeAndEstadoIn(LocalDateTime antesDe, List<String> estados);
 
+    // PedidoExpiracionService: pedidos en un estado de pago en proceso (PENDIENTE, PROCESANDO_PAGO
+    // o PENDIENTE_PAGO) creados hace más del plazo de gracia de ese estado — se cancelan solos.
+    List<Pedido> findByFechaBeforeAndEstadoIn(LocalDateTime antesDe, List<String> estados);
+
     // Panel de estadísticas de comunidad (admin): cuántas transacciones se concretaron.
     long countByEstadoIn(List<String> estados);
 

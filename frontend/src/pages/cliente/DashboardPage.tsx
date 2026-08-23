@@ -6,7 +6,7 @@ import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import type { DashboardCliente } from '../../types'
-import { ESTADO_COLOR, ESTADO_INFO } from '../../config/estadosPedido'
+import { ESTADO_COLOR, ESTADO_LABEL, ESTADO_LABEL_INFO } from '../../config/estadosPedido'
 import { formatMoneda } from '../../utils/formato'
 
 export default function ClienteDashboardPage() {
@@ -132,9 +132,9 @@ export default function ClienteDashboardPage() {
                     <div className="flex items-center gap-3 shrink-0">
                       <span
                         className={`badge ${ESTADO_COLOR[pedido.estado] ?? 'bg-gray-100 text-gray-700'} cursor-help`}
-                        title={ESTADO_INFO[pedido.estado] ?? ''}
+                        title={ESTADO_LABEL_INFO[pedido.estado] ?? ''}
                       >
-                        {pedido.estado.replace(/_/g, ' ')}
+                        {ESTADO_LABEL[pedido.estado] ?? pedido.estado.replace(/_/g, ' ')}
                       </span>
                       <span className="font-semibold text-gray-800">
                         {formatMoneda(pedido.total)}
