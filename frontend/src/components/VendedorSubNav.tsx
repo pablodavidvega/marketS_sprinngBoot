@@ -29,8 +29,8 @@ export default function VendedorSubNav() {
                   isActive
                     ? 'active-tab text-primary-700 font-semibold'
                     : modoComprador
-                      ? 'text-primary-300 hover:text-primary-400'
-                      : 'text-primary-900/70 hover:text-primary-700'
+                      ? 'text-primary-700/25 hover:text-primary-700/40'
+                      : 'text-primary-700/70 hover:text-primary-700'
                 }`
               }
             >
