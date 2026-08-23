@@ -190,8 +190,12 @@ function ProductoCard({ producto, prioridad = false }: Props) {
         {producto.vendedorId && producto.vendedorUsername && (
           <Link
             to={`/vendedores/${producto.vendedorId}`}
-            className="text-xs text-primary-600 hover:text-primary-700 hover:underline transition-colors mb-0.5 inline-block"
+            className="text-xs text-primary-600 hover:text-primary-700 underline transition-colors mb-0.5 inline-flex items-center gap-0.5"
           >
+            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
             @{producto.vendedorUsername}
           </Link>
         )}
