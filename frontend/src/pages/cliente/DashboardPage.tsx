@@ -69,7 +69,10 @@ export default function ClienteDashboardPage() {
   // Deep-link desde la campanita de notificaciones: ?pedido=123&vendedor=45&foco=chat|encuentro
   // expande el pedido exacto y, si aplica, abre el hilo de chat correcto.
   useEffect(() => {
-    if (loadingPedidos) return
+    // También espera a loadingResumen: hasta que sea false, el componente devuelve el spinner
+    // de página completa más abajo y las cards de pedidos (con sus cardRefs) ni siquiera están
+    // en el DOM — el scrollIntoView de más abajo no tendría a qué apuntar.
+    if (loadingPedidos || loadingResumen) return
     const pedidoParam = searchParams.get('pedido')
     if (!pedidoParam) return
     const key = searchParams.toString()
@@ -92,7 +95,7 @@ export default function ClienteDashboardPage() {
     requestAnimationFrame(() => {
       cardRefs.current[pedidoId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     })
-  }, [loadingPedidos, pedidos, searchParams])
+  }, [loadingPedidos, loadingResumen, pedidos, searchParams])
 
   async function handleConfirmarRecepcion(pedidoId: number) {
     setConfirmando(pedidoId)
