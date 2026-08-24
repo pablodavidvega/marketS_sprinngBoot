@@ -186,7 +186,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
             <button
               onClick={() => handleCheckout('OTRO')}
               disabled={loading || bloqueadoPorRol}
-              className="btn-secondary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-accent w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {etiquetaBoton('Acordar pago con el vendedor', 'OTRO')}
             </button>
