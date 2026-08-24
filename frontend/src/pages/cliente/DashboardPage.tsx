@@ -92,9 +92,21 @@ export default function ClienteDashboardPage() {
       }
     }
 
-    requestAnimationFrame(() => {
-      cardRefs.current[pedidoId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    })
+    // Reintenta durante varios frames en vez de uno solo: el layout de esta página (stats +
+    // perfil + imágenes de producto arriba de la card) puede seguir acomodándose un momento
+    // después del commit que agrega la ref, y un solo requestAnimationFrame a veces corría
+    // antes de que cardRefs.current[pedidoId] existiera.
+    let intentos = 0
+    function intentarScroll() {
+      const el = cardRefs.current[pedidoId]
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else if (intentos < 30) {
+        intentos++
+        requestAnimationFrame(intentarScroll)
+      }
+    }
+    requestAnimationFrame(intentarScroll)
   }, [loadingPedidos, loadingResumen, pedidos, searchParams])
 
   async function handleConfirmarRecepcion(pedidoId: number) {
