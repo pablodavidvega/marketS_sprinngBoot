@@ -92,21 +92,23 @@ export default function ClienteDashboardPage() {
       }
     }
 
-    // Reintenta durante varios frames en vez de uno solo: el layout de esta página (stats +
-    // perfil + imágenes de producto arriba de la card) puede seguir acomodándose un momento
-    // después del commit que agrega la ref, y un solo requestAnimationFrame a veces corría
-    // antes de que cardRefs.current[pedidoId] existiera.
+    // Reintenta durante un momento en vez de una sola vez: el layout de esta página (stats +
+    // perfil + imágenes de producto arriba de la card) puede seguir acomodándose justo después
+    // del commit que agrega la ref, y un solo intento a veces corría antes de que
+    // cardRefs.current[pedidoId] existiera. "instant" en vez de "smooth": el scroll animado
+    // (smooth) puede no completarse en algunos navegadores/configuraciones (ver también
+    // window.scrollTo con smooth), mientras que instant siempre deja la posición correcta.
     let intentos = 0
     function intentarScroll() {
       const el = cardRefs.current[pedidoId]
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } else if (intentos < 30) {
+        el.scrollIntoView({ behavior: 'instant', block: 'center' })
+      } else if (intentos < 20) {
         intentos++
-        requestAnimationFrame(intentarScroll)
+        setTimeout(intentarScroll, 50)
       }
     }
-    requestAnimationFrame(intentarScroll)
+    setTimeout(intentarScroll, 50)
   }, [loadingPedidos, loadingResumen, pedidos, searchParams])
 
   async function handleConfirmarRecepcion(pedidoId: number) {
