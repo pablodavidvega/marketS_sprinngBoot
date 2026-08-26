@@ -61,6 +61,14 @@ public class User {
     @Column(name = "password_establecida", nullable = false, columnDefinition = "boolean default true")
     private boolean passwordEstablecida = true;
 
+    // true para altas por carga masiva (ver CargaMasivaUsuariosService.construirUsuario): la
+    // contraseña la elige el admin en el CSV/Excel, no el usuario, y pudo circular por email o
+    // en papel — se obliga a cambiarla en el primer login (ver AuthApiController.login +
+    // UsuarioApiController.cambiarPassword, que la apaga al completar el cambio).
+    // Default false a nivel de columna: mismo patrón que "acepto_terminos"/"password_establecida".
+    @Column(name = "debe_cambiar_password", nullable = false, columnDefinition = "boolean default false")
+    private boolean debeCambiarPassword = false;
+
     @ManyToOne
     @JoinColumn(name="rol_id")
     private Rol rol;

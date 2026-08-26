@@ -11,6 +11,7 @@ import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.security.AuthCookieService;
 import com.example.MarketS.security.JwtTokenProvider;
 import com.example.MarketS.security.RateLimitService;
+import com.example.MarketS.security.UsuarioPrincipal;
 import com.example.MarketS.service.EmailService;
 import com.example.MarketS.service.InvitacionService;
 import com.example.MarketS.service.NotificacionService;
@@ -102,9 +103,15 @@ public class AuthApiController {
                     .findFirst()
                     .orElse("")
                     .replace("ROLE_", "");
+            User usuario = UsuarioPrincipal.from(auth);
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookieService.buildCookie(token, cookieMaxAge()).toString());
-            return ResponseEntity.ok(Map.of("email", loginDTO.getEmail(), "role", role, "token", token));
+            return ResponseEntity.ok(Map.of(
+                    "email", loginDTO.getEmail(),
+                    "role", role,
+                    "token", token,
+                    "debeCambiarPassword", usuario != null && usuario.isDebeCambiarPassword()
+            ));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body(Map.of("error", "Credenciales inválidas"));
         }

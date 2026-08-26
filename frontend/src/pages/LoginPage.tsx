@@ -35,7 +35,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await loginApi(form.email, form.password)
-      login(data.email, data.role, data.token)
+      login(data.email, data.role, data.token, data.debeCambiarPassword)
       irDespuesDeLogin(data.role)
     } catch (err: unknown) {
       const response = (err as { response?: { data?: { mensaje?: string; error?: string } } })?.response

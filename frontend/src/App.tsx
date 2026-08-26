@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
+import CambioPasswordObligatorio from './components/CambioPasswordObligatorio'
 import { ToastProvider } from './components/Toast'
 import { VendedorHoverProvider } from './context/VendedorHoverContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -322,6 +323,7 @@ export default function App() {
         </Suspense>
       </main>
       <Footer />
+      <CambioPasswordObligatorio />
     </div>
     </VendedorHoverProvider>
     </ToastProvider>

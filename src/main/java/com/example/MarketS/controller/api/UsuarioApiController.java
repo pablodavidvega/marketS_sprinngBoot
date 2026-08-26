@@ -101,6 +101,7 @@ public class UsuarioApiController {
 
         user.setPassword(userService.codificarPassword(request.getNewPassword()));
         user.setPasswordEstablecida(true);
+        user.setDebeCambiarPassword(false);
         userService.guardar(user);
 
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));

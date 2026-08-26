@@ -2,6 +2,7 @@ export interface AuthResponse {
   email: string
   role: string
   token: string
+  debeCambiarPassword?: boolean
 }
 
 export interface GoogleLoginResponse {

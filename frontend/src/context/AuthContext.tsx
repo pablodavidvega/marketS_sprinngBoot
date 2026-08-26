@@ -4,14 +4,19 @@ import { logout as logoutApi, refresh as refreshApi } from '../api/auth'
 interface AuthUser {
   email: string
   role: string
+  // Usuarios creados por carga masiva (ver CargaMasivaUsuariosService) reciben una contraseña
+  // elegida por el admin, no por ellos — se les obliga a cambiarla antes de usar el resto de
+  // la app (ver CambioPasswordObligatorio).
+  debeCambiarPassword: boolean
 }
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (email: string, role: string, token: string) => void
+  login: (email: string, role: string, token: string, debeCambiarPassword?: boolean) => void
   logout: () => void
   isAuthenticated: boolean
   hasRole: (...roles: string[]) => boolean
+  marcarPasswordCambiada: () => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -22,14 +27,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored ? JSON.parse(stored) : null
   })
 
-  const login = (email: string, role: string, token: string) => {
+  const login = (email: string, role: string, token: string, debeCambiarPassword = false) => {
     // El JWT también viaja en una cookie httpOnly, pero al ser cross-site (frontend en
     // Vercel, backend en Render) Safari/iOS la descarta por ITP. Por eso el transporte real
     // es este token guardado en localStorage y mandado como Authorization: Bearer.
-    localStorage.setItem('user', JSON.stringify({ email, role }))
+    const nuevoUser = { email, role, debeCambiarPassword }
+    localStorage.setItem('user', JSON.stringify(nuevoUser))
     localStorage.setItem('authToken', token)
     localStorage.setItem('lastActive', Date.now().toString())
-    setUser({ email, role })
+    setUser(nuevoUser)
+  }
+
+  // Se llama al completar el cambio obligatorio de contraseña (ver CambioPasswordObligatorio)
+  // para que el modal deje de mostrarse sin tener que volver a loguearse.
+  const marcarPasswordCambiada = () => {
+    setUser(prev => {
+      if (!prev) return prev
+      const actualizado = { ...prev, debeCambiarPassword: false }
+      localStorage.setItem('user', JSON.stringify(actualizado))
+      return actualizado
+    })
   }
 
   const logout = async () => {
@@ -112,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user ? roles.includes(user.role) : false
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, hasRole }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, hasRole, marcarPasswordCambiada }}>
       {children}
     </AuthContext.Provider>
   )

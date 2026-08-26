@@ -251,6 +251,7 @@ public class CargaMasivaUsuariosService {
         u.setPhone(phone.isBlank() ? "" : phone);
         u.setAddress(address.isBlank() ? null : address);
         u.setActive(true);
+        u.setDebeCambiarPassword(true);
 
         // Rol: CLIENTE por defecto, acepta CLIENTE o VENDEDOR
         String rolname = rolInput.equals("VENDEDOR") ? "ROLE_VENDEDOR" : "ROLE_CLIENTE";
