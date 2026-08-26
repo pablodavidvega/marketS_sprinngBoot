@@ -36,16 +36,17 @@ function agruparPorVendedor(items: CarritoItem[]): GrupoVendedor[] {
   return Array.from(grupos.values())
 }
 
-function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
+interface PedidoConfirmado {
+  pedidoId: number
+  vendedorId: number | null
+}
+
+function GrupoCarrito({ grupo, onPedidoAcordado }: { grupo: GrupoVendedor; onPedidoAcordado: (p: PedidoConfirmado) => void }) {
   const { quitar, actualizar, limpiarVendedor } = useCarrito()
   const { isAuthenticated, hasRole } = useAuth()
   const navigate = useNavigate()
   const [procesando, setProcesando] = useState<MetodoPago | null>(null)
   const [error, setError] = useState('')
-  // Confirmación del pedido "Acordar pago con el vendedor": antes se avisaba con un toast que
-  // apenas alcanzaba a verse porque la navegación al dashboard ocurría casi al mismo tiempo. Un
-  // modal obliga a que el comprador lo vea y confirme antes de seguir.
-  const [pedidoConfirmado, setPedidoConfirmado] = useState<{ pedidoId: number; vendedorId: number | null } | null>(null)
   const loading = procesando !== null
 
   // Administradores y moderadores no compran con su propia cuenta — evita el conflicto de
@@ -67,7 +68,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
       )
       limpiarVendedor(grupo.vendedorId)
       if (metodoPago !== 'MERCADOPAGO') {
-        setPedidoConfirmado({ pedidoId: data.pedidoId, vendedorId: grupo.vendedorId })
+        onPedidoAcordado({ pedidoId: data.pedidoId, vendedorId: grupo.vendedorId })
         return
       }
       navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {
@@ -85,16 +86,6 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
     } finally {
       setProcesando(null)
     }
-  }
-
-  function irAMisPedidos() {
-    if (!pedidoConfirmado) return
-    const params = new URLSearchParams({ pedido: String(pedidoConfirmado.pedidoId), nuevo: '1' })
-    if (pedidoConfirmado.vendedorId) {
-      params.set('vendedor', String(pedidoConfirmado.vendedorId))
-      params.set('foco', 'chat')
-    }
-    navigate(`/cliente/dashboard?${params.toString()}`)
   }
 
   function etiquetaBoton(base: string, metodo: MetodoPago) {
@@ -199,39 +190,57 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {pedidoConfirmado && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="pedido-confirmado-titulo"
-        >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 text-center">
-            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 id="pedido-confirmado-titulo" className="text-lg font-bold text-gray-800 mb-2">
-              ¡Pedido registrado!
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Acuerda el pago y la entrega directamente con el vendedor por chat desde
-              "Mis pedidos".
-            </p>
-            <button onClick={irAMisPedidos} className="btn-primary w-full">
-              Ir a mis pedidos
-            </button>
-          </div>
+function ModalPedidoAcordado({ pedido, onCerrar }: { pedido: PedidoConfirmado; onCerrar: () => void }) {
+  const navigate = useNavigate()
+
+  function irAMisPedidos() {
+    const params = new URLSearchParams({ pedido: String(pedido.pedidoId), nuevo: '1' })
+    if (pedido.vendedorId) {
+      params.set('vendedor', String(pedido.vendedorId))
+      params.set('foco', 'chat')
+    }
+    onCerrar()
+    navigate(`/cliente/dashboard?${params.toString()}`)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pedido-confirmado-titulo"
+    >
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+          <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
         </div>
-      )}
+        <h3 id="pedido-confirmado-titulo" className="text-lg font-bold text-gray-800 mb-2">
+          ¡Pedido registrado!
+        </h3>
+        <p className="text-sm text-gray-500 mb-6">
+          Acuerda el pago y la entrega directamente con el vendedor por chat desde
+          "Mis pedidos".
+        </p>
+        <button onClick={irAMisPedidos} className="btn-primary w-full">
+          Ir a mis pedidos
+        </button>
+      </div>
     </div>
   )
 }
 
 export default function CarritoPage() {
   const { items, total } = useCarrito()
+  // Vive acá y no en GrupoCarrito: al acordar el pago se limpia el carrito de ese vendedor, y si
+  // era el único grupo, `items` queda vacío y este componente re-renderiza al estado "carrito
+  // vacío" — desmontando GrupoCarrito (y el modal) antes de que el comprador llegue a verlo.
+  const [pedidoConfirmado, setPedidoConfirmado] = useState<PedidoConfirmado | null>(null)
 
   if (items.length === 0) {
     return (
@@ -241,6 +250,9 @@ export default function CarritoPage() {
         </svg>
         <h2 className="text-xl font-semibold text-gray-600 mb-2">Tu carrito está vacío</h2>
         <Link to="/" className="btn-primary inline-block mt-4">Ver productos</Link>
+        {pedidoConfirmado && (
+          <ModalPedidoAcordado pedido={pedidoConfirmado} onCerrar={() => setPedidoConfirmado(null)} />
+        )}
       </div>
     )
   }
@@ -258,7 +270,7 @@ export default function CarritoPage() {
 
       <div className="flex flex-col gap-6">
         {grupos.map(grupo => (
-          <GrupoCarrito key={grupo.vendedorId ?? 'sin-vendedor'} grupo={grupo} />
+          <GrupoCarrito key={grupo.vendedorId ?? 'sin-vendedor'} grupo={grupo} onPedidoAcordado={setPedidoConfirmado} />
         ))}
       </div>
 
@@ -266,6 +278,10 @@ export default function CarritoPage() {
         <div className="mt-6 text-right text-sm text-gray-500">
           Total general: <span className="font-semibold text-gray-700">{formatMoneda(total)}</span>
         </div>
+      )}
+
+      {pedidoConfirmado && (
+        <ModalPedidoAcordado pedido={pedidoConfirmado} onCerrar={() => setPedidoConfirmado(null)} />
       )}
     </div>
   )
