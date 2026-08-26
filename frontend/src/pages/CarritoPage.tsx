@@ -39,7 +39,6 @@ function agruparPorVendedor(items: CarritoItem[]): GrupoVendedor[] {
 function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
   const { quitar, actualizar, limpiarVendedor } = useCarrito()
   const { isAuthenticated, hasRole } = useAuth()
-  const { showToast } = useToast()
   const navigate = useNavigate()
   const [procesando, setProcesando] = useState<MetodoPago | null>(null)
   const [error, setError] = useState('')
