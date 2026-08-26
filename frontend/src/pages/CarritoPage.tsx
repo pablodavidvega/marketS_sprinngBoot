@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
-import { useToast } from '../components/Toast'
 import { crearPedido, type MetodoPago } from '../api/pedidos'
 import type { CarritoItem } from '../types'
 import { formatMoneda } from '../utils/formato'
@@ -44,6 +43,10 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
   const navigate = useNavigate()
   const [procesando, setProcesando] = useState<MetodoPago | null>(null)
   const [error, setError] = useState('')
+  // Confirmación del pedido "Acordar pago con el vendedor": antes se avisaba con un toast que
+  // apenas alcanzaba a verse porque la navegación al dashboard ocurría casi al mismo tiempo. Un
+  // modal obliga a que el comprador lo vea y confirme antes de seguir.
+  const [pedidoConfirmado, setPedidoConfirmado] = useState<{ pedidoId: number; vendedorId: number | null } | null>(null)
   const loading = procesando !== null
 
   // Administradores y moderadores no compran con su propia cuenta — evita el conflicto de
@@ -65,13 +68,7 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
       )
       limpiarVendedor(grupo.vendedorId)
       if (metodoPago !== 'MERCADOPAGO') {
-        showToast('Pedido registrado')
-        const params = new URLSearchParams({ pedido: String(data.pedidoId), nuevo: '1' })
-        if (grupo.vendedorId) {
-          params.set('vendedor', String(grupo.vendedorId))
-          params.set('foco', 'chat')
-        }
-        navigate(`/cliente/dashboard?${params.toString()}`)
+        setPedidoConfirmado({ pedidoId: data.pedidoId, vendedorId: grupo.vendedorId })
         return
       }
       navigate(`/pedidos/confirmacion?status=pendiente&pedido_id=${data.pedidoId}`, {
@@ -89,6 +86,16 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
     } finally {
       setProcesando(null)
     }
+  }
+
+  function irAMisPedidos() {
+    if (!pedidoConfirmado) return
+    const params = new URLSearchParams({ pedido: String(pedidoConfirmado.pedidoId), nuevo: '1' })
+    if (pedidoConfirmado.vendedorId) {
+      params.set('vendedor', String(pedidoConfirmado.vendedorId))
+      params.set('foco', 'chat')
+    }
+    navigate(`/cliente/dashboard?${params.toString()}`)
   }
 
   function etiquetaBoton(base: string, metodo: MetodoPago) {
@@ -193,6 +200,33 @@ function GrupoCarrito({ grupo }: { grupo: GrupoVendedor }) {
           </div>
         </div>
       </div>
+
+      {pedidoConfirmado && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pedido-confirmado-titulo"
+        >
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 text-center">
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 id="pedido-confirmado-titulo" className="text-lg font-bold text-gray-800 mb-2">
+              ¡Pedido registrado!
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Acuerda el pago y la entrega directamente con el vendedor por chat desde
+              "Mis pedidos".
+            </p>
+            <button onClick={irAMisPedidos} className="btn-primary w-full">
+              Ir a mis pedidos
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
