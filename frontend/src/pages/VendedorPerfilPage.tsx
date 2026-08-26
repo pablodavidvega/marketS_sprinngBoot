@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getPerfilVendedor, getProductosVendedor } from '../api/vendedores'
 import ProductoCard from '../components/ProductoCard'
 import ReputacionBar from '../components/ReputacionBar'
@@ -25,6 +25,7 @@ const PRODUCTOS_POR_PAGINA = 30
 
 export default function VendedorPerfilPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const vendedorId = Number(id)
 
   const [perfil,    setPerfil]    = useState<PerfilVendedor | null>(null)
@@ -95,6 +96,13 @@ export default function VendedorPerfilPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1 -ml-2 pl-2 pr-3 py-1 rounded-md text-sm font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-100 transition-colors mb-4"
+      >
+        ← Volver
+      </button>
 
       {/* ── Header del vendedor ── */}
       <div className="card mb-8">

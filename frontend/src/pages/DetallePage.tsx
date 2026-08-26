@@ -344,8 +344,12 @@ export default function DetallePage() {
             <div className="flex items-center gap-3 flex-wrap">
               <Link
                 to={`/vendedores/${producto.vendedorId}`}
-                className="text-sm text-primary-600 hover:text-primary-700 hover:underline transition-colors"
+                className="text-sm text-primary-600 hover:text-primary-700 hover:underline transition-colors inline-flex items-center gap-1"
               >
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 @{producto.vendedorUsername}
               </Link>
               {producto.reputacionVendedor && (
