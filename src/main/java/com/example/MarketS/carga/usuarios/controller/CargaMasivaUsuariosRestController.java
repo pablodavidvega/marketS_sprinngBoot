@@ -2,12 +2,14 @@ package com.example.MarketS.carga.usuarios.controller;
 
 import com.example.MarketS.carga.dto.DTOResultadoCarga;
 import com.example.MarketS.carga.usuarios.service.CargaMasivaUsuariosService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -30,5 +32,10 @@ public class CargaMasivaUsuariosRestController {
 
         DTOResultadoCarga resultado = cargaMasivaUsuariosService.procesar(archivo);
         return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping("/plantilla-excel")
+    public void descargarPlantillaExcel(HttpServletResponse response) throws IOException {
+        cargaMasivaUsuariosService.generarPlantillaExcel(response);
     }
 }

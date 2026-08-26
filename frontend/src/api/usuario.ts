@@ -73,6 +73,9 @@ export const descargarPdfUsuarios = (tipo?: string, valor?: string) =>
     responseType: 'blob',
   })
 
+export const descargarPlantillaExcelUsuarios = () =>
+  api.get('/api/admin/carga-usuarios/plantilla-excel', { responseType: 'blob' })
+
 export const cargarUsuariosMasivo = (
   archivo: File,
   onUploadProgress?: (pct: number) => void,

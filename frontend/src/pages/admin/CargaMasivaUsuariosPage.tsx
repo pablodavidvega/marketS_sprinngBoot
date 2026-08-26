@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { cargarUsuariosMasivo } from '../../api/usuario'
+import { cargarUsuariosMasivo, descargarPlantillaExcelUsuarios } from '../../api/usuario'
 import type { ResultadoCarga } from '../../types'
 
 const COLUMNAS = [
@@ -108,6 +108,25 @@ export default function CargaMasivaUsuariosPage() {
   const [cargando,  setCargando]  = useState(false)
   const [resultado, setResultado] = useState<ResultadoCarga | null>(null)
   const [error,     setError]     = useState('')
+  const [descargandoExcel, setDescargandoExcel] = useState(false)
+
+  async function descargarPlantillaExcel() {
+    setDescargandoExcel(true)
+    try {
+      const response = await descargarPlantillaExcelUsuarios()
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'plantilla_usuarios.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setDescargandoExcel(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -159,18 +178,31 @@ export default function CargaMasivaUsuariosPage() {
 
       {/* Instrucciones */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h2 className="text-base font-semibold text-gray-700">Formato del archivo</h2>
-          <button
-            onClick={descargarPlantillaCSV}
-            className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Descargar plantilla CSV
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={descargarPlantillaCSV}
+              className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Descargar plantilla CSV
+            </button>
+            <button
+              onClick={descargarPlantillaExcel}
+              disabled={descargandoExcel}
+              className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {descargandoExcel ? 'Generando...' : 'Descargar plantilla Excel'}
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

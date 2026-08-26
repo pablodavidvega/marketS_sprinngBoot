@@ -5,14 +5,17 @@ import com.example.MarketS.model.Rol;
 import com.example.MarketS.model.User;
 import com.example.MarketS.repository.RolRepository;
 import com.example.MarketS.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -82,6 +85,43 @@ public class CargaMasivaUsuariosService {
 
         int correctos = guardarValidos(candidatos, errores);
         return new DTOResultadoCarga(total, correctos, total - correctos, errores);
+    }
+
+    // ── Plantilla Excel ──────────────────────────────────────────────────────
+    // Mismas columnas y valores de ejemplo que la plantilla CSV del frontend
+    // (ver COLUMNAS en CargaMasivaUsuariosPage.tsx) — listas para que el admin
+    // borre la fila de ejemplo y pegue sus propios datos.
+
+    private static final String[] PLANTILLA_HEADERS = {"username", "email", "password", "phone", "address", "rol"};
+    private static final String[] PLANTILLA_EJEMPLO  = {"juan.perez", "juan@correo.com", "Clave2024!", "3001234567", "Calle 10 # 5-20", "CLIENTE"};
+
+    public void generarPlantillaExcel(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=plantilla_usuarios.xlsx");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Usuarios");
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < PLANTILLA_HEADERS.length; i++) {
+                headerRow.createCell(i).setCellValue(PLANTILLA_HEADERS[i]);
+            }
+
+            Row ejemploRow = sheet.createRow(1);
+            for (int i = 0; i < PLANTILLA_EJEMPLO.length; i++) {
+                ejemploRow.createCell(i).setCellValue(PLANTILLA_EJEMPLO[i]);
+            }
+
+            for (int i = 0; i < PLANTILLA_HEADERS.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(response.getOutputStream());
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Error al generar la plantilla Excel", e);
+        }
     }
 
     // ── Excel ─────────────────────────────────────────────────────────────────
