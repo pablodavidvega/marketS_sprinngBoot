@@ -399,7 +399,12 @@ export default function ClienteDashboardPage() {
                           </button>
                           {chatAbierto === key && (
                             <div className="mt-3">
-                              <ChatPedido pedidoId={pedido.pedidoId} vendedorId={vendedorId} />
+                              <ChatPedido
+                                pedidoId={pedido.pedidoId}
+                                vendedorId={vendedorId}
+                                resaltarInput={destacado}
+                                onInputEnfocado={() => setResaltarEscribir(prev => prev === key ? null : prev)}
+                              />
                             </div>
                           )}
                           <div className="mt-3">

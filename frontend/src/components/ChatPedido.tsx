@@ -15,7 +15,17 @@ function fusionarMensajes(previos: ChatMensaje[], tanda: ChatMensaje[]): ChatMen
   return Array.from(mapa.values()).sort((a, b) => a.fechaEnvio.localeCompare(b.fechaEnvio))
 }
 
-export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number; vendedorId: number }) {
+interface Props {
+  pedidoId: number
+  vendedorId: number
+  // Resalta el input de mensaje (borde ámbar) cuando el comprador llega acá recién después de
+  // "Acordar pago con el vendedor" — el aviso ya no basta si no se ve dónde escribir. Se apaga
+  // apenas el input recibe foco, para que no quede marcado después de que ya lo usó.
+  resaltarInput?: boolean
+  onInputEnfocado?: () => void
+}
+
+export default function ChatPedido({ pedidoId, vendedorId, resaltarInput, onInputEnfocado }: Props) {
   const [mensajes, setMensajes] = useState<ChatMensaje[]>([])
   const [texto, setTexto] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -146,9 +156,13 @@ export default function ChatPedido({ pedidoId, vendedorId }: { pedidoId: number;
         <input
           value={texto}
           onChange={e => setTexto(e.target.value)}
+          onFocus={onInputEnfocado}
           placeholder="Escribe un mensaje sobre la entrega..."
           maxLength={500}
-          className="input flex-1 text-sm"
+          autoFocus={resaltarInput}
+          className={`input flex-1 text-sm ${
+            resaltarInput ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white' : ''
+          }`}
         />
         <button type="submit" disabled={enviando || !texto.trim()} className="btn-primary text-sm px-4">
           Enviar
