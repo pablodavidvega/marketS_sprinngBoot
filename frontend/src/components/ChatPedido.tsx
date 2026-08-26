@@ -18,9 +18,10 @@ function fusionarMensajes(previos: ChatMensaje[], tanda: ChatMensaje[]): ChatMen
 interface Props {
   pedidoId: number
   vendedorId: number
-  // Resalta el input de mensaje (borde ámbar) cuando el comprador llega acá recién después de
-  // "Acordar pago con el vendedor" — el aviso ya no basta si no se ve dónde escribir. Se apaga
-  // apenas el input recibe foco, para que no quede marcado después de que ya lo usó.
+  // Resalta el input de mensaje (mismo azul primario del resto del sitio) cuando el comprador
+  // llega acá recién después de "Acordar pago con el vendedor" — el aviso ya no basta si no se
+  // ve dónde escribir. Se apaga apenas el input recibe foco, para que no quede marcado después
+  // de que ya lo usó.
   resaltarInput?: boolean
   onInputEnfocado?: () => void
 }
@@ -161,7 +162,7 @@ export default function ChatPedido({ pedidoId, vendedorId, resaltarInput, onInpu
           maxLength={500}
           autoFocus={resaltarInput}
           className={`input flex-1 text-sm ${
-            resaltarInput ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white' : ''
+            resaltarInput ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white' : ''
           }`}
         />
         <button type="submit" disabled={enviando || !texto.trim()} className="btn-primary text-sm px-4">

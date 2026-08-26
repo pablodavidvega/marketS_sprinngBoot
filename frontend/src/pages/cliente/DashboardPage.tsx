@@ -382,9 +382,9 @@ export default function ClienteDashboardPage() {
                     const destacado = resaltarEscribir === key
                     return (
                       <div key={key} className="mt-4 pt-4 border-t border-gray-100">
-                        <div className={destacado ? 'rounded-lg border border-amber-300 bg-amber-50 p-3' : ''}>
+                        <div className={destacado ? 'rounded-lg border border-primary-100 bg-primary-50 p-3' : ''}>
                           {destacado && (
-                            <p className="text-sm text-amber-800 mb-3">
+                            <p className="text-sm text-primary-700 mb-3">
                               👋 Escríbele al vendedor por chat para coordinar el pago, o acuerden un punto de encuentro.
                             </p>
                           )}
