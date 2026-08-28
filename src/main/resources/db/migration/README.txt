@@ -13,3 +13,8 @@ Para todo cambio de schema nuevo: agregar acá un archivo `V{N}__descripcion.sql
   error, corregirlo en una migración nueva.
 - Numerar en orden secuencial; no reusar ni saltear números.
 - Un archivo por cambio lógico, para poder revisar el historial en git.
+- Nunca alterar flyway_schema_history desde una migración (ALTER TABLE, RLS, etc.):
+  Flyway usa esa tabla para trackear la migración que está corriendo en ese momento,
+  así que tocarla desde adentro genera un lock circular que termina en
+  "canceling statement due to statement timeout". Cualquier cambio sobre esa tabla
+  (ej. activarle RLS) se hace a mano desde el SQL Editor de Supabase, fuera de Flyway.
