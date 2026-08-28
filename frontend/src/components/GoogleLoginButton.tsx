@@ -73,8 +73,15 @@ export default function GoogleLoginButton({
   if (!clientId) return null
 
   return (
-    <div className="relative">
-      <div ref={containerRef} id={`google-btn-${containerId}`} className="flex justify-center" />
+    // El botón de Google Identity Services no tiene un tamaño mayor a "large" (~40px de alto,
+    // fijo por Google) — se agranda visualmente con un scale en vez de eso. El padding vertical
+    // compensa el alto extra que agrega el scale para que no se superponga con lo de arriba/abajo.
+    <div className="relative py-2">
+      <div
+        ref={containerRef}
+        id={`google-btn-${containerId}`}
+        className="flex justify-center scale-125 origin-center"
+      />
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-white/90 text-sm text-gray-600">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600" />
