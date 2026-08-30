@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProductosRecientes } from '../api/productos'
 import { getBannersActivos } from '../api/banners'
@@ -29,6 +29,135 @@ function resolverDestino(enlace: string): { interno: boolean; ruta: string } {
   } catch {
     return { interno: true, ruta: enlace }
   }
+}
+
+// Diapositiva de "últimos productos": en pantallas medianas hacia abajo (< lg) las cards
+// no caben todas y se navegan con scroll horizontal — en mobile con el dedo (nativo), y en
+// escritorio con la scrollbar visible, arrastrando con el mouse o con las flechas.
+function ResumenSlide({ productos }: { productos: Producto[] }) {
+  const navigate = useNavigate()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ activo: false, startX: 0, scrollLeft: 0, movido: false })
+
+  // Escuchar en document (no solo en el contenedor) para que el arrastre no se corte
+  // si el mouse sale del área antes de soltar el botón.
+  const moverRef = useRef((e: MouseEvent) => {
+    const el = scrollRef.current
+    if (!el || !drag.current.activo) return
+    const delta = e.pageX - drag.current.startX
+    if (Math.abs(delta) > 5) drag.current.movido = true
+    el.scrollLeft = drag.current.scrollLeft - delta
+  })
+
+  const soltarRef = useRef(() => {
+    const el = scrollRef.current
+    drag.current.activo = false
+    // Restaura el scroll-snap, que se desactiva durante el arrastre porque "pelea"
+    // con la asignación manual de scrollLeft y provocaba un tirón raro.
+    if (el) el.style.scrollSnapType = ''
+    document.removeEventListener('mousemove', moverRef.current)
+    document.removeEventListener('mouseup', soltarRef.current)
+  })
+
+  useEffect(() => () => {
+    document.removeEventListener('mousemove', moverRef.current)
+    document.removeEventListener('mouseup', soltarRef.current)
+  }, [])
+
+  function iniciarDrag(e: React.MouseEvent) {
+    const el = scrollRef.current
+    if (!el) return
+    e.preventDefault() // evita el drag nativo de imágenes / selección de texto, que interfería
+    drag.current = { activo: true, startX: e.pageX, scrollLeft: el.scrollLeft, movido: false }
+    el.style.scrollSnapType = 'none'
+    document.addEventListener('mousemove', moverRef.current)
+    document.addEventListener('mouseup', soltarRef.current)
+  }
+
+  function irAProducto(id: number) {
+    if (drag.current.movido) {
+      drag.current.movido = false
+      return
+    }
+    navigate(`/productos/${id}`)
+  }
+
+  function desplazar(direccion: 1 | -1) {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: direccion * el.clientWidth * 0.85, behavior: 'smooth' })
+  }
+
+  return (
+    <div className="relative w-full h-full flex-shrink-0 overflow-hidden">
+      <div
+        ref={scrollRef}
+        className="w-full h-full flex lg:grid lg:grid-cols-5 overflow-x-auto overflow-y-hidden snap-x snap-mandatory slider-scrollbar cursor-grab active:cursor-grabbing"
+        onMouseDown={iniciarDrag}
+      >
+        {productos.map((p, colIdx) => {
+          const imagenUrl = buildImageUrl(p.imagen)
+          const color = PALETA_SHOWCASE[colIdx % PALETA_SHOWCASE.length]
+          return (
+            <div
+              key={p.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => irAProducto(p.id)}
+              onKeyDown={e => { if (e.key === 'Enter') irAProducto(p.id) }}
+              className="group relative flex-shrink-0 w-[75%] sm:w-56 lg:w-auto h-full flex flex-col justify-end cursor-pointer snap-center px-3 pb-4 pt-6"
+              style={{ backgroundColor: color }}
+            >
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity pointer-events-none" />
+
+              {/* "Plato" claro que contiene la imagen tal cual venga (sin estirar ni recortar) —
+                  las fotos las suben los vendedores con tamaños y fondos dispares */}
+              <div className="relative w-full flex-1 min-h-0 mb-3 p-2">
+                <div className="w-full h-full rounded-2xl bg-white/90 shadow-lg flex items-center justify-center overflow-hidden p-3">
+                  {imagenUrl ? (
+                    <img
+                      src={imagenUrl}
+                      alt={p.nombre}
+                      draggable={false}
+                      className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <span className="text-gray-300 text-xs">Sin imagen</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="relative w-full text-center">
+                <p className="text-white font-bold text-sm line-clamp-2 drop-shadow">{p.nombre}</p>
+                <p className="text-white/90 font-bold text-base mt-0.5">{formatMoneda(p.precio)}</p>
+              </div>
+
+              <span className="absolute bottom-3 right-3 text-white/80 text-lg leading-none">→</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Flechas de navegación del carrusel interno — solo hasta el breakpoint lg,
+          donde las 5 cards ya caben en grilla y no hace falta desplazar */}
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); desplazar(-1) }}
+        aria-label="Ver productos anteriores"
+        className="lg:hidden absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors text-lg leading-none z-10"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); desplazar(1) }}
+        aria-label="Ver más productos"
+        className="lg:hidden absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors text-lg leading-none z-10"
+      >
+        ›
+      </button>
+    </div>
+  )
 }
 
 export default function ProductosRecientesSlider() {
@@ -105,13 +234,6 @@ export default function ProductosRecientesSlider() {
     setReproduciendo(p => !p)
   }
 
-  function detener(e: React.MouseEvent) {
-    e.stopPropagation()
-    setReproduciendo(false)
-    setTransicion(false)
-    setIndex(1)
-  }
-
   function irAlBanner(banner: BannerSlide) {
     const { interno, ruta } = resolverDestino(banner.enlace)
     if (interno) navigate(ruta)
@@ -144,55 +266,7 @@ export default function ProductosRecientesSlider() {
           const duracion = duraciones[(i - 1 + n) % n] ?? 4000
 
           if (item.tipo === 'resumen') {
-            return (
-              <div
-                key={`${item.key}-${i}`}
-                className="relative w-full h-full flex-shrink-0 overflow-hidden"
-              >
-                <div className="w-full h-full flex sm:grid sm:grid-cols-5 overflow-x-auto snap-x snap-mandatory">
-                  {item.productos.map((p, colIdx) => {
-                    const imagenUrl = buildImageUrl(p.imagen)
-                    const color = PALETA_SHOWCASE[colIdx % PALETA_SHOWCASE.length]
-                    return (
-                      <div
-                        key={p.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => navigate(`/productos/${p.id}`)}
-                        onKeyDown={e => { if (e.key === 'Enter') navigate(`/productos/${p.id}`) }}
-                        className="group relative flex-shrink-0 w-[75%] sm:w-auto h-full flex flex-col justify-end cursor-pointer snap-center px-3 pb-4 pt-6"
-                        style={{ backgroundColor: color }}
-                      >
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity pointer-events-none" />
-
-                        {/* "Plato" claro que contiene la imagen tal cual venga (sin estirar ni recortar) —
-                            las fotos las suben los vendedores con tamaños y fondos dispares */}
-                        <div className="relative w-full flex-1 min-h-0 mb-3 p-2">
-                          <div className="w-full h-full rounded-2xl bg-white/90 shadow-lg flex items-center justify-center overflow-hidden p-3">
-                            {imagenUrl ? (
-                              <img
-                                src={imagenUrl}
-                                alt={p.nombre}
-                                className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <span className="text-gray-300 text-xs">Sin imagen</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="relative w-full text-center">
-                          <p className="text-white font-bold text-sm line-clamp-2 drop-shadow">{p.nombre}</p>
-                          <p className="text-white/90 font-bold text-base mt-0.5">{formatMoneda(p.precio)}</p>
-                        </div>
-
-                        <span className="absolute bottom-3 right-3 text-white/80 text-lg leading-none">→</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
+            return <ResumenSlide key={`${item.key}-${i}`} productos={item.productos} />
           }
 
           const imagenUrl = buildImageUrl(item.banner.imagen)
@@ -206,17 +280,28 @@ export default function ProductosRecientesSlider() {
               className="relative w-full h-full flex-shrink-0 cursor-pointer overflow-hidden"
             >
               {imagenUrl ? (
-                <img
-                  src={imagenUrl}
-                  alt={item.banner.texto}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{
-                    transform: esActiva ? 'scale(1.06)' : 'scale(1)',
-                    transitionProperty: 'transform',
-                    transitionDuration: `${duracion}ms`,
-                    transitionTimingFunction: 'linear',
-                  }}
-                />
+                <>
+                  {/* Fondo: la misma imagen ampliada y desenfocada, para rellenar el espacio
+                      sin dejar barras vacías cuando la proporción no calza con la del banner */}
+                  <img
+                    src={imagenUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
+                  />
+                  {/* Primer plano: la imagen completa, sin recortar */}
+                  <img
+                    src={imagenUrl}
+                    alt={item.banner.texto}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    style={{
+                      transform: esActiva ? 'scale(1.06)' : 'scale(1)',
+                      transitionProperty: 'transform',
+                      transitionDuration: `${duracion}ms`,
+                      transitionTimingFunction: 'linear',
+                    }}
+                  />
+                </>
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
               )}
@@ -307,16 +392,9 @@ export default function ProductosRecientesSlider() {
         <button
           onClick={togglePlay}
           aria-label={reproduciendo ? 'Pausar slider' : 'Reanudar slider'}
-          className="w-7 h-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm text-[10px]"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm text-base transition-colors"
         >
           {reproduciendo ? '❙❙' : '▶'}
-        </button>
-        <button
-          onClick={detener}
-          aria-label="Detener slider"
-          className="w-7 h-7 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm text-[10px]"
-        >
-          ■
         </button>
       </div>
       </div>

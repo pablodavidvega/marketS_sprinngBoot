@@ -149,3 +149,26 @@
     transform: translateY(12px);
   }
 }
+
+@layer utilities {
+  /* Scrollbar delgada y translúcida (para carruseles internos oscuros, como el slide
+     de "últimos productos" del banner) — visible y arrastrable, pero discreta */
+  .slider-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
+  }
+  .slider-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .slider-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .slider-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 9999px;
+  }
+  .slider-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.75);
+  }
+}

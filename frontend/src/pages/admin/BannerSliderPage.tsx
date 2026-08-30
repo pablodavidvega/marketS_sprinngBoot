@@ -148,7 +148,21 @@ export default function BannerSliderPage() {
             return (
               <div key={b.id} className="card flex flex-col gap-3">
                 <div className="relative aspect-[16/7] bg-gray-100 rounded-lg overflow-hidden">
-                  {imagenUrl && <img src={imagenUrl} alt={b.texto} className="w-full h-full object-cover" />}
+                  {imagenUrl && (
+                    <>
+                      <img
+                        src={imagenUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
+                      />
+                      <img
+                        src={imagenUrl}
+                        alt={b.texto}
+                        className="absolute inset-0 w-full h-full object-contain"
+                      />
+                    </>
+                  )}
                   <span className={`absolute top-2 left-2 badge text-[10px] font-semibold ${
                     b.activo ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'
                   }`}>
@@ -214,11 +228,17 @@ export default function BannerSliderPage() {
                   Imagen del banner {!editando && <span className="text-red-500">*</span>}
                 </label>
                 {(preview || (editando && buildImageUrl(editando.imagen))) && (
-                  <div className="aspect-[16/7] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-2">
+                  <div className="relative aspect-[16/7] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-2">
                     <img
                       src={preview ?? buildImageUrl(editando!.imagen)!}
                       alt=""
-                      className="w-full h-full object-cover"
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
+                    />
+                    <img
+                      src={preview ?? buildImageUrl(editando!.imagen)!}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-contain"
                     />
                   </div>
                 )}
@@ -229,7 +249,9 @@ export default function BannerSliderPage() {
                   onChange={e => setImagenFile(e.target.files?.[0] ?? null)}
                 />
                 {editando && <p className="text-[10px] text-gray-400 mt-1">Sube una nueva para reemplazar la actual</p>}
-                <p className="text-[10px] text-gray-400 mt-1">Recomendado: imagen ancha, ej. 1200×250px.</p>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Recomendado: imagen ancha, ej. 1200×250px. Esta vista previa es igual a como se verá en el banner: la imagen completa, sin recortar.
+                </p>
               </div>
 
               <div>
