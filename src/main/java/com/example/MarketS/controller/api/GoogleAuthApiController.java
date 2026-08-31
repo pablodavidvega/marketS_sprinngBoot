@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -141,6 +142,7 @@ public class GoogleAuthApiController {
     // POST /api/auth/google/completar — crea la cuenta con los datos que Google no provee
     // (rol, teléfono, dirección, ciudad si vendedor) y emite la sesión.
     @PostMapping("/completar")
+    @Transactional
     public ResponseEntity<?> completar(@Valid @RequestBody GoogleCompletarRegistroDTO dto, HttpServletResponse response) {
         Claims claims;
         try {
@@ -198,10 +200,13 @@ public class GoogleAuthApiController {
 
         User creado;
         try {
-            creado = userService.registrarUsuario(user);
-            if (dto.getInvitacion() != null && !dto.getInvitacion().isBlank()) {
-                invitacionService.usarToken(dto.getInvitacion());
+            // Consumir el uso del token ANTES de crear la cuenta: si dos registros llegan con el
+            // mismo link de un solo uso casi al mismo tiempo, solo uno logra consumirlo (ver
+            // InvitacionRepository.consumirUso, UPDATE atómico) y el otro se rechaza acá mismo.
+            if (dto.getInvitacion() != null && !dto.getInvitacion().isBlank() && !invitacionService.usarToken(dto.getInvitacion())) {
+                return ResponseEntity.status(403).body(Map.of("error", "El link de invitación ya no es válido"));
             }
+            creado = userService.registrarUsuario(user);
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo o nombre de usuario ya está en uso"));
         }

@@ -4,6 +4,7 @@ import com.example.MarketS.model.Invitacion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,4 +53,21 @@ public interface InvitacionRepository extends JpaRepository<Invitacion, Long> {
 
     @Query("SELECT COALESCE(SUM(i.usosActuales), 0) FROM Invitacion i")
     long sumUsosActuales();
+
+    // Consume un uso de forma atómica (UPDATE ... WHERE) en vez de leer y luego guardar: dos
+    // registros concurrentes con el mismo link de un solo uso pueden pasar ambos la lectura
+    // de "isVigente()" antes de que cualquiera confirme el consumo (condición de carrera).
+    // Con un UPDATE condicionado, el motor de base de datos serializa la fila y la segunda
+    // ejecución ya no encuentra la fila vigente. Devuelve 1 si se consumió, 0 si no era válida.
+    @Modifying
+    @Query("""
+        UPDATE Invitacion i
+           SET i.usosActuales = i.usosActuales + 1,
+               i.activo = CASE WHEN i.maxUsos IS NOT NULL AND i.usosActuales + 1 >= i.maxUsos THEN false ELSE i.activo END
+         WHERE i.token = :token
+           AND i.activo = true
+           AND (i.fechaExpiracion IS NULL OR i.fechaExpiracion >= CURRENT_TIMESTAMP)
+           AND (i.maxUsos IS NULL OR i.usosActuales < i.maxUsos)
+        """)
+    int consumirUso(@Param("token") String token);
 }

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -41,18 +42,13 @@ public class InvitacionService {
                 .orElse(false);
     }
 
-    // Valida y consume un uso — llamar solo durante el registro
+    // Valida y consume un uso de forma atómica — llamar solo durante el registro, ANTES de
+    // crear la cuenta (ver AuthApiController/GoogleAuthApiController). Usar un UPDATE
+    // condicionado en vez de leer-y-guardar evita que dos registros concurrentes con el mismo
+    // link de un solo uso pasen ambos la validación antes de que cualquiera confirme el consumo.
+    @Transactional
     public boolean usarToken(String token) {
-        Optional<Invitacion> opt = repo.findByToken(token);
-        if (opt.isEmpty()) return false;
-        Invitacion inv = opt.get();
-        if (!inv.isVigente()) return false;
-        inv.setUsosActuales(inv.getUsosActuales() + 1);
-        if (inv.getMaxUsos() != null && inv.getUsosActuales() >= inv.getMaxUsos()) {
-            inv.setActivo(false);
-        }
-        repo.save(inv);
-        return true;
+        return repo.consumirUso(token) > 0;
     }
 
     // Invitaciones paginadas (30 por defecto, ver InvitacionAdminRestController), con filtro

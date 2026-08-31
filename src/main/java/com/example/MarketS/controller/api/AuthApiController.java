@@ -29,6 +29,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -137,6 +138,7 @@ public class AuthApiController {
 
     // POST /api/auth/registro
     @PostMapping("/registro")
+    @Transactional
     public ResponseEntity<?> registro(@Valid @RequestBody RegistroVendedorDTO dto, HttpServletRequest request) {
         if (!rateLimitService.permitirRegistro(request)) {
             return ResponseEntity.status(429).body(Map.of("error", "Demasiados intentos. Probá de nuevo en un rato."));
@@ -190,11 +192,14 @@ public class AuthApiController {
         }
 
         try {
-            User creado = userService.registrarUsuario(user);
-            // Consumir un uso del token si se usó para el registro
-            if (token != null && !token.isBlank()) {
-                invitacionService.usarToken(token);
+            // Consumir el uso del token ANTES de crear la cuenta: si dos registros llegan con el
+            // mismo link de un solo uso casi al mismo tiempo, solo uno logra consumirlo (ver
+            // InvitacionRepository.consumirUso, UPDATE atómico) y el otro se rechaza acá mismo.
+            if (token != null && !token.isBlank() && !invitacionService.usarToken(token)) {
+                return ResponseEntity.status(403).body(Map.of("error", "El link de invitación ya no es válido"));
             }
+
+            User creado = userService.registrarUsuario(user);
             emailService.enviarBienvenida(creado.getEmail(), creado.getUsername(), rol.getRolname());
             if ("VENDEDOR".equals(tipoRol)) {
                 emailService.enviarGuiaMercadoPago(creado.getEmail(), creado.getUsername());
