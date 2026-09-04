@@ -160,13 +160,24 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     // Transición atómica a PAGADO, condicionada a que el pedido no estuviera ya en ese estado
     // (ver PedidoApiController.actualizarEstado). Reconfirmar /api/pedidos/mp/exito (recarga,
-    // doble navegación, notificación duplicada de MercadoPago) no debe volver a descontar stock
-    // ni reenviar notificaciones. Con un UPDATE condicionado en vez de leer-chequear-guardar,
-    // dos confirmaciones casi simultáneas para el mismo pedido no pueden pasar ambas el chequeo:
-    // el motor de base de datos serializa la fila y solo una de las dos actualiza (mismo patrón
-    // que InvitacionRepository.consumirUso). Devuelve 1 si esta llamada marcó el pedido como
-    // pagado, 0 si ya estaba pagado.
+    // doble navegación, notificación duplicada de MercadoPago) no debe reenviar notificaciones.
+    // Con un UPDATE condicionado en vez de leer-chequear-guardar, dos confirmaciones casi
+    // simultáneas para el mismo pedido no pueden pasar ambas el chequeo: el motor de base de
+    // datos serializa la fila y solo una de las dos actualiza (mismo patrón que
+    // InvitacionRepository.consumirUso). Devuelve 1 si esta llamada marcó el pedido como pagado,
+    // 0 si ya estaba pagado.
     @Modifying
     @Query("UPDATE Pedido p SET p.estado = 'PAGADO' WHERE p.id = :id AND p.estado <> 'PAGADO'")
     int marcarPagadoSiNoLoEstaba(@Param("id") Long id);
+
+    // Transición atómica a RECHAZADO, condicionada a que el pedido no estuviera ya PAGADO ni
+    // RECHAZADO (ver PedidoApiController.mpFallo). El stock del pedido se reserva al crearlo
+    // (ver PedidoService.crearPedido) y se restaura cuando se rechaza; sin este guard,
+    // reconfirmar /api/pedidos/mp/fallo (recarga, notificación duplicada de MercadoPago)
+    // restauraría ese stock más de una vez, y una confirmación de rechazo que llega después de
+    // que /mp/exito ya marcó el pedido como PAGADO podría pisarlo. Devuelve 1 si esta llamada
+    // marcó el pedido como rechazado, 0 si no correspondía.
+    @Modifying
+    @Query("UPDATE Pedido p SET p.estado = 'RECHAZADO' WHERE p.id = :id AND p.estado NOT IN ('PAGADO', 'RECHAZADO')")
+    int marcarRechazadoSiNoLoEstaba(@Param("id") Long id);
 }

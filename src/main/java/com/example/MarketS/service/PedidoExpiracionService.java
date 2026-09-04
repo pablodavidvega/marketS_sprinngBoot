@@ -35,6 +35,7 @@ public class PedidoExpiracionService {
     private final NotificacionService notificacionService;
     private final EmailService emailService;
     private final FrontendLinkBuilder frontendLinkBuilder;
+    private final ProductoService productoService;
 
     @Scheduled(cron = "0 0 * * * *")
     public void expirarPedidosSinResolver() {
@@ -59,6 +60,10 @@ public class PedidoExpiracionService {
         for (Pedido pedido : vencidos) {
             pedido.setEstado("RECHAZADO");
             pedidoRepository.save(pedido);
+            // El stock del pedido se reservó (descontó) al crearlo — ver PedidoService.crearPedido —
+            // así que al expirar sin resolverse hay que restaurarlo para que vuelva a estar
+            // disponible.
+            pedido.getDetalles().forEach(d -> productoService.restaurarStock(d.getProducto().getId(), d.getCantidad()));
             notificarExpiracion(pedido);
         }
     }

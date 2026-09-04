@@ -27,10 +27,13 @@ public class PedidoService {
 
     private final PedidoRepository  pedidoRepository;
     private final ProductoRepository productoRepository;
+    private final ProductoService productoService;
 
-    public PedidoService(PedidoRepository pedidoRepository, ProductoRepository productoRepository) {
+    public PedidoService(PedidoRepository pedidoRepository, ProductoRepository productoRepository,
+                          ProductoService productoService) {
         this.pedidoRepository   = pedidoRepository;
         this.productoRepository = productoRepository;
+        this.productoService    = productoService;
     }
 
     // Solo arma y persiste el pedido — no avisa a nadie. Avisar acá (como antes) significaba
@@ -67,11 +70,16 @@ public class PedidoService {
             int cantidad = item.getValue();
             double precio = producto.getPrecio();
 
-            int stockDisponible = producto.getStock() != null ? producto.getStock() : 0;
-            if (cantidad > stockDisponible) {
-                throw new SolicitudInvalidaException("Stock insuficiente para \"" + producto.getNombre()
-                        + "\". Disponible: " + stockDisponible + ", solicitado: " + cantidad);
-            }
+            // Reserva el stock atómicamente al crear el pedido en vez de solo validarlo contra
+            // el valor en memoria: antes dos carritos concurrentes del mismo producto podían
+            // pasar la validación y sobrevender, porque el descuento real recién ocurría al
+            // confirmarse el pago (ver PedidoApiController.actualizarEstado). Si algo más abajo
+            // en este método falla, la transacción de este método se revierte y el stock
+            // reservado acá vuelve solo. Si el pedido se crea pero no llega a concretarse
+            // (rechazado, expirado, o acuerdo externo no completado), quien lo resuelve así debe
+            // restaurar el stock explícitamente — ver ProductoService.restaurarStock y sus usos
+            // en PedidoApiController/PedidoExpiracionService.
+            productoService.reducirStock(producto.getId(), cantidad);
 
             double subtotal = cantidad * precio;
             double comision = Math.round(subtotal * COMISION_APP * 100.0) / 100.0;

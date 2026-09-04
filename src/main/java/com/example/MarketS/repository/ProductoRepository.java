@@ -192,4 +192,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Producto p SET p.stock = p.stock - :cantidad WHERE p.id = :id AND p.stock >= :cantidad")
     int reducirStockAtomico(@Param("id") Long id, @Param("cantidad") Integer cantidad);
+
+    // Contraparte de reducirStockAtomico: devuelve stock reservado que no llegó a venderse
+    // (pedido rechazado, expirado, o resolución de acuerdo externo no completada — ver
+    // ProductoService.restaurarStock). Sumar nunca deja stock inconsistente, así que no
+    // necesita condición en el WHERE.
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Producto p SET p.stock = p.stock + :cantidad WHERE p.id = :id")
+    int aumentarStockAtomico(@Param("id") Long id, @Param("cantidad") Integer cantidad);
 }

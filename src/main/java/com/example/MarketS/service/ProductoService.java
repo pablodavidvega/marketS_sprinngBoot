@@ -89,6 +89,29 @@ public class ProductoService {
     }
 
     /**
+     * Restaura stock reservado en PedidoService.crearPedido que no llegó a venderse: pedido
+     * rechazado por MercadoPago, falla al crear la preferencia de pago, expiración automática
+     * (ver PedidoExpiracionService), o resolución de acuerdo externo marcada como no completada.
+     * Simétrico a reducirStock: si el producto había quedado "No disponible" por llegar a 0,
+     * lo vuelve a poner "Disponible" al recibir stock de nuevo.
+     */
+    @Transactional
+    public void restaurarStock(Long productoId, Integer cantidad) {
+        productoRepository.aumentarStockAtomico(productoId, cantidad);
+
+        // clearAutomatically=true en aumentarStockAtomico ya limpió el contexto de persistencia,
+        // así que esta lectura trae el stock real post-UPDATE.
+        Producto producto = productoRepository.findById(productoId).orElse(null);
+        if (producto == null) return; // el producto pudo borrarse mientras tanto
+
+        if (producto.getStock() != null && producto.getStock() > 0
+                && "No disponible".equals(producto.getEstadoProducto())) {
+            producto.setEstadoProducto("Disponible");
+            productoRepository.save(producto);
+        }
+    }
+
+    /**
      * Reducir stock de una talla específica (para ropa - categoría 3)
      */
     @Transactional

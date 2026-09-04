@@ -7,7 +7,6 @@ import com.example.MarketS.exception.RecursoNoEncontradoException;
 import com.example.MarketS.exception.SolicitudInvalidaException;
 import com.example.MarketS.model.DetallePedido;
 import com.example.MarketS.model.Pedido;
-import com.example.MarketS.model.Producto;
 import com.example.MarketS.model.ResenaComprador;
 import com.example.MarketS.model.ResolucionVentaExterna;
 import com.example.MarketS.model.User;
@@ -182,6 +181,7 @@ public class PedidoApiController {
             // que ya invita a intentar de nuevo desde el carrito.
             pedido.setEstado("RECHAZADO");
             pedidoRepository.save(pedido);
+            restaurarStockPedido(pedido);
             notificarPagoRechazado(pedido);
 
             return ResponseEntity.status(500).body(Map.of(
@@ -461,18 +461,16 @@ public class PedidoApiController {
         nuevasResoluciones.forEach(v ->
                 resolucionVentaExternaRepository.save(new ResolucionVentaExterna(pedido, v, completado)));
 
-        if (completado) {
-            List<Long> idsConStockADescontar = nuevasResoluciones.stream().map(User::getId).toList();
+        // El stock de estos ítems ya se reservó (descontó) al crear el pedido, sea cual sea su
+        // método de pago (ver PedidoService.crearPedido) — acá ya no hay que volver a
+        // descontarlo si se completó. Si el vendedor indica que su parte NO se concretó, hay
+        // que restaurar ese stock reservado para que vuelva a estar disponible.
+        if (!completado) {
+            List<Long> idsResueltosAhora = nuevasResoluciones.stream().map(User::getId).toList();
             pedido.getDetalles().stream()
                     .filter(d -> d.getProducto().getVendedor() != null
-                            && idsConStockADescontar.contains(d.getProducto().getVendedor().getId()))
-                    .forEach(d -> {
-                        try {
-                            productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
-                        } catch (Exception e) {
-                            avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
-                        }
-                    });
+                            && idsResueltosAhora.contains(d.getProducto().getVendedor().getId()))
+                    .forEach(d -> productoService.restaurarStock(d.getProducto().getId(), d.getCantidad()));
         }
 
         // El estado global del pedido solo se fija como definitivo cuando TODOS los vendedores
@@ -600,9 +598,13 @@ public class PedidoApiController {
                                          @RequestParam(required = false) Long pedidoId) {
         Long id = resolverPedidoId(params, pedidoId);
         if (id != null && verificarPagoConMP(params, id, "rejected")) {
-            pedidoRepository.findById(id).ifPresent(p -> {
-                p.setEstado("RECHAZADO");
-                pedidoRepository.save(p);
+            pedidoRepository.findByIdWithDetalles(id).ifPresent(p -> {
+                // UPDATE atómico condicionado: evita restaurar el stock reservado más de una
+                // vez si se reconfirma /mp/fallo (ver PedidoRepository.marcarRechazadoSiNoLoEstaba).
+                if (pedidoRepository.marcarRechazadoSiNoLoEstaba(id) == 0) {
+                    return;
+                }
+                restaurarStockPedido(p);
                 notificarPagoRechazado(p);
             });
         }
@@ -662,20 +664,12 @@ public class PedidoApiController {
             if (aprobado) {
                 // UPDATE atómico condicionado: si el pedido ya estaba PAGADO (reconfirmar
                 // /api/pedidos/mp/exito por recarga, doble navegación o notificación duplicada
-                // de MercadoPago) esta llamada no gana la carrera y no repite el descuento de
-                // stock ni las notificaciones (ver PedidoRepository.marcarPagadoSiNoLoEstaba).
+                // de MercadoPago) esta llamada no gana la carrera y no repite las notificaciones
+                // (ver PedidoRepository.marcarPagadoSiNoLoEstaba). El stock ya se reservó
+                // (descontó) al crear el pedido, no acá — ver PedidoService.crearPedido.
                 if (pedidoRepository.marcarPagadoSiNoLoEstaba(pedidoId) == 0) {
                     return;
                 }
-                // Reducir stock por cada detalle
-                pedido.getDetalles().forEach(d -> {
-                    try {
-                        productoService.reducirStock(d.getProducto().getId(), d.getCantidad());
-                    } catch (Exception e) {
-                        // No interrumpe el flujo de pago (ya se cobró) pero avisa al vendedor
-                        avisarFalloDescuentoStock(d.getProducto(), pedido.getId(), e);
-                    }
-                });
                 notificarPagoAprobado(pedido);
             } else if ("pending".equals(mpStatus)) {
                 pedido.setEstado("PENDIENTE_PAGO");
@@ -730,26 +724,12 @@ public class PedidoApiController {
         });
     }
 
-    // Se llama cuando reducirStock() falla al confirmar un pago/acuerdo ya cerrado (venta
-    // duplicada por una carrera entre dos compradores comprando la última unidad al mismo
-    // tiempo — pedidoService.crearPedido ya valida el stock al crear el pedido, así que esto
-    // solo puede pasar en esa ventana de carrera). No se revierte el pago: el dinero ya cambió
-    // de manos, así que en vez de solo loguearlo en consola (como antes) se avisa al vendedor
-    // para que revise el inventario manualmente.
-    private void avisarFalloDescuentoStock(Producto producto, Long pedidoId, Exception causa) {
-        System.err.println("Error reduciendo stock producto " + producto.getId() + " (pedido " + pedidoId + "): " + causa.getMessage());
-
-        Long vendedorId = producto.getVendedor() != null ? producto.getVendedor().getId() : null;
-        if (vendedorId == null) return;
-
-        userRepository.findById(vendedorId).ifPresent(vendedor -> {
-            String mensaje = "No se pudo descontar el stock de \"" + producto.getNombre() + "\" para el pedido #" + pedidoId
-                    + " (posible venta duplicada por stock insuficiente). Revisa el inventario manualmente.";
-            notificacionService.crear(vendedor, mensaje, "STOCK_DESCUENTO_FALLIDO", pedidoId, producto.getId());
-            if (vendedor.getEmail() != null && !vendedor.getEmail().isBlank()) {
-                emailService.enviarCorreo(vendedor.getEmail(), "Revisa el stock de tu producto - MarketS", mensaje);
-            }
-        });
+    // Restaura el stock reservado al crear el pedido (ver PedidoService.crearPedido) para un
+    // pedido que terminó RECHAZADO sin llegar a pagarse: pago rechazado por MP, falla al crear
+    // la preferencia, o expiración automática (ver PedidoExpiracionService, que restaura el
+    // suyo por separado al no compartir este controller).
+    private void restaurarStockPedido(Pedido pedido) {
+        pedido.getDetalles().forEach(d -> productoService.restaurarStock(d.getProducto().getId(), d.getCantidad()));
     }
 
     private void notificarPagoRechazado(Pedido pedido) {
