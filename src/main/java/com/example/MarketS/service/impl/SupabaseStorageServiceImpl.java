@@ -49,8 +49,11 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
                 ? originalFilename.substring(originalFilename.lastIndexOf('.'))
                 : "";
 
-        // Generar un nombre de archivo limpio y único
-        String nombreLimpio = archivo.getName().replaceAll("\\s+", "_").toLowerCase();
+        // Generar un nombre de archivo limpio y único. archivo.getName() es el nombre del CAMPO
+        // multipart (no el filename), fijo por el @RequestParam de cada caller — pero se sanea
+        // igual que en subirBytes (whitelist, no solo espacios) para no depender de que ningún
+        // caller futuro pase acá un nombre de campo dinámico sin validar.
+        String nombreLimpio = archivo.getName().replaceAll("[^a-zA-Z0-9_-]", "_").toLowerCase();
         String nombreArchivo = System.currentTimeMillis() + "_" + nombreLimpio + extension;
 
         // Construir la ruta final (ej: carpeta/nombre_archivo.jpg)
