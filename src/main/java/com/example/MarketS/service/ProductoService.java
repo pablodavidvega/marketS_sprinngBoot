@@ -57,26 +57,35 @@ public class ProductoService {
             throw new SolicitudInvalidaException("El producto no tiene stock definido");
         }
 
-        if (producto.getStock() < cantidad) {
+        // UPDATE atómico condicionado (WHERE stock >= cantidad) en vez de leer-chequear-escribir:
+        // dos confirmaciones de pago concurrentes para el mismo producto (p.ej. reconfirmar
+        // /api/pedidos/mp/exito con recarga o doble navegación) podían pasar ambas el chequeo de
+        // stock de arriba antes de que cualquiera guardara, dejando stock negativo. El motor de
+        // base de datos serializa la fila; si esta llamada no logra actualizar ninguna fila es
+        // porque ya no había stock suficiente.
+        int filasActualizadas = productoRepository.reducirStockAtomico(productoId, cantidad);
+        if (filasActualizadas == 0) {
             throw new SolicitudInvalidaException("Stock insuficiente para el producto: " + producto.getNombre()
                     + ". Stock disponible: " + producto.getStock() + ", solicitado: " + cantidad);
         }
 
         int stockAnterior = producto.getStock();
 
-        // Reducir el stock
-        producto.setStock(producto.getStock() - cantidad);
+        // clearAutomatically=true en reducirStockAtomico limpia el contexto de persistencia, así
+        // que esta relectura trae el stock real post-UPDATE (no el valor cacheado de "producto").
+        Producto actualizado = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + productoId));
 
         // Si el stock llega a 0, cambiar estado a "No disponible"
-        if (producto.getStock() == 0) {
-            producto.setEstadoProducto("No disponible");
+        if (actualizado.getStock() == 0 && !"No disponible".equals(actualizado.getEstadoProducto())) {
+            actualizado.setEstadoProducto("No disponible");
+            productoRepository.save(actualizado);
         }
 
-        productoRepository.save(producto);
-        avisarStockBajoSiCorresponde(producto, stockAnterior, producto.getStock());
+        avisarStockBajoSiCorresponde(actualizado, stockAnterior, actualizado.getStock());
 
-        System.out.println("✅ Stock reducido. Producto: " + producto.getNombre()
-                + ", Nuevo stock: " + producto.getStock());
+        System.out.println("✅ Stock reducido. Producto: " + actualizado.getNombre()
+                + ", Nuevo stock: " + actualizado.getStock());
     }
 
     /**

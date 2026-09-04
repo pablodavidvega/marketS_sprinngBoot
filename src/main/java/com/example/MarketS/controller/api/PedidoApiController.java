@@ -660,8 +660,13 @@ public class PedidoApiController {
             boolean aprobado = "approved".equals(mpStatus) || "approved".equals(collectionStatus);
 
             if (aprobado) {
-                pedido.setEstado("PAGADO");
-                pedidoRepository.save(pedido);
+                // UPDATE atómico condicionado: si el pedido ya estaba PAGADO (reconfirmar
+                // /api/pedidos/mp/exito por recarga, doble navegación o notificación duplicada
+                // de MercadoPago) esta llamada no gana la carrera y no repite el descuento de
+                // stock ni las notificaciones (ver PedidoRepository.marcarPagadoSiNoLoEstaba).
+                if (pedidoRepository.marcarPagadoSiNoLoEstaba(pedidoId) == 0) {
+                    return;
+                }
                 // Reducir stock por cada detalle
                 pedido.getDetalles().forEach(d -> {
                     try {

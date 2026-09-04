@@ -5,6 +5,7 @@ import com.example.MarketS.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -179,4 +180,16 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     long countByActivoTrue();
     long countByActivoFalse();
+
+    // UPDATE atómico condicionado (WHERE stock >= cantidad) en vez de leer-chequear-escribir
+    // (ver ProductoService.reducirStock). Dos confirmaciones de pago concurrentes para el mismo
+    // producto podían pasar ambas el chequeo de stock en memoria antes de que cualquiera
+    // guardara, dejando stock negativo (mismo patrón que InvitacionRepository.consumirUso). El
+    // motor de base de datos serializa la fila; la segunda ejecución ya no encuentra stock
+    // suficiente y no actualiza ninguna fila. clearAutomatically=true limpia el contexto de
+    // persistencia para que la relectura posterior en reducirStock traiga el stock real y no el
+    // valor cacheado antes del UPDATE.
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Producto p SET p.stock = p.stock - :cantidad WHERE p.id = :id AND p.stock >= :cantidad")
+    int reducirStockAtomico(@Param("id") Long id, @Param("cantidad") Integer cantidad);
 }

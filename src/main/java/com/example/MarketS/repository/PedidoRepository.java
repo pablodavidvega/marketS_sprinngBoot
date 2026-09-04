@@ -6,6 +6,7 @@ import com.example.MarketS.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -156,4 +157,16 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     // en Java (ver AdminApiController.agruparPorSemana) — evita una query nativa con DATE_TRUNC.
     @Query("SELECT p.fecha, p.total FROM Pedido p WHERE p.estado IN :estados AND p.fecha >= :desde")
     List<Object[]> findFechaYTotalByEstadoInAndFechaAfter(@Param("estados") List<String> estados, @Param("desde") LocalDateTime desde);
+
+    // Transición atómica a PAGADO, condicionada a que el pedido no estuviera ya en ese estado
+    // (ver PedidoApiController.actualizarEstado). Reconfirmar /api/pedidos/mp/exito (recarga,
+    // doble navegación, notificación duplicada de MercadoPago) no debe volver a descontar stock
+    // ni reenviar notificaciones. Con un UPDATE condicionado en vez de leer-chequear-guardar,
+    // dos confirmaciones casi simultáneas para el mismo pedido no pueden pasar ambas el chequeo:
+    // el motor de base de datos serializa la fila y solo una de las dos actualiza (mismo patrón
+    // que InvitacionRepository.consumirUso). Devuelve 1 si esta llamada marcó el pedido como
+    // pagado, 0 si ya estaba pagado.
+    @Modifying
+    @Query("UPDATE Pedido p SET p.estado = 'PAGADO' WHERE p.id = :id AND p.estado <> 'PAGADO'")
+    int marcarPagadoSiNoLoEstaba(@Param("id") Long id);
 }
