@@ -1,27 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getProductos, getProductosPorCategoria, getCategorias } from '../api/productos'
-import type { Producto, Categoria } from '../types'
+import type { Categoria, VendedorProductosResponse } from '../types'
 import ProductoCard from '../components/ProductoCard'
+import Paginador from '../components/Paginador'
 import BuscadorAvanzado from '../components/BuscadorAvanzado'
 import ProductosRecientesSlider from '../components/ProductosRecientesSlider'
 import BotonVolverABuscar from '../components/BotonVolverABuscar'
+import { usePaginatedResource } from '../hooks/usePaginatedResource'
 
 const PRODUCTOS_POR_PAGINA = 30
 
 export default function HomePage() {
-  const [productos, setProductos] = useState<Producto[]>([])
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [categoriaActiva, setCategoriaActiva] = useState<number | null>(null)
   // filtro sólo cambia cuando el usuario confirma la búsqueda (submit / selección)
   const [filtro, setFiltro] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  // Con categoría activa o sin ella (búsqueda general/"Todos"): paginado real server-side en
-  // ambos casos, "Ver más" pide la siguiente página al backend y la concatena.
-  const [pagina, setPagina] = useState(0)
-  const [totalPaginas, setTotalPaginas] = useState(0)
-  const [cargandoMas, setCargandoMas] = useState(false)
   const buscadorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,68 +23,29 @@ export default function HomePage() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError('')
+  // Con categoría activa o sin ella (búsqueda general/"Todos"): mismo paginado real
+  // server-side (page/size), controlado con <Paginador> igual que el resto de la app.
+  const cargarProductos = useCallback(
+    (p: number) => categoriaActiva
+      ? getProductosPorCategoria(categoriaActiva, p, PRODUCTOS_POR_PAGINA)
+      : getProductos(filtro || undefined, p, PRODUCTOS_POR_PAGINA),
+    [categoriaActiva, filtro],
+  )
+  const { data, loading, error, pagina, setPagina } =
+    usePaginatedResource<VendedorProductosResponse>(cargarProductos, 'Error al cargar productos')
 
-    // Cambiar de categoría o de búsqueda rápido (antes de que la respuesta anterior llegue)
-    // cancela esa request vieja, para que no pise el resultado del filtro actual con datos
-    // del filtro anterior.
-    if (categoriaActiva) {
-      getProductosPorCategoria(categoriaActiva, 0, PRODUCTOS_POR_PAGINA, controller.signal)
-        .then(r => {
-          setProductos(r.data.contenido)
-          setPagina(r.data.paginaActual)
-          setTotalPaginas(r.data.totalPaginas)
-          setLoading(false)
-        })
-        .catch(err => {
-          if (axios.isCancel(err)) return
-          setError('Error al cargar productos')
-          setLoading(false)
-        })
-      return () => controller.abort()
-    }
-
-    getProductos(filtro || undefined, 0, PRODUCTOS_POR_PAGINA, controller.signal)
-      .then(r => {
-        setProductos(r.data.contenido)
-        setPagina(r.data.paginaActual)
-        setTotalPaginas(r.data.totalPaginas)
-        setLoading(false)
-      })
-      .catch(err => {
-        if (axios.isCancel(err)) return
-        setError('Error al cargar productos')
-        setLoading(false)
-      })
-    return () => controller.abort()
-  }, [categoriaActiva, filtro])
-
-  function handleVerMas() {
-    if (cargandoMas) return
-    setCargandoMas(true)
-    const siguiente = categoriaActiva
-      ? getProductosPorCategoria(categoriaActiva, pagina + 1, PRODUCTOS_POR_PAGINA)
-      : getProductos(filtro || undefined, pagina + 1, PRODUCTOS_POR_PAGINA)
-    siguiente
-      .then(r => {
-        setProductos(prev => [...prev, ...r.data.contenido])
-        setPagina(r.data.paginaActual)
-        setTotalPaginas(r.data.totalPaginas)
-      })
-      .finally(() => setCargandoMas(false))
-  }
+  const productos = data?.contenido ?? []
 
   function handleSearch(q: string) {
     setCategoriaActiva(null)
     setFiltro(q)
+    setPagina(0)
   }
 
   function handleCategoria(id: number | null) {
     setCategoriaActiva(id)
     setFiltro('')
+    setPagina(0)
   }
 
   return (
@@ -165,17 +119,9 @@ export default function HomePage() {
               <ProductoCard key={p.id} producto={p} prioridad={i < 4} />
             ))}
           </div>
-          {pagina < totalPaginas - 1 && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleVerMas}
-                disabled={cargandoMas}
-                className="btn-secondary px-6"
-              >
-                {cargandoMas ? 'Cargando...' : 'Ver más'}
-              </button>
-            </div>
-          )}
+          <div className="flex justify-center mt-8">
+            <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
+          </div>
         </>
       )}
     </div>

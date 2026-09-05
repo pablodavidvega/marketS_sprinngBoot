@@ -1,41 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { getProductosRecientesPaginado } from '../api/productos'
-import type { Producto } from '../types'
+import type { VendedorProductosResponse } from '../types'
 import ProductoCard from '../components/ProductoCard'
+import Paginador from '../components/Paginador'
+import { usePaginatedResource } from '../hooks/usePaginatedResource'
 
 const PRODUCTOS_POR_PAGINA = 30
 
 export default function UltimosProductosPage() {
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [pagina, setPagina] = useState(0)
-  const [totalPaginas, setTotalPaginas] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [cargandoMas, setCargandoMas] = useState(false)
-  const [error, setError] = useState('')
+  const cargarProductos = useCallback(
+    (p: number) => getProductosRecientesPaginado(p, PRODUCTOS_POR_PAGINA),
+    [],
+  )
+  const { data, loading, error, pagina, setPagina } =
+    usePaginatedResource<VendedorProductosResponse>(cargarProductos, 'Error al cargar los productos')
 
-  useEffect(() => {
-    getProductosRecientesPaginado(0, PRODUCTOS_POR_PAGINA)
-      .then(r => {
-        setProductos(r.data.contenido)
-        setPagina(r.data.paginaActual)
-        setTotalPaginas(r.data.totalPaginas)
-      })
-      .catch(() => setError('Error al cargar los productos'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  function handleVerMas() {
-    if (cargandoMas) return
-    setCargandoMas(true)
-    getProductosRecientesPaginado(pagina + 1, PRODUCTOS_POR_PAGINA)
-      .then(r => {
-        setProductos(prev => [...prev, ...r.data.contenido])
-        setPagina(r.data.paginaActual)
-        setTotalPaginas(r.data.totalPaginas)
-      })
-      .finally(() => setCargandoMas(false))
-  }
+  const productos = data?.contenido ?? []
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -62,17 +43,9 @@ export default function UltimosProductosPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {productos.map((p, i) => <ProductoCard key={p.id} producto={p} prioridad={i < 4} />)}
           </div>
-          {pagina < totalPaginas - 1 && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={handleVerMas}
-                disabled={cargandoMas}
-                className="btn-secondary px-6"
-              >
-                {cargandoMas ? 'Cargando...' : 'Ver más'}
-              </button>
-            </div>
-          )}
+          <div className="flex justify-center mt-8">
+            <Paginador paginaActual={pagina} totalPaginas={data?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
+          </div>
         </>
       )}
     </div>
