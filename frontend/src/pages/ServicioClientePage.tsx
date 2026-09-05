@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { enviarContacto, getMisSolicitudes } from '../api/contacto'
 import type { ContactoPaginado } from '../api/contacto'
+import Paginador from '../components/Paginador'
 
 const TIPOS = ['Pregunta', 'Queja', 'Reclamo', 'Sugerencia', 'Devolución / Reembolso', 'Otro']
 
@@ -290,27 +291,9 @@ export default function ServicioClientePage() {
             </div>
           )}
 
-          {misSolicitudes && misSolicitudes.totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button
-                onClick={() => setPagina(p => p - 1)}
-                disabled={pagina === 0}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-500">
-                Página {misSolicitudes.paginaActual + 1} de {misSolicitudes.totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina(p => p + 1)}
-                disabled={pagina >= misSolicitudes.totalPaginas - 1}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-center mt-4">
+            <Paginador paginaActual={pagina} totalPaginas={misSolicitudes?.totalPaginas ?? 0} onCambiarPagina={setPagina} />
+          </div>
         </div>
       )}
     </div>

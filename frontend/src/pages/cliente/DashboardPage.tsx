@@ -7,6 +7,7 @@ import ChatPedido from '../../components/ChatPedido'
 import EncuentroPedido from '../../components/EncuentroPedido'
 import ReputacionBar from '../../components/ReputacionBar'
 import Stars from '../../components/Stars'
+import Paginador from '../../components/Paginador'
 import type { DashboardCliente } from '../../types'
 import { ESTADO_COLOR, ESTADO_LABEL, ESTADO_LABEL_INFO, ESTADO_LEYENDA } from '../../config/estadosPedido'
 import { formatMoneda } from '../../utils/formato'
@@ -462,25 +463,7 @@ export default function ClienteDashboardPage() {
           <p className="text-sm text-gray-500">
             {pedidosData.totalElementos} pedido(s) en total
           </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPagina(p => p - 1)}
-              disabled={pagina === 0}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-500">
-              Página {pedidosData.paginaActual + 1} de {pedidosData.totalPaginas}
-            </span>
-            <button
-              onClick={() => setPagina(p => p + 1)}
-              disabled={pagina >= pedidosData.totalPaginas - 1}
-              className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
+          <Paginador paginaActual={pagina} totalPaginas={pedidosData.totalPaginas} onCambiarPagina={setPagina} />
         </div>
       )}
     </div>

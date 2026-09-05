@@ -4,6 +4,7 @@ import { getNotificacionesTodas, marcarLeida, marcarTodasLeidas } from '../api/n
 import { useAuth } from '../context/AuthContext'
 import { destinoDeNotificacion, formatTiempoNotificacion } from '../utils/notificaciones'
 import type { Notificacion, NotificacionesTodasResponse } from '../types'
+import Paginador from '../components/Paginador'
 
 export default function NotificacionesPage() {
   const { hasRole } = useAuth()
@@ -103,27 +104,9 @@ export default function NotificacionesPage() {
             ))}
           </div>
 
-          {data.totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button
-                onClick={() => setPagina(p => p - 1)}
-                disabled={pagina === 0}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-500">
-                Página {data.paginaActual + 1} de {data.totalPaginas}
-              </span>
-              <button
-                onClick={() => setPagina(p => p + 1)}
-                disabled={pagina >= data.totalPaginas - 1}
-                className="btn-secondary text-sm py-1.5 px-3 disabled:opacity-40"
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-center mt-4">
+            <Paginador paginaActual={pagina} totalPaginas={data.totalPaginas} onCambiarPagina={setPagina} />
+          </div>
         </>
       )}
     </div>
