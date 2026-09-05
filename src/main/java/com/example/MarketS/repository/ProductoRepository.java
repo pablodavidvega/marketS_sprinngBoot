@@ -28,6 +28,28 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     """)
     List<Producto> findByNombreContainingIgnoreCase(@Param("nombre") String nombre);
 
+    // Paginado real (usado por HomePage sin categoría activa —"Todos" y búsqueda por nombre—,
+    // botón "Ver más"). q=null trae el catálogo activo completo ordenado por fecha; antes esta
+    // vista traía como mucho 200 productos (random si no había texto de búsqueda) en una sola
+    // llamada y el resto quedaba inalcanzable. countQuery explícito, sin los JOIN FETCH, por el
+    // mismo motivo que en findAllFiltrado.
+    @Query(
+        value = """
+            SELECT p FROM Producto p
+            LEFT JOIN FETCH p.marca
+            LEFT JOIN FETCH p.categorias
+            WHERE p.activo = true
+              AND (:q IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            ORDER BY p.fechaAgregacion DESC
+            """,
+        countQuery = """
+            SELECT COUNT(p) FROM Producto p
+            WHERE p.activo = true
+              AND (:q IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:q AS string), '%')))
+            """
+    )
+    Page<Producto> paginaByNombreContainingIgnoreCaseAndActivoTrue(@Param("q") String q, Pageable pageable);
+
 
     @Query("""
     SELECT p FROM Producto p

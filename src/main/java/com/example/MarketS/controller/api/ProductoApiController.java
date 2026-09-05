@@ -55,26 +55,24 @@ public class ProductoApiController {
         this.reputacionService = reputacionService;
     }
 
-    // GET /api/productos — catálogo principal (aleatoriamente limitado a 30)
+    // GET /api/productos — catálogo principal, paginado real (usado por HomePage sin categoría
+    // activa: "Todos" y búsqueda por nombre comparten esta paginación, igual que el filtro por
+    // categoría en /productos/categoria/{id}).
     @GetMapping("/productos")
-    public ResponseEntity<List<ProductoResponseDTO>> listarProductos(
+    public ResponseEntity<Map<String, Object>> listarProductos(
             @RequestParam(required = false) String q,
-            @RequestParam(defaultValue = "30") int limit) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
 
-        List<Producto> productos;
+        String keyword = (q != null && !q.isBlank()) ? q : null;
+        Page<Producto> pagina = productoRepository.paginaByNombreContainingIgnoreCaseAndActivoTrue(
+                keyword, PageRequest.of(page, size));
 
-        if (q != null && !q.isBlank()) {
-            productos = productoRepository.findByNombreContainingIgnoreCase(q)
-                    .stream().filter(Producto::getActivo).toList();
-        } else {
-            productos = productoRepository.findByActivoTrue();
-            Collections.shuffle(productos);
-            if (limit > 0 && productos.size() > limit) {
-                productos = productos.subList(0, limit);
-            }
-        }
-
-        return ResponseEntity.ok(buildDTOs(productos));
+        return ResponseEntity.ok(Map.of(
+                "contenido", buildDTOs(pagina.getContent()),
+                "paginaActual", pagina.getNumber(),
+                "totalPaginas", pagina.getTotalPages(),
+                "totalElementos", pagina.getTotalElements()));
     }
 
     // GET /api/productos/recientes?limit=10 — últimos productos agregados (orden descendente),

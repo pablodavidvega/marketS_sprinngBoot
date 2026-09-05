@@ -1,8 +1,8 @@
 import api from './axios'
 import type { Producto, Categoria, SugerenciaProducto, VendedorProductosResponse, ResenasResponse, Resena } from '../types'
 
-export const getProductos = (q?: string, limit = 30, signal?: AbortSignal) =>
-  api.get<Producto[]>('/api/productos', { params: { q, limit }, signal })
+export const getProductos = (q?: string, page = 0, size = 30, signal?: AbortSignal) =>
+  api.get<VendedorProductosResponse>('/api/productos', { params: { q, page, size }, signal })
 
 export const getProductosRecientes = (limit = 10) =>
   api.get<Producto[]>('/api/productos/recientes', { params: { limit } })
