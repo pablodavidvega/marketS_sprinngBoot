@@ -136,7 +136,7 @@ export default function VendedorProductosPage() {
 
   // ── Carga de lista ────────────────────────────────────────────────────────
   const cargarProductos = useCallback(
-    (p: number) => getVendedorProductos({ keyword: busquedaDebounced || undefined, page: p, size: 10 }),
+    (p: number) => getVendedorProductos({ keyword: busquedaDebounced || undefined, page: p, size: 30 }),
     [busquedaDebounced],
   )
 
