@@ -304,7 +304,7 @@ export default function VendedorProductosPage() {
                           {p.imagen && (
                             <img
                               src={buildImageUrl(p.imagen)!}
-                              alt=""
+                              alt={p.nombre}
                               className="w-full h-full object-cover"
                             />
                           )}
