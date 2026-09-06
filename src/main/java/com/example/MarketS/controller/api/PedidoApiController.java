@@ -24,6 +24,8 @@ import com.example.MarketS.service.PedidoService;
 import com.example.MarketS.service.ProductoService;
 import com.example.MarketS.security.UsuarioPrincipal;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +44,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/pedidos")
 public class PedidoApiController {
+
+    private static final Logger log = LoggerFactory.getLogger(PedidoApiController.class);
 
     @Value("${app.url:http://localhost:8081}")
     private String appUrl;
@@ -602,6 +606,8 @@ public class PedidoApiController {
                 // UPDATE atómico condicionado: evita restaurar el stock reservado más de una
                 // vez si se reconfirma /mp/fallo (ver PedidoRepository.marcarRechazadoSiNoLoEstaba).
                 if (pedidoRepository.marcarRechazadoSiNoLoEstaba(id) == 0) {
+                    log.warn("Reconfirmación de pago rechazado ignorada: pedido #{} ya estaba en estado '{}' (payment_id={})",
+                            id, p.getEstado(), params.getOrDefault("payment_id", params.get("collection_id")));
                     return;
                 }
                 restaurarStockPedido(p);
@@ -668,6 +674,8 @@ public class PedidoApiController {
                 // (ver PedidoRepository.marcarPagadoSiNoLoEstaba). El stock ya se reservó
                 // (descontó) al crear el pedido, no acá — ver PedidoService.crearPedido.
                 if (pedidoRepository.marcarPagadoSiNoLoEstaba(pedidoId) == 0) {
+                    log.warn("Reconfirmación de pago aprobado ignorada: pedido #{} ya estaba en estado '{}' (payment_id={})",
+                            pedidoId, pedido.getEstado(), params.getOrDefault("payment_id", params.get("collection_id")));
                     return;
                 }
                 notificarPagoAprobado(pedido);
