@@ -6,7 +6,9 @@ import ProductoCard from '../components/ProductoCard'
 import Paginador from '../components/Paginador'
 import { usePaginatedResource } from '../hooks/usePaginatedResource'
 
-const PRODUCTOS_POR_PAGINA = 30
+// Múltiplo de 2, 3 y 4 (columnas de la grilla según breakpoint) para no dejar filas a medias.
+// Menos cards por página = menos imágenes pedidas a Supabase Storage por vista.
+const PRODUCTOS_POR_PAGINA = 24
 
 export default function UltimosProductosPage() {
   const cargarProductos = useCallback(
