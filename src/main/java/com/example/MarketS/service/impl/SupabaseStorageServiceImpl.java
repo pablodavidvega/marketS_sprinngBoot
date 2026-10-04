@@ -19,6 +19,11 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
     @Value("${supabase.key:}")
     private String supabaseKey;
 
+    // Los nombres llevan timestamp, así que una URL nunca cambia de contenido: se puede cachear
+    // un año en el navegador y en la CDN de Supabase. Sin este header, Storage guarda el objeto
+    // con "no-cache" y cada vista revalida contra el origen (mismo formato que usa supabase-js).
+    private static final String CACHE_CONTROL = "max-age=31536000";
+
     @Value("${supabase.bucket:productos}")
     private String bucketName;
 
@@ -70,6 +75,7 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
                     .uri(uploadUrl)
                     .header("Authorization", "Bearer " + supabaseKey)
                     .header("apikey", supabaseKey)
+                    .header("cache-control", CACHE_CONTROL)
                     .contentType(MediaType.parseMediaType(archivo.getContentType() != null ? archivo.getContentType() : "application/octet-stream"))
                     .bodyValue(contenido)
                     .retrieve()
@@ -117,6 +123,7 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
                     .uri(uploadUrl)
                     .header("Authorization", "Bearer " + supabaseKey)
                     .header("apikey", supabaseKey)
+                    .header("cache-control", CACHE_CONTROL)
                     .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
                     .bodyValue(bytes)
                     .retrieve()
