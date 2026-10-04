@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../api/axios'
+import { comprimirImagen } from '../../utils/comprimirImagen'
 import { useAppConfig, aplicarColor, type AppConfigData } from '../../context/AppConfigContext'
 
 const PRESETS = [
@@ -57,7 +58,8 @@ export default function ConfiguracionAppPage() {
     setMensaje(null)
     try {
       const fd = new FormData()
-      fd.append('imagen', archivo)
+      // El logo se muestra a h-8 en navbar y footer: 400 px sobra incluso en pantallas retina
+      fd.append('imagen', await comprimirImagen(archivo, { maxLado: 400 }))
       const res = await api.post<AppConfigData>('/api/config/app/logo', fd)
       setForm(prev => ({ ...prev, logoUrl: res.data.logoUrl }))
       setLogoError(false)

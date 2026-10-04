@@ -10,6 +10,7 @@ import {
 } from '../../api/banners'
 import type { BannerSlide } from '../../types'
 import { buildImageUrl } from '../../utils/image'
+import { comprimirImagen } from '../../utils/comprimirImagen'
 import { useModalA11y } from '../../hooks/useModalA11y'
 
 const emptyForm = { texto: '', enlace: '', orden: '0', activo: true }
@@ -75,7 +76,8 @@ export default function BannerSliderPage() {
       fd.append('enlace', form.enlace)
       fd.append('orden', form.orden || '0')
       fd.append('activo', String(form.activo))
-      if (imagenFile) fd.append('imagen', imagenFile)
+      // Banner a ancho completo: se deja más resolución que en productos
+      if (imagenFile) fd.append('imagen', await comprimirImagen(imagenFile, { maxLado: 1920 }))
 
       if (editando) await actualizarBanner(editando.id, fd)
       else          await crearBanner(fd)
