@@ -218,6 +218,7 @@ export default function PedidosVendedorPage() {
                             {item.productoImagen ? (
                               <img
                                 src={item.productoImagen}
+                                loading="lazy"
                                 alt={item.productoNombre}
                                 className="w-14 h-14 object-cover rounded-lg"
                               />

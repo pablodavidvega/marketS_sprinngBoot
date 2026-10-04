@@ -154,12 +154,14 @@ export default function BannerSliderPage() {
                     <>
                       <img
                         src={imagenUrl}
+                        loading="lazy"
                         alt=""
                         aria-hidden="true"
                         className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
                       />
                       <img
                         src={imagenUrl}
+                        loading="lazy"
                         alt={b.texto}
                         className="absolute inset-0 w-full h-full object-contain"
                       />

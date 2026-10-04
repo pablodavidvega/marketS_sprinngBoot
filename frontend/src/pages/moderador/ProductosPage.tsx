@@ -135,7 +135,7 @@ export default function ModeradorProductosPage() {
                     <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${!p.activo ? 'opacity-60' : ''}`}>
                       <td className="px-4 py-3">
                         {p.imagen
-                          ? <img src={buildThumbUrl(p) ?? ''} alt={p.nombre}
+                          ? <img src={buildThumbUrl(p) ?? ''} alt={p.nombre} loading="lazy"
                               className="w-10 h-10 rounded-lg object-cover" />
                           : <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">—</div>
                         }

@@ -168,7 +168,7 @@ export default function BuscadorAvanzado({ onSearch, initialValue = '' }: Props)
                   {/* Miniatura */}
                   <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                     {imgSrc ? (
-                      <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                      <img src={imgSrc} alt="" loading="lazy" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">📦</div>
                     )}

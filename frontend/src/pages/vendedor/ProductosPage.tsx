@@ -317,6 +317,7 @@ export default function VendedorProductosPage() {
                           {p.imagen && (
                             <img
                               src={buildThumbUrl(p)!}
+                              loading="lazy"
                               alt={p.nombre}
                               className="w-full h-full object-cover"
                             />

@@ -118,6 +118,8 @@ function ResumenSlide({ productos }: { productos: Producto[] }) {
                     <img
                       src={imagenUrl}
                       alt={p.nombre}
+                      // En mobile solo entran ~2 cards; el resto se pide al scrollear horizontalmente
+                      loading={colIdx < 2 ? 'eager' : 'lazy'}
                       draggable={false}
                       className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
@@ -269,7 +271,10 @@ export default function ProductosRecientesSlider() {
             return <ResumenSlide key={`${item.key}-${i}`} productos={item.productos} />
           }
 
-          const imagenUrl = buildImageUrl(item.banner.imagen)
+          // Solo se renderiza la imagen de la diapositiva visible y sus vecinas: el resto de los
+          // banners no se pide a Supabase Storage hasta que el carrusel se acerca a ellos.
+          const cercana = n < 2 || Math.abs(i - index) <= 1
+          const imagenUrl = cercana ? buildImageUrl(item.banner.imagen) : null
           return (
             <div
               key={`${item.key}-${i}`}
