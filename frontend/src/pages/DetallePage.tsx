@@ -7,7 +7,7 @@ import type { Producto, ResenasResponse, PreguntasResponse } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { useAuth } from '../context/AuthContext'
 import { useFavoritos } from '../context/FavoritosContext'
-import { buildImageUrl } from '../utils/image'
+import { buildImageUrl, buildThumbUrl } from '../utils/image'
 import { formatMoneda } from '../utils/formato'
 import Stars from '../components/Stars'
 import ReputacionBar from '../components/ReputacionBar'
@@ -159,7 +159,7 @@ export default function DetallePage() {
   // ── Carrito ──────────────────────────────────────────────────────────────
   function handleAgregar() {
     if (!producto) return
-    const primeraImagen = mediaItems.find(m => m.type === 'image')?.url ?? null
+    const primeraImagen = buildThumbUrl(producto) ?? mediaItems.find(m => m.type === 'image')?.url ?? null
     agregar({
       productoId: producto.id,
       nombre:     producto.nombre,
@@ -239,7 +239,7 @@ export default function DetallePage() {
 
   function handlePagar() {
     if (!producto) return
-    const primeraImagen = mediaItems.find(m => m.type === 'image')?.url ?? null
+    const primeraImagen = buildThumbUrl(producto) ?? mediaItems.find(m => m.type === 'image')?.url ?? null
     agregar({
       productoId: producto.id,
       nombre:     producto.nombre,

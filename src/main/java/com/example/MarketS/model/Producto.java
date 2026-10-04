@@ -36,6 +36,8 @@ public class Producto {
     private String estadoProducto;
     private String descripcion;
     private String imagen;
+    @Column(name = "imagen_thumb")
+    private String imagenThumb;
     private String imagen2;
     private String imagen3;
     private String video;

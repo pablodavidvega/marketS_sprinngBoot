@@ -18,6 +18,7 @@ public class ProductoResponseDTO {
     private Double precio;
     private String descripcion;
     private String imagen;
+    private String imagenThumb;
     private String imagen2;
     private String imagen3;
     private String video;
@@ -70,6 +71,7 @@ public class ProductoResponseDTO {
                 .precio(p.getPrecio())
                 .descripcion(p.getDescripcion())
                 .imagen(normalizeUrl(p.getImagen()))
+                .imagenThumb(normalizeUrl(p.getImagenThumb()))
                 .imagen2(normalizeUrl(p.getImagen2()))
                 .imagen3(normalizeUrl(p.getImagen3()))
                 .video(p.getVideo())

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { crearProducto, getCategorias, getMarcas } from '../../api/productos'
 import type { Categoria } from '../../types'
 import MarcaAutocomplete from '../../components/MarcaAutocomplete'
-import { comprimirImagen } from '../../utils/comprimirImagen'
+import { comprimirImagen, MINIATURA } from '../../utils/comprimirImagen'
 
 type EstadoFila = 'pendiente' | 'guardando' | 'ok' | 'error'
 
@@ -236,7 +236,10 @@ export default function CargaMasivaPage() {
         fd.append('descripcion', fila.descripcion.trim())
         fd.append('categoriaId', fila.categoriaId)
         fd.append('marca', fila.marca.trim())
-        if (fila.imagen)  fd.append('imagen', await comprimirImagen(fila.imagen))
+        if (fila.imagen) {
+          fd.append('imagen',      await comprimirImagen(fila.imagen))
+          fd.append('imagenThumb', await comprimirImagen(fila.imagen, MINIATURA))
+        }
         if (fila.imagen2) fd.append('imagen2', await comprimirImagen(fila.imagen2))
         if (fila.imagen3) fd.append('imagen3', await comprimirImagen(fila.imagen3))
         if (fila.video)   fd.append('video', fila.video)

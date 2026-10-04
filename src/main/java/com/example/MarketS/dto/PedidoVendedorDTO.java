@@ -63,7 +63,7 @@ public class PedidoVendedorDTO {
                 .map(d -> ItemDTO.builder()
                         .productoId(d.getProducto().getId())
                         .productoNombre(d.getProducto().getNombre())
-                        .productoImagen(normalizeUrl(d.getProducto().getImagen()))
+                        .productoImagen(normalizeUrl(d.getProducto().getImagenThumb() != null ? d.getProducto().getImagenThumb() : d.getProducto().getImagen()))
                         .cantidad(d.getCantidad())
                         .precioUnitario(d.getPrecioUnitario())
                         .gananciaVendedor(d.getGananciaVendedor())

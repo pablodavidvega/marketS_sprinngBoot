@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getProductosRecientes } from '../api/productos'
 import { getBannersActivos } from '../api/banners'
 import type { Producto, BannerSlide } from '../types'
-import { buildImageUrl } from '../utils/image'
+import { buildImageUrl, buildThumbUrl } from '../utils/image'
 import { formatMoneda } from '../utils/formato'
 
 const DURACION_MIN = 3000
@@ -96,7 +96,7 @@ function ResumenSlide({ productos }: { productos: Producto[] }) {
         onMouseDown={iniciarDrag}
       >
         {productos.map((p, colIdx) => {
-          const imagenUrl = buildImageUrl(p.imagen)
+          const imagenUrl = buildThumbUrl(p)
           const color = PALETA_SHOWCASE[colIdx % PALETA_SHOWCASE.length]
           return (
             <div

@@ -115,7 +115,7 @@ public class ProductoApiController {
                         p.getId(),
                         p.getNombre(),
                         p.getPrecio(),
-                        p.getImagen(),
+                        p.getImagenThumb() != null ? p.getImagenThumb() : p.getImagen(),
                         p.getCategorias() != null ? p.getCategorias().getNombreCategoria() : null
                 ))
                 .toList();

@@ -275,6 +275,7 @@ public class VendedorApiController {
             @RequestParam(required = false) String marca,
             @RequestParam(required = false) Integer stock,
             @RequestParam(value = "imagen", required = false) MultipartFile img1,
+            @RequestParam(value = "imagenThumb", required = false) MultipartFile img1Thumb,
             @RequestParam(value = "imagen2", required = false) MultipartFile img2,
             @RequestParam(value = "imagen3", required = false) MultipartFile img3,
             @RequestParam(required = false) MultipartFile video) throws IOException {
@@ -294,7 +295,13 @@ public class VendedorApiController {
         aplicarCategoria(producto, categoriaId);
         aplicarMarca(producto, marca);
 
-        if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
+        if (img1 != null && !img1.isEmpty()) {
+            producto.setImagen(guardarArchivo(img1, nombre));
+            // La miniatura acompaña siempre a la imagen principal: si cambia la principal y no
+            // llega miniatura, se limpia para no mostrar la de la imagen anterior.
+            producto.setImagenThumb(img1Thumb != null && !img1Thumb.isEmpty()
+                    ? guardarArchivo(img1Thumb, nombre + "_thumb") : null);
+        }
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
         if (img3 != null && !img3.isEmpty()) producto.setImagen3(guardarArchivo(img3, nombre));
         if (video != null && !video.isEmpty()) producto.setVideo(guardarArchivo(video, nombre + "_video"));
@@ -317,6 +324,7 @@ public class VendedorApiController {
             @RequestParam(required = false) String marca,
             @RequestParam(required = false) Integer stock,
             @RequestParam(value = "imagen", required = false) MultipartFile img1,
+            @RequestParam(value = "imagenThumb", required = false) MultipartFile img1Thumb,
             @RequestParam(value = "imagen2", required = false) MultipartFile img2,
             @RequestParam(value = "imagen3", required = false) MultipartFile img3,
             @RequestParam(required = false) MultipartFile video,
@@ -348,7 +356,13 @@ public class VendedorApiController {
         aplicarCategoria(producto, categoriaId);
         aplicarMarca(producto, marca);
 
-        if (img1 != null && !img1.isEmpty()) producto.setImagen(guardarArchivo(img1, nombre));
+        if (img1 != null && !img1.isEmpty()) {
+            producto.setImagen(guardarArchivo(img1, nombre));
+            // La miniatura acompaña siempre a la imagen principal: si cambia la principal y no
+            // llega miniatura, se limpia para no mostrar la de la imagen anterior.
+            producto.setImagenThumb(img1Thumb != null && !img1Thumb.isEmpty()
+                    ? guardarArchivo(img1Thumb, nombre + "_thumb") : null);
+        }
         if (img2 != null && !img2.isEmpty()) producto.setImagen2(guardarArchivo(img2, nombre));
         if (img3 != null && !img3.isEmpty()) producto.setImagen3(guardarArchivo(img3, nombre));
         if (video != null && !video.isEmpty()) producto.setVideo(guardarArchivo(video, nombre + "_video"));

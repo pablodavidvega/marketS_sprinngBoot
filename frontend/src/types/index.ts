@@ -49,6 +49,8 @@ export interface Producto {
   precio: number
   descripcion: string
   imagen: string | null
+  // Miniatura (~480 px) de la imagen principal; null en productos subidos antes de que existiera
+  imagenThumb?: string | null
   imagen2: string | null
   imagen3: string | null
   video: string | null

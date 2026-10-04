@@ -45,3 +45,6 @@ export async function comprimirImagen(
     return archivo
   }
 }
+
+// Miniatura de la imagen principal para grillas, tablas, carrito y sugerencias (ver imagenThumb)
+export const MINIATURA: Opciones = { maxLado: 480, calidad: 0.75 }

@@ -9,8 +9,8 @@ import {
 } from '../../api/productos'
 import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
-import { buildImageUrl } from '../../utils/image'
-import { comprimirImagen } from '../../utils/comprimirImagen'
+import { buildImageUrl, buildThumbUrl } from '../../utils/image'
+import { comprimirImagen, MINIATURA } from '../../utils/comprimirImagen'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
 import { extraerMensajeError } from '../../utils/errores'
@@ -224,7 +224,10 @@ export default function VendedorProductosPage() {
     try {
       const fd = new FormData()
       Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, v) })
-      if (imagen1)   fd.append('imagen',  await comprimirImagen(imagen1))
+      if (imagen1) {
+        fd.append('imagen',      await comprimirImagen(imagen1))
+        fd.append('imagenThumb', await comprimirImagen(imagen1, MINIATURA))
+      }
       if (imagen2)   fd.append('imagen2', await comprimirImagen(imagen2))
       if (imagen3)   fd.append('imagen3', await comprimirImagen(imagen3))
       if (videoFile) fd.append('video',   videoFile)
@@ -304,7 +307,7 @@ export default function VendedorProductosPage() {
                         <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                           {p.imagen && (
                             <img
-                              src={buildImageUrl(p.imagen)!}
+                              src={buildThumbUrl(p)!}
                               alt={p.nombre}
                               className="w-full h-full object-cover"
                             />

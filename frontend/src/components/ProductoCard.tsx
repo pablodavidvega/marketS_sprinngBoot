@@ -4,7 +4,7 @@ import type { Producto } from '../types'
 import { useCarrito } from '../context/CarritoContext'
 import { useFavoritos } from '../context/FavoritosContext'
 import { useAuth } from '../context/AuthContext'
-import { buildImageUrl } from '../utils/image'
+import { buildImageUrl, buildThumbUrl } from '../utils/image'
 import { formatMoneda } from '../utils/formato'
 
 const HOVER_DELAY_MS = 400
@@ -26,7 +26,7 @@ function ProductoCard({ producto, prioridad = false }: Props) {
   const [videoActivo,    setVideoActivo]    = useState(false)
   const [videoCargando,  setVideoCargando]  = useState(false)
 
-  const imagenUrl = buildImageUrl(producto.imagen)
+  const imagenUrl = buildThumbUrl(producto)
   const videoUrl  = buildImageUrl(producto.video)
 
   // ── Hover: reproducir / pausar video ──────────────────────────────────────

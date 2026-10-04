@@ -68,7 +68,7 @@ public class PedidoResponseDTO {
                         return DetalleDTO.builder()
                                 .productoId(d.getProducto().getId())
                                 .productoNombre(d.getProducto().getNombre())
-                                .productoImagen(normalizeUrl(d.getProducto().getImagen()))
+                                .productoImagen(normalizeUrl(d.getProducto().getImagenThumb() != null ? d.getProducto().getImagenThumb() : d.getProducto().getImagen()))
                                 .precioUnitario(d.getPrecioUnitario())
                                 .cantidad(d.getCantidad())
                                 .subtotal(d.getPrecioUnitario() * d.getCantidad())
