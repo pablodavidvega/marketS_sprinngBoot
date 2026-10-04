@@ -139,11 +139,10 @@ export default function DetallePage() {
 
   if (!producto) return null
 
-  // ── Construir lista de medios: video primero, luego imágenes ─────────────
+  // ── Construir lista de medios: imágenes primero, video al final ──────────
+  // El video va último para que entrar al detalle no lo descargue: solo se pide a
+  // Supabase cuando el usuario elige su miniatura y le da play (egress del plan Free).
   const mediaItems: MediaItem[] = []
-
-  const videoUrl = buildImageUrl(producto.video)
-  if (videoUrl) mediaItems.push({ type: 'video', url: videoUrl })
 
   ;[producto.imagen, producto.imagen2, producto.imagen3]
     .filter((img): img is string => !!img)
@@ -151,6 +150,9 @@ export default function DetallePage() {
       const url = buildImageUrl(img)
       if (url) mediaItems.push({ type: 'image', url })
     })
+
+  const videoUrl = buildImageUrl(producto.video)
+  if (videoUrl) mediaItems.push({ type: 'video', url: videoUrl })
 
   const itemActivo = mediaItems[activoIdx] ?? null
 
@@ -276,13 +278,12 @@ export default function DetallePage() {
           <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-3">
             {itemActivo ? (
               itemActivo.type === 'video' ? (
-                /* Video con reproducción automática al entrar a la página */
+                /* Sin autoplay ni preload: el video se descarga recién cuando el usuario le da play */
                 <video
                   key={activoIdx}           // remonta el elemento al cambiar de ítem
                   src={itemActivo.url}
-                  autoPlay
-                  muted
-                  loop
+                  preload="none"
+                  poster={mediaItems.find(m => m.type === 'image')?.url}
                   playsInline
                   controls
                   className="w-full h-full object-cover"
