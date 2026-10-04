@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext'
 import { buildImageUrl } from '../utils/image'
 import { formatMoneda } from '../utils/formato'
 
+const HOVER_DELAY_MS = 400
+
 interface Props {
   producto: Producto
   // La tarjeta no sabe su posición en la grilla — quien arma la lista decide si esta card cae
@@ -19,8 +21,8 @@ function ProductoCard({ producto, prioridad = false }: Props) {
   const { isAuthenticated } = useAuth()
   const { esFavorito, toggleFavorito } = useFavoritos()
   const navigate    = useNavigate()
-  const cardRef  = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef   = useRef<HTMLVideoElement>(null)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [videoActivo,    setVideoActivo]    = useState(false)
   const [videoCargando,  setVideoCargando]  = useState(false)
 
@@ -28,38 +30,34 @@ function ProductoCard({ producto, prioridad = false }: Props) {
   const videoUrl  = buildImageUrl(producto.video)
 
   // ── Hover: reproducir / pausar video ──────────────────────────────────────
+  // El play espera HOVER_DELAY_MS con el mouse encima: pasar el cursor de largo sobre la
+  // grilla no dispara descargas del video (cada play pide el archivo a Supabase Storage).
+  // En pantallas táctiles no hay hover, así que ahí el video solo se ve en el detalle.
   function handleMouseEnter() {
     if (!videoUrl || !videoRef.current) return
-    setVideoActivo(true)
-    setVideoCargando(true)
-    videoRef.current.play().catch(() => {})
+    hoverTimer.current = setTimeout(() => {
+      if (!videoRef.current) return
+      setVideoActivo(true)
+      setVideoCargando(true)
+      videoRef.current.play().catch(() => {})
+    }, HOVER_DELAY_MS)
   }
 
   function handleMouseLeave() {
-    if (!videoRef.current) return
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current)
+      hoverTimer.current = null
+    }
+    if (!videoRef.current || !videoActivo) return
     videoRef.current.pause()
     videoRef.current.currentTime = 0
     setVideoActivo(false)
     setVideoCargando(false)
   }
 
-  // ── Táctil: sin mouseenter/mouseleave, el video arranca solo al entrar en pantalla ──
-  useEffect(() => {
-    if (!videoUrl || !cardRef.current) return
-    const esTactil = window.matchMedia('(hover: none)').matches
-    if (!esTactil) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) handleMouseEnter()
-        else handleMouseLeave()
-      },
-      { threshold: 0.6 },
-    )
-    observer.observe(cardRef.current)
-    return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoUrl])
+  useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+  }, [])
 
   function handleAgregar(e: React.MouseEvent) {
     e.preventDefault()
@@ -102,7 +100,6 @@ function ProductoCard({ producto, prioridad = false }: Props) {
 
   return (
     <div
-      ref={cardRef}
       className="card producto-card group flex flex-col p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
