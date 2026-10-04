@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -356,6 +357,8 @@ public class VendedorApiController {
         aplicarCategoria(producto, categoriaId);
         aplicarMarca(producto, marca);
 
+        List<String> mediosAnteriores = mediosDe(producto);
+
         if (img1 != null && !img1.isEmpty()) {
             producto.setImagen(guardarArchivo(img1, nombre));
             // La miniatura acompaña siempre a la imagen principal: si cambia la principal y no
@@ -382,6 +385,7 @@ public class VendedorApiController {
         }
 
         productoRepository.save(producto);
+        eliminarMediosReemplazados(mediosAnteriores, mediosDe(producto));
         // producto.getVendedor() es LAZY y este producto se recargó vía findById (sesión ya
         // cerrada), pero ya sabemos que el vendedor es "usuario" (se validó arriba).
         return ResponseEntity.ok(ProductoResponseDTO.from(
@@ -472,5 +476,20 @@ public class VendedorApiController {
 
     private String guardarArchivo(MultipartFile archivo, String prefijo) throws IOException {
         return cloudStorageService.subirArchivo(archivo, "");
+    }
+
+    private static List<String> mediosDe(Producto p) {
+        return Arrays.asList(p.getImagen(), p.getImagenThumb(), p.getImagen2(), p.getImagen3(), p.getVideo());
+    }
+
+    // Borra de Storage los archivos que el producto dejó de usar (cuentan para el 1 GB del plan
+    // Free de Supabase), salvo que otro producto siga apuntando a la misma URL. Se llama después
+    // del save para no dejar al producto apuntando a un archivo ya borrado si el guardado falla.
+    private void eliminarMediosReemplazados(List<String> anteriores, List<String> actuales) {
+        for (String url : anteriores) {
+            if (url != null && !actuales.contains(url) && !productoRepository.existsArchivoEnUso(url)) {
+                cloudStorageService.eliminarArchivo(url);
+            }
+        }
     }
 }

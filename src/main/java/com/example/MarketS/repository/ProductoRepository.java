@@ -222,4 +222,13 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Producto p SET p.stock = p.stock + :cantidad WHERE p.id = :id")
     int aumentarStockAtomico(@Param("id") Long id, @Param("cantidad") Integer cantidad);
+
+    // La carga masiva por ZIP sube cada archivo una vez y reusa su URL en todas las filas que lo
+    // nombran: antes de borrar un archivo de Storage hay que confirmar que nadie más lo usa.
+    @Query("""
+            SELECT COUNT(p) > 0 FROM Producto p
+            WHERE p.imagen = :url OR p.imagenThumb = :url OR p.imagen2 = :url
+               OR p.imagen3 = :url OR p.video = :url
+            """)
+    boolean existsArchivoEnUso(@Param("url") String url);
 }

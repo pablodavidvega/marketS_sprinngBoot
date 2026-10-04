@@ -79,6 +79,7 @@ public class BannerSlideAdminApiController {
             return ResponseEntity.notFound().build();
         }
 
+        String imagenAnterior = banner.getImagen();
         if (imagen != null && !imagen.isEmpty()) {
             banner.setImagen(cloudStorageService.subirArchivo(imagen, "banners"));
         }
@@ -88,6 +89,10 @@ public class BannerSlideAdminApiController {
         banner.setActivo(activo);
 
         BannerSlide guardado = bannerSlideRepository.save(banner);
+        // Después del save: si falla, el banner sigue apuntando a una imagen que todavía existe
+        if (imagenAnterior != null && !imagenAnterior.equals(guardado.getImagen())) {
+            cloudStorageService.eliminarArchivo(imagenAnterior);
+        }
         return ResponseEntity.ok(BannerSlideDTO.from(guardado));
     }
 
@@ -115,10 +120,12 @@ public class BannerSlideAdminApiController {
     // DELETE /api/admin/banners-slider/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        if (bannerSlideRepository.findById(id).isEmpty()) {
+        BannerSlide banner = bannerSlideRepository.findById(id).orElse(null);
+        if (banner == null) {
             return ResponseEntity.notFound().build();
         }
         bannerSlideRepository.deleteById(id);
+        cloudStorageService.eliminarArchivo(banner.getImagen());
         return ResponseEntity.ok(Map.of("mensaje", "Banner eliminado correctamente"));
     }
 }

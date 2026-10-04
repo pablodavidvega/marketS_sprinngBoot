@@ -137,4 +137,25 @@ public class SupabaseStorageServiceImpl implements CloudStorageService {
             throw new IOException("Error al subir bytes a Supabase: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public void eliminarArchivo(String url) {
+        String prefijoPublico = String.format("%s/storage/v1/object/public/%s/", supabaseUrl, bucketName);
+        if (url == null || !url.startsWith(prefijoPublico) || supabaseKey == null || supabaseKey.isBlank()) {
+            return;
+        }
+        String rutaArchivo = url.substring(prefijoPublico.length());
+
+        try {
+            webClient.delete()
+                    .uri(String.format("%s/storage/v1/object/%s/%s", supabaseUrl, bucketName, rutaArchivo))
+                    .header("Authorization", "Bearer " + supabaseKey)
+                    .header("apikey", supabaseKey)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+        } catch (Exception e) {
+            System.err.println("⚠️ No se pudo eliminar de Supabase Storage '" + rutaArchivo + "': " + e.getMessage());
+        }
+    }
 }
