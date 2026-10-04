@@ -9,7 +9,7 @@ import {
 } from '../../api/productos'
 import { getCategorias, getMarcas } from '../../api/productos'
 import type { Producto, Categoria, VendedorProductosResponse } from '../../types'
-import { buildImageUrl, buildThumbUrl } from '../../utils/image'
+import { buildImageUrl, buildThumbUrl, errorTamanoVideo, VIDEO_MAX_MB } from '../../utils/image'
 import { comprimirImagen, MINIATURA } from '../../utils/comprimirImagen'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginatedResource } from '../../hooks/usePaginatedResource'
@@ -97,6 +97,9 @@ function MediaSlot({
         className="input py-1 text-xs"
         onChange={e => onChange(e.target.files?.[0] ?? null)}
       />
+      {type === 'video' && (
+        <p className="text-[10px] text-gray-400">Máximo {VIDEO_MAX_MB} MB</p>
+      )}
       {existing && !file && type === 'image' && (
         <p className="text-[10px] text-gray-400">Sube una nueva para reemplazar</p>
       )}
@@ -217,6 +220,12 @@ export default function VendedorProductosPage() {
         setError(`Faltan campos obligatorios: ${faltantes.join(', ')}`)
         return
       }
+    }
+
+    const errorVideo = errorTamanoVideo(videoFile)
+    if (errorVideo) {
+      setError(errorVideo)
+      return
     }
 
     setGuardando(true)

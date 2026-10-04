@@ -4,6 +4,7 @@ import { crearProducto, getCategorias, getMarcas } from '../../api/productos'
 import type { Categoria } from '../../types'
 import MarcaAutocomplete from '../../components/MarcaAutocomplete'
 import { comprimirImagen, MINIATURA } from '../../utils/comprimirImagen'
+import { errorTamanoVideo } from '../../utils/image'
 
 type EstadoFila = 'pendiente' | 'guardando' | 'ok' | 'error'
 
@@ -50,6 +51,9 @@ function validarFila(f: FilaGrilla): string | null {
   if (!f.imagen3)            faltantes.push('imagen adicional')
   if (!f.video)              faltantes.push('video')
   if (faltantes.length > 0) return `Faltan campos obligatorios: ${faltantes.join(', ')}`
+
+  const errorVideo = errorTamanoVideo(f.video)
+  if (errorVideo) return errorVideo
 
   const precioNum = Number(f.precio)
   if (!Number.isFinite(precioNum) || precioNum <= 0) return 'El precio debe ser un número mayor a 0'
