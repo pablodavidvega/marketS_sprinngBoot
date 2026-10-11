@@ -70,6 +70,8 @@ public class SecurityConfig {
                         // debe quedar accesible o ese reenvío cae en la cadena 2 (denyAll) y enmascara
                         // cualquier error real (500, 400, etc.) como un 403 en blanco confuso.
                         .requestMatchers("/error").permitAll()
+                        // Sin método: el monitor que mantiene despierto Render Free puede usar GET o HEAD.
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/google").permitAll()
