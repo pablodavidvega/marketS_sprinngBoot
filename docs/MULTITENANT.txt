@@ -1,0 +1,59 @@
+# Fase SaaS multi-tenant
+
+Plan para que MarketS deje de ser una sola comunidad y pase a ser una plataforma con muchas
+comunidades (tenants), cada una con su plan (ver `frontend/src/config/planes.ts`).
+
+## Decisiones tomadas
+
+- **Una base de datos y un schema compartidos.** Cada fila de una tabla de comunidad lleva
+  `comunidad_id`. Es lo más barato de operar mientras sean decenas o cientos de comunidades.
+- **Un dominio, un subdominio por comunidad:** `tucomunidad.<dominio>`. El plan Premium
+  puede usar dominio propio (`comunidad.dominio_propio`).
+- **Una cuenta para todas las comunidades** (como Slack). `users` es global; la pertenencia y
+  el rol en cada comunidad viven en `membresia_comunidad`.
+
+## Qué es global y qué es de cada comunidad
+
+| Global (de la cuenta o de la plataforma) | De cada comunidad (`comunidad_id`) |
+|---|---|
+| `users`, `roles`, `vendedores`, `enlace_social`, `vendedor_mercado_pago`, `comunidad`, `membresia_comunidad` | `banner_slide`, `categorias`, `chat_mensajes`, `configuracion_app`, `contacto`, `detalle_pedido`, `domicilios`, `encuentros`, `favoritos`, `invitacion`, `marca`, `metodos_pago`, `notificacion`, `pedidos`, `preguntas`, `producto`, `resenas`, `resenas_comprador`, `resoluciones_venta_externa`, `talla_stock` |
+
+## Pasos
+
+### Hecho (V9, rama `feature/multitenant-base`) — sin cambio visible para el usuario
+
+1. Tabla `comunidad`; la actual es la comunidad `1` (subdominio `principal`, plan `GRATIS`).
+2. `comunidad_id BIGINT NOT NULL DEFAULT 1` con FK e índice en las tablas de comunidad. El
+   `DEFAULT 1` hace que el código actual, que no conoce comunidades, siga guardando todo en la 1.
+3. Únicos por comunidad: `categorias (comunidad_id, nombre_categoria)`,
+   `marca (comunidad_id, nombre_marca)` y PK de `configuracion_app (comunidad_id, clave)`.
+4. `membresia_comunidad` con todos los usuarios en la comunidad 1 y su rol actual, más un
+   trigger **temporal** (`trg_users_membresia_principal`) que la mantiene al día con
+   `users.rol_id` mientras el código no use membresías.
+
+### Pendiente — cambia el comportamiento, hay que probarlo con cuidado
+
+5. **Resolver la comunidad en cada petición** desde el subdominio (o `dominio_propio`) y
+   guardarla en un contexto por request. CORS con patrón `*.dominio` y cookie del JWT con el
+   dominio padre.
+6. **Filtrar todo por comunidad** con `@TenantId` de Hibernate 6 en las entidades de comunidad
+   (agrega el `WHERE comunidad_id = ?` y lo asigna al insertar). Las `nativeQuery` y los
+   `@Query` con SQL nativo **no** quedan cubiertos: revisarlos uno por uno.
+7. **Membresías en el backend:** login → elegir comunidad; el rol sale de
+   `membresia_comunidad`, no de `users.rol_id`. Validar que el usuario pertenece a la comunidad
+   del subdominio (si no, un JWT de una comunidad abriría otra). Al terminar, borrar el trigger
+   del paso 4 y luego `users.rol_id`.
+8. **Superadmin de plataforma** separado del admin de cada comunidad (`AdminInitializer`).
+9. **Repositorios con `Optional` por nombre** (`findByNombreCategoria`, `findByNombreMarca`,
+   `ConfiguracionAppService.get`) devuelven más de una fila en cuanto haya dos comunidades: con
+   el paso 6 quedan filtrados; sin él, fallan.
+10. **Tareas programadas por comunidad:** `NovedadesDiariasService`, `PedidoExpiracionService`,
+    `RecordatorioPendienteService`.
+11. **Correos:** link base por comunidad (hoy una sola `FRONTEND_URL`) y un proveedor/plan con
+    cupo para todas (Resend Free: 100/día para toda la plataforma).
+12. **Storage:** carpeta por comunidad en Supabase (`<comunidad_id>/...`) para medir uso por
+    plan y poder borrar una comunidad completa.
+13. **Planes:** límites por plan (miembros, productos, fotos, banners, moderadores) aplicados en
+    el backend, y cobro recurrente (suscripciones de Mercado Pago).
+14. **Alta de comunidades:** registro → crear comunidad y subdominio → quedar como admin → plan.
+15. **Infraestructura:** salir de Render Free y Supabase Free antes de tener clientes que paguen.
