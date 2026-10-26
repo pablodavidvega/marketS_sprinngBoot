@@ -92,7 +92,7 @@ function ResumenSlide({ productos }: { productos: Producto[] }) {
     <div className="relative w-full h-full flex-shrink-0 overflow-hidden">
       <div
         ref={scrollRef}
-        className="w-full h-full flex lg:grid lg:grid-cols-5 overflow-x-auto overflow-y-hidden snap-x snap-mandatory slider-scrollbar cursor-grab active:cursor-grabbing"
+        className="w-full h-full flex lg:grid lg:grid-cols-5 lg:grid-rows-1 overflow-x-auto overflow-y-hidden snap-x snap-mandatory slider-scrollbar cursor-grab active:cursor-grabbing"
         onMouseDown={iniciarDrag}
       >
         {productos.map((p, colIdx) => {
@@ -105,7 +105,7 @@ function ResumenSlide({ productos }: { productos: Producto[] }) {
               tabIndex={0}
               onClick={() => irAProducto(p.id)}
               onKeyDown={e => { if (e.key === 'Enter') irAProducto(p.id) }}
-              className="group relative flex-shrink-0 w-[75%] sm:w-56 lg:w-auto h-full flex flex-col justify-end cursor-pointer snap-center px-3 pb-4 pt-6"
+              className="group relative flex-shrink-0 w-[75%] sm:w-56 lg:w-auto h-full min-h-0 flex flex-col justify-end cursor-pointer snap-center px-3 pb-4 pt-6"
               style={{ backgroundColor: color }}
             >
               <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-white transition-opacity pointer-events-none" />
