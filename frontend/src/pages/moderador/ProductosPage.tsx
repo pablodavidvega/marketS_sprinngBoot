@@ -136,7 +136,7 @@ export default function ModeradorProductosPage() {
                       <td className="px-4 py-3">
                         {p.imagen
                           ? <img src={buildThumbUrl(p) ?? ''} alt={p.nombre} loading="lazy"
-                              className="w-10 h-10 rounded-lg object-cover" />
+                              className="w-10 h-10 rounded-lg object-contain bg-gray-100" />
                           : <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">—</div>
                         }
                       </td>

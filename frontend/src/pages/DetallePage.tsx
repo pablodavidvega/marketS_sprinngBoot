@@ -286,13 +286,13 @@ export default function DetallePage() {
                   poster={mediaItems.find(m => m.type === 'image')?.url}
                   playsInline
                   controls
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <img
                   src={itemActivo.url}
                   alt={producto.nombre}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               )
             ) : (
@@ -325,7 +325,7 @@ export default function DetallePage() {
                     <img
                       src={item.url}
                       alt=""
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   )}
                 </button>

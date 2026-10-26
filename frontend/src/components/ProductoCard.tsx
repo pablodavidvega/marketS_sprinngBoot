@@ -114,7 +114,7 @@ function ProductoCard({ producto, prioridad = false }: Props) {
                 src={imagenUrl}
                 alt={producto.nombre}
                 loading={prioridad ? 'eager' : 'lazy'}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+                className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ${
                   videoActivo ? 'opacity-0' : 'opacity-100 group-hover:scale-105'
                 }`}
               />
@@ -136,7 +136,7 @@ function ProductoCard({ producto, prioridad = false }: Props) {
                 onWaiting={() => setVideoCargando(true)}
                 onCanPlay={() => setVideoCargando(false)}
                 onPlaying={() => setVideoCargando(false)}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${
                   videoActivo ? 'opacity-100' : 'opacity-0'
                 }`}
               />

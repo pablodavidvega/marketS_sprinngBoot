@@ -108,7 +108,7 @@ function GrupoCarrito({ grupo, onPedidoAcordado }: { grupo: GrupoVendedor; onPed
             <div key={item.productoId} className="flex gap-4 items-start">
               <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                 {item.imagen ? (
-                  <img src={item.imagen} alt={item.nombre} loading="lazy" className="w-full h-full object-cover" />
+                  <img src={item.imagen} alt={item.nombre} loading="lazy" className="w-full h-full object-contain" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sin img</div>
                 )}

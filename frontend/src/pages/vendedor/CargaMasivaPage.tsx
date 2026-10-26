@@ -116,7 +116,7 @@ function CeldaMedia({ tipo, file, onChange, disabled }: {
         disabled={disabled}
         onChange={e => onChange(e.target.files?.[0] ?? null)}
       />
-      {tipo === 'image' && preview && <img src={preview} alt="" className="w-full h-full object-cover" />}
+      {tipo === 'image' && preview && <img src={preview} alt="" className="w-full h-full object-contain" />}
       {tipo === 'video' && file && <span className="text-base">🎬</span>}
       {!file && <span className="text-gray-300 text-lg leading-none">+</span>}
       {file && !disabled && (

@@ -302,7 +302,7 @@ export default function ClienteDashboardPage() {
                                 src={item.productoImagen}
                                 loading="lazy"
                                 alt={item.productoNombre}
-                                className="w-14 h-14 object-cover rounded-lg"
+                                className="w-14 h-14 object-contain rounded-lg bg-gray-100"
                               />
                             ) : (
                               <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xl">

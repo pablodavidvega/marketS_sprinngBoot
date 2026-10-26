@@ -57,7 +57,7 @@ function MediaSlot({
       {/* Preview imagen actual o nueva */}
       {type === 'image' && displayUrl && (
         <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-          <img src={displayUrl} alt="" className="w-full h-full object-cover" />
+          <img src={displayUrl} alt="" className="w-full h-full object-contain" />
           {existing && !file && (
             <span className="absolute bottom-0 left-0 right-0 text-center text-[10px] bg-black/40 text-white py-0.5">
               actual
@@ -312,7 +312,7 @@ export default function VendedorProductosPage() {
                               src={buildThumbUrl(p)!}
                               loading="lazy"
                               alt={p.nombre}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                             />
                           )}
                         </div>
