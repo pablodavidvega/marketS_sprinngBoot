@@ -47,9 +47,6 @@ function validarFila(f: FilaGrilla): string | null {
   if (!f.categoriaId)        faltantes.push('categoría')
   if (!f.marca.trim())       faltantes.push('marca')
   if (!f.imagen)             faltantes.push('imagen principal')
-  if (!f.imagen2)            faltantes.push('imagen secundaria')
-  if (!f.imagen3)            faltantes.push('imagen adicional')
-  if (!f.video)              faltantes.push('video')
   if (faltantes.length > 0) return `Faltan campos obligatorios: ${faltantes.join(', ')}`
 
   const errorVideo = errorTamanoVideo(f.video)
@@ -285,7 +282,7 @@ export default function CargaMasivaPage() {
           Agrega varios productos a la vez en la tabla de abajo. Escribe directo, o arrastra las imágenes y el video
           sobre cada fila. También puedes pegar varias filas copiadas de una hoja de cálculo pegando sobre la
           columna "Nombre", siempre que las columnas estén en este orden: <strong>Nombre, Precio, Stock, Categoría, Marca, Descripción</strong>.
-          Todos los campos son obligatorios.
+          Todos los campos son obligatorios salvo la imagen 2, la imagen 3 y el video.
         </p>
       </div>
 
@@ -318,9 +315,9 @@ export default function CargaMasivaPage() {
               <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Marca *</th>
               <th className="text-left px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Descripción *</th>
               <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 1 *</th>
-              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 2 *</th>
-              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 3 *</th>
-              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Video *</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 2</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Img 3</th>
+              <th className="text-center px-1 py-2 font-medium text-primary-700 whitespace-nowrap">Video</th>
               <th className="text-center px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Estado</th>
               <th className="text-right px-2 py-2 font-medium text-primary-700 whitespace-nowrap">Acciones</th>
             </tr>

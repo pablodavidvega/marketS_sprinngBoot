@@ -209,17 +209,10 @@ export default function VendedorProductosPage() {
     e.preventDefault()
     setError('')
 
-    // Validación de medios obligatorios al CREAR
-    if (!editando) {
-      const faltantes: string[] = []
-      if (!imagen1)   faltantes.push('Imagen principal')
-      if (!imagen2)   faltantes.push('Imagen secundaria')
-      if (!imagen3)   faltantes.push('Imagen adicional')
-      if (!videoFile) faltantes.push('Video')
-      if (faltantes.length > 0) {
-        setError(`Faltan campos obligatorios: ${faltantes.join(', ')}`)
-        return
-      }
+    // Al CREAR solo la imagen principal es obligatoria; las demás imágenes y el video son opcionales
+    if (!editando && !imagen1) {
+      setError('Falta el campo obligatorio: Imagen principal')
+      return
     }
 
     const errorVideo = errorTamanoVideo(videoFile)
@@ -521,7 +514,6 @@ export default function VendedorProductosPage() {
                   />
                   <MediaSlot
                     label="Imagen secundaria"
-                    required={!editando}
                     type="image"
                     currentUrl={editando?.imagen2 ?? null}
                     file={imagen2}
@@ -529,7 +521,6 @@ export default function VendedorProductosPage() {
                   />
                   <MediaSlot
                     label="Imagen adicional"
-                    required={!editando}
                     type="image"
                     currentUrl={editando?.imagen3 ?? null}
                     file={imagen3}
@@ -550,7 +541,6 @@ export default function VendedorProductosPage() {
                 </h3>
                 <MediaSlot
                   label="Video (MP4)"
-                  required={!editando}
                   type="video"
                   currentUrl={editando?.video ?? null}
                   file={videoFile}
