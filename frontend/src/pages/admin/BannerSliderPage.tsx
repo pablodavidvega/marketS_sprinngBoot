@@ -15,6 +15,21 @@ import { useModalA11y } from '../../hooks/useModalA11y'
 
 const emptyForm = { texto: '', enlace: '', orden: '0', activo: true }
 
+// Vista previa igual al slider: la imagen completa sobre un fondo difuminado de sí misma
+function VistaPreviaBanner({ src, aspecto }: { src: string; aspecto: string }) {
+  return (
+    <div className={`relative ${aspecto} rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-2`}>
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
+      />
+      <img src={src} alt="" className="absolute inset-0 w-full h-full object-contain" />
+    </div>
+  )
+}
+
 export default function BannerSliderPage() {
   const [banners, setBanners] = useState<BannerSlide[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +40,10 @@ export default function BannerSliderPage() {
   const [form, setForm] = useState(emptyForm)
   const [imagenFile, setImagenFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [imagenMobileFile, setImagenMobileFile] = useState<File | null>(null)
+  const [previewMobile, setPreviewMobile] = useState<string | null>(null)
+  // Al editar: el admin pidió quitar la imagen de celular actual (vuelve a usarse la de escritorio)
+  const [quitarMobile, setQuitarMobile] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [formError, setFormError] = useState('')
   const modalRef = useModalA11y(modalOpen, () => setModalOpen(false))
@@ -46,10 +65,19 @@ export default function BannerSliderPage() {
     return () => URL.revokeObjectURL(url)
   }, [imagenFile])
 
+  useEffect(() => {
+    if (!imagenMobileFile) { setPreviewMobile(null); return }
+    const url = URL.createObjectURL(imagenMobileFile)
+    setPreviewMobile(url)
+    return () => URL.revokeObjectURL(url)
+  }, [imagenMobileFile])
+
   function abrirNuevo() {
     setEditando(null)
     setForm(emptyForm)
     setImagenFile(null)
+    setImagenMobileFile(null)
+    setQuitarMobile(false)
     setFormError('')
     setModalOpen(true)
   }
@@ -58,6 +86,8 @@ export default function BannerSliderPage() {
     setEditando(b)
     setForm({ texto: b.texto, enlace: b.enlace, orden: String(b.orden), activo: b.activo })
     setImagenFile(null)
+    setImagenMobileFile(null)
+    setQuitarMobile(false)
     setFormError('')
     setModalOpen(true)
   }
@@ -78,6 +108,8 @@ export default function BannerSliderPage() {
       fd.append('activo', String(form.activo))
       // Banner a ancho completo: se deja más resolución que en productos
       if (imagenFile) fd.append('imagen', await comprimirImagen(imagenFile, { maxLado: 1920 }))
+      if (imagenMobileFile) fd.append('imagenMobile', await comprimirImagen(imagenMobileFile, { maxLado: 1200 }))
+      else if (editando && quitarMobile) fd.append('quitarImagenMobile', 'true')
 
       if (editando) await actualizarBanner(editando.id, fd)
       else          await crearBanner(fd)
@@ -175,6 +207,11 @@ export default function BannerSliderPage() {
                   <span className="absolute top-2 right-2 badge bg-black/50 text-white text-[10px] font-semibold">
                     Orden {b.orden}
                   </span>
+                  {b.imagenMobile && (
+                    <span className="absolute bottom-2 right-2 badge bg-black/50 text-white text-[10px] font-semibold">
+                      📱 Con imagen móvil
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-800 line-clamp-1">{b.texto}</p>
@@ -229,22 +266,11 @@ export default function BannerSliderPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Imagen del banner {!editando && <span className="text-red-500">*</span>}
+                  🖥️ Imagen para escritorio {!editando && <span className="text-red-500">*</span>}
                 </label>
-                {(preview || (editando && buildImageUrl(editando.imagen))) && (
-                  <div className="relative aspect-[16/7] rounded-lg overflow-hidden border border-gray-200 bg-gray-50 mb-2">
-                    <img
-                      src={preview ?? buildImageUrl(editando!.imagen)!}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
-                    />
-                    <img
-                      src={preview ?? buildImageUrl(editando!.imagen)!}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
-                  </div>
+                {(preview ?? buildImageUrl(editando?.imagen)) && (
+                  // 1920×350: proporción del slider en una pantalla de escritorio
+                  <VistaPreviaBanner src={(preview ?? buildImageUrl(editando?.imagen))!} aspecto="aspect-[1920/350]" />
                 )}
                 <input
                   type="file"
@@ -254,7 +280,49 @@ export default function BannerSliderPage() {
                 />
                 {editando && <p className="text-[10px] text-gray-400 mt-1">Sube una nueva para reemplazar la actual</p>}
                 <p className="text-[10px] text-gray-400 mt-1">
-                  Recomendado: imagen ancha, ej. 1200×250px. Esta vista previa es igual a como se verá en el banner: la imagen completa, sin recortar.
+                  Recomendado: 1920×400 px. Deja libres las esquinas superiores y la franja inferior
+                  izquierda, donde van la etiqueta, el botón "Ver más" y el texto del banner.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  📱 Imagen para celular <span className="text-xs font-normal text-gray-400">(opcional)</span>
+                </label>
+                {(() => {
+                  const actualMobile = quitarMobile ? null : buildImageUrl(editando?.imagenMobile)
+                  const src = previewMobile ?? actualMobile
+                  return (
+                    <>
+                      {src && (
+                        // 390×440: proporción del slider en un celular
+                        <div className="max-w-[12rem]">
+                          <VistaPreviaBanner src={src} aspecto="aspect-[390/440]" />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="input py-1 text-xs"
+                        onChange={e => setImagenMobileFile(e.target.files?.[0] ?? null)}
+                      />
+                      {editando?.imagenMobile && !imagenMobileFile && (
+                        <label className="flex items-center gap-2 text-xs text-gray-600 mt-1">
+                          <input
+                            type="checkbox"
+                            checked={quitarMobile}
+                            onChange={e => setQuitarMobile(e.target.checked)}
+                            className="w-3.5 h-3.5"
+                          />
+                          Quitar la imagen de celular actual
+                        </label>
+                      )}
+                    </>
+                  )
+                })()}
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Recomendado: 1080×1200 px (casi cuadrada). Se muestra en pantallas de menos de 640 px
+                  de ancho; si no subes una, el celular usa la imagen de escritorio.
                 </p>
               </div>
 

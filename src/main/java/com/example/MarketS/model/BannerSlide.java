@@ -19,6 +19,10 @@ public class BannerSlide {
     @Column(nullable = false)
     private String imagen;
 
+    // Opcional: versión para celular (< 640 px). Si es null se usa "imagen" en todas las pantallas.
+    @Column(name = "imagen_mobile")
+    private String imagenMobile;
+
     @Column(nullable = false)
     private String texto;
 

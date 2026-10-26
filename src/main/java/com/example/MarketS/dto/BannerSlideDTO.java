@@ -12,6 +12,7 @@ public class BannerSlideDTO {
 
     private Long id;
     private String imagen;
+    private String imagenMobile;
     private String texto;
     private String enlace;
     private int orden;
@@ -22,6 +23,7 @@ public class BannerSlideDTO {
         return BannerSlideDTO.builder()
                 .id(b.getId())
                 .imagen(b.getImagen())
+                .imagenMobile(b.getImagenMobile())
                 .texto(b.getTexto())
                 .enlace(b.getEnlace())
                 .orden(b.getOrden())

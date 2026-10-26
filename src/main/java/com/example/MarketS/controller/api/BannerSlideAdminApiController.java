@@ -40,10 +40,11 @@ public class BannerSlideAdminApiController {
         return ResponseEntity.ok(banners);
     }
 
-    // POST /api/admin/banners-slider — crear banner (imagen obligatoria)
+    // POST /api/admin/banners-slider — crear banner (imagen obligatoria, imagenMobile opcional)
     @PostMapping
     public ResponseEntity<?> crear(
             @RequestParam("imagen") MultipartFile imagen,
+            @RequestParam(required = false) MultipartFile imagenMobile,
             @RequestParam @NotBlank String texto,
             @RequestParam @NotBlank String enlace,
             @RequestParam(defaultValue = "0") int orden,
@@ -55,6 +56,9 @@ public class BannerSlideAdminApiController {
 
         BannerSlide banner = new BannerSlide();
         banner.setImagen(cloudStorageService.subirArchivo(imagen, "banners"));
+        if (imagenMobile != null && !imagenMobile.isEmpty()) {
+            banner.setImagenMobile(cloudStorageService.subirArchivo(imagenMobile, "banners"));
+        }
         banner.setTexto(texto);
         banner.setEnlace(enlace);
         banner.setOrden(orden);
@@ -64,11 +68,14 @@ public class BannerSlideAdminApiController {
         return ResponseEntity.ok(BannerSlideDTO.from(guardado));
     }
 
-    // PUT /api/admin/banners-slider/{id} — actualizar (imagen opcional, conserva la actual si no se envía)
+    // PUT /api/admin/banners-slider/{id} — actualizar (imágenes opcionales, conserva las actuales si
+    // no se envían; quitarImagenMobile=true borra la de celular y vuelve a usar la de escritorio)
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(
             @PathVariable Long id,
             @RequestParam(required = false) MultipartFile imagen,
+            @RequestParam(required = false) MultipartFile imagenMobile,
+            @RequestParam(defaultValue = "false") boolean quitarImagenMobile,
             @RequestParam @NotBlank String texto,
             @RequestParam @NotBlank String enlace,
             @RequestParam(defaultValue = "0") int orden,
@@ -80,8 +87,14 @@ public class BannerSlideAdminApiController {
         }
 
         String imagenAnterior = banner.getImagen();
+        String imagenMobileAnterior = banner.getImagenMobile();
         if (imagen != null && !imagen.isEmpty()) {
             banner.setImagen(cloudStorageService.subirArchivo(imagen, "banners"));
+        }
+        if (imagenMobile != null && !imagenMobile.isEmpty()) {
+            banner.setImagenMobile(cloudStorageService.subirArchivo(imagenMobile, "banners"));
+        } else if (quitarImagenMobile) {
+            banner.setImagenMobile(null);
         }
         banner.setTexto(texto);
         banner.setEnlace(enlace);
@@ -89,9 +102,12 @@ public class BannerSlideAdminApiController {
         banner.setActivo(activo);
 
         BannerSlide guardado = bannerSlideRepository.save(banner);
-        // Después del save: si falla, el banner sigue apuntando a una imagen que todavía existe
+        // Después del save: si falla, el banner sigue apuntando a imágenes que todavía existen
         if (imagenAnterior != null && !imagenAnterior.equals(guardado.getImagen())) {
             cloudStorageService.eliminarArchivo(imagenAnterior);
+        }
+        if (imagenMobileAnterior != null && !imagenMobileAnterior.equals(guardado.getImagenMobile())) {
+            cloudStorageService.eliminarArchivo(imagenMobileAnterior);
         }
         return ResponseEntity.ok(BannerSlideDTO.from(guardado));
     }
@@ -126,6 +142,9 @@ public class BannerSlideAdminApiController {
         }
         bannerSlideRepository.deleteById(id);
         cloudStorageService.eliminarArchivo(banner.getImagen());
+        if (banner.getImagenMobile() != null) {
+            cloudStorageService.eliminarArchivo(banner.getImagenMobile());
+        }
         return ResponseEntity.ok(Map.of("mensaje", "Banner eliminado correctamente"));
     }
 }

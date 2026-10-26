@@ -137,6 +137,7 @@ export interface CategoriaAdmin {
 export interface BannerSlide {
   id: number
   imagen: string
+  imagenMobile: string | null
   texto: string
   enlace: string
   orden: number

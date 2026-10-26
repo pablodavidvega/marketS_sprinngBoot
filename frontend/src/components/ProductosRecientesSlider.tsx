@@ -275,6 +275,11 @@ export default function ProductosRecientesSlider() {
           // banners no se pide a Supabase Storage hasta que el carrusel se acerca a ellos.
           const cercana = n < 2 || Math.abs(i - index) <= 1
           const imagenUrl = cercana ? buildImageUrl(item.banner.imagen) : null
+          const imagenMobileUrl = cercana ? buildImageUrl(item.banner.imagenMobile) : null
+          // Por debajo de sm (640 px) el slider es casi cuadrado: ahí va la imagen de celular, si hay
+          const fuenteMobile = imagenMobileUrl && (
+            <source media="(max-width: 639px)" srcSet={imagenMobileUrl} />
+          )
           return (
             <div
               key={`${item.key}-${i}`}
@@ -288,24 +293,30 @@ export default function ProductosRecientesSlider() {
                 <>
                   {/* Fondo: la misma imagen ampliada y desenfocada, para rellenar el espacio
                       sin dejar barras vacías cuando la proporción no calza con la del banner */}
-                  <img
-                    src={imagenUrl}
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
-                  />
+                  <picture>
+                    {fuenteMobile}
+                    <img
+                      src={imagenUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.55]"
+                    />
+                  </picture>
                   {/* Primer plano: la imagen completa, sin recortar */}
-                  <img
-                    src={imagenUrl}
-                    alt={item.banner.texto}
-                    className="absolute inset-0 w-full h-full object-contain"
-                    style={{
-                      transform: esActiva ? 'scale(1.06)' : 'scale(1)',
-                      transitionProperty: 'transform',
-                      transitionDuration: `${duracion}ms`,
-                      transitionTimingFunction: 'linear',
-                    }}
-                  />
+                  <picture>
+                    {fuenteMobile}
+                    <img
+                      src={imagenUrl}
+                      alt={item.banner.texto}
+                      className="absolute inset-0 w-full h-full object-contain"
+                      style={{
+                        transform: esActiva ? 'scale(1.06)' : 'scale(1)',
+                        transitionProperty: 'transform',
+                        transitionDuration: `${duracion}ms`,
+                        transitionTimingFunction: 'linear',
+                      }}
+                    />
+                  </picture>
                 </>
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900" />
