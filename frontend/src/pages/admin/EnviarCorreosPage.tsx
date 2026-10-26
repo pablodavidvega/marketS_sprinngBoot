@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { enviarCorreoIndividual, enviarCorreoVarios, enviarCorreoMasivo } from '../../api/correos'
 import { useToast } from '../../components/Toast'
+import { enviarNovedadesAhora } from '../../api/novedades'
 
 type Tab = 'varios' | 'individual' | 'masivo'
 
@@ -97,6 +98,26 @@ function DropZone({ file, onFile }: DropZoneProps) {
 export default function EnviarCorreosPage() {
   const { showToast } = useToast()
 
+  const [enviandoNovedades, setEnviandoNovedades] = useState(false)
+
+  async function handleEnviarNovedades() {
+    setEnviandoNovedades(true)
+    try {
+      const { data } = await enviarNovedadesAhora()
+      if (data.productos === 0) {
+        showToast('No hay productos nuevos desde el último resumen.', 'success')
+      } else {
+        const fallidos = data.fallidos > 0 ? ` (${data.fallidos} fallidos)` : ''
+        showToast(`Resumen de ${data.productos} producto(s) enviado a ${data.enviados} usuario(s)${fallidos}.`,
+          data.fallidos > 0 ? 'error' : 'success')
+      }
+    } catch {
+      showToast('No se pudo enviar el resumen de novedades.', 'error')
+    } finally {
+      setEnviandoNovedades(false)
+    }
+  }
+
   const [tab, setTab] = useState<Tab>('varios')
   const [asunto, setAsunto] = useState('')
   const [mensaje, setMensaje] = useState('')
@@ -178,6 +199,25 @@ export default function EnviarCorreosPage() {
         <p className="text-gray-500 mt-1">
           Envía mensajes individuales, a varios destinatarios o de forma masiva mediante CSV.
         </p>
+      </div>
+
+      {/* Resumen diario de productos nuevos — sale solo a las 7 p. m.; esto lo adelanta */}
+      <div className="card mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1">
+          <h2 className="text-base font-semibold text-gray-800">Resumen de novedades</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Todos los días a las 7 p. m. se envía a cada usuario un correo con los productos
+            nuevos. Puedes enviarlo ahora; los productos ya anunciados no se repiten.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-secondary whitespace-nowrap"
+          onClick={handleEnviarNovedades}
+          disabled={enviandoNovedades}
+        >
+          {enviandoNovedades ? 'Enviando...' : 'Enviar ahora'}
+        </button>
       </div>
 
       {/* Tabs */}

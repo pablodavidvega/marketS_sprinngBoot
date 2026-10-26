@@ -71,6 +71,16 @@ public class UsuarioApiController {
         return ResponseEntity.ok(PerfilResponseDTO.from(user));
     }
 
+    // PUT /api/me/novedades — activar/desactivar el resumen diario de productos nuevos
+    @PutMapping("/novedades")
+    public ResponseEntity<PerfilResponseDTO> actualizarNovedades(@RequestBody Map<String, Boolean> body,
+                                                                 Authentication auth) {
+        User user = resolverUsuario(auth);
+        user.setRecibirNovedades(Boolean.TRUE.equals(body.get("recibir")));
+        userService.guardar(user);
+        return ResponseEntity.ok(PerfilResponseDTO.from(user));
+    }
+
     // PUT /api/me/password — cambiar contraseña
     @PutMapping("/password")
     public ResponseEntity<?> cambiarPassword(@Valid @RequestBody CambiarPasswordRequestDTO request,

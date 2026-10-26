@@ -15,10 +15,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.HtmlUtils;
 
 import jakarta.mail.internet.MimeMessage;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -247,6 +250,114 @@ public class EmailService {
         return htmlCard(saludo, subtitulo, pasos, destino, "Conectar MercadoPago", nota);
     }
 
+    // Un producto dentro del resumen "Novedades del día" (ver NovedadesDiariasService)
+    public record ProductoNovedad(String nombre, Double precio, String imagenUrl, String link) {}
+
+    // Resumen "Novedades del día". Síncrono a propósito (sin @Async): NovedadesDiariasService
+    // lo llama en serie, una persona a la vez, para respetar el límite de envíos por segundo
+    // de Resend. Devuelve si el envío salió bien para poder contarlos.
+    // linkBaja abre la página de confirmación del frontend; linkBajaUnClick es el endpoint al
+    // que Gmail/Outlook hacen POST desde su botón "Anular suscripción" (List-Unsubscribe).
+    public boolean enviarNovedades(String para, String username, List<ProductoNovedad> productos,
+                                   int totalNuevos, String linkVerTodos, String linkBaja,
+                                   String linkBajaUnClick) {
+        try {
+            String asunto = totalNuevos == 1
+                    ? "🛍️ Hay 1 producto nuevo en MarketS"
+                    : "🛍️ Hay " + totalNuevos + " productos nuevos en MarketS";
+            String textoAlterno = textoNovedades(username, productos, totalNuevos, linkVerTodos, linkBaja);
+            String html = htmlNovedades(username, productos, totalNuevos, linkVerTodos, linkBaja);
+            Map<String, String> headers = Map.of(
+                    "List-Unsubscribe", "<" + linkBajaUnClick + ">",
+                    "List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+
+            if (resendApiKey != null && !resendApiKey.isBlank()) {
+                enviarViaResend(para, asunto, textoAlterno, html, headers);
+            } else {
+                MimeMessage mime = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mime, true, "UTF-8");
+                helper.setFrom(fromConNombre());
+                helper.setReplyTo(mailFrom);
+                helper.setTo(para);
+                helper.setSubject(asunto);
+                helper.setText(textoAlterno, html);
+                for (Map.Entry<String, String> h : headers.entrySet()) {
+                    mime.setHeader(h.getKey(), h.getValue());
+                }
+                mailSender.send(mime);
+            }
+            logger.info("Resumen de novedades enviado a: {}", para);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error enviando resumen de novedades a: {} - {}", para, e.getMessage());
+            return false;
+        }
+    }
+
+    private static String formatoPrecio(Double precio) {
+        if (precio == null) return "";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("es-CO"));
+        nf.setMaximumFractionDigits(0);
+        return "$" + nf.format(precio);
+    }
+
+    private String textoNovedades(String username, List<ProductoNovedad> productos, int totalNuevos,
+                                  String linkVerTodos, String linkBaja) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("¡Hola, ").append(username).append("!\n\n");
+        sb.append("Esto es lo nuevo en MarketS:\n\n");
+        for (ProductoNovedad p : productos) {
+            sb.append("  • ").append(p.nombre()).append(" — ").append(formatoPrecio(p.precio()))
+              .append("\n    ").append(p.link()).append("\n");
+        }
+        if (totalNuevos > productos.size()) {
+            sb.append("\n...y ").append(totalNuevos - productos.size()).append(" más.\n");
+        }
+        sb.append("\nVer todos los productos nuevos: ").append(linkVerTodos).append("\n\n");
+        sb.append("¿No querés recibir este resumen? Date de baja acá: ").append(linkBaja).append("\n");
+        return sb.toString();
+    }
+
+    private String htmlNovedades(String username, List<ProductoNovedad> productos, int totalNuevos,
+                                 String linkVerTodos, String linkBaja) {
+        // Nombre de producto y usuario los escriben los usuarios: se escapan para que no puedan
+        // inyectar HTML en el correo que reciben los demás.
+        StringBuilder filas = new StringBuilder();
+        for (ProductoNovedad p : productos) {
+            String imagen = p.imagenUrl() != null
+                    ? "<img src=\"%s\" width=\"56\" height=\"56\" alt=\"\" style=\"display:block;width:56px;height:56px;object-fit:cover;border-radius:8px;\">"
+                        .formatted(HtmlUtils.htmlEscape(p.imagenUrl()))
+                    : "<div style=\"width:56px;height:56px;border-radius:8px;background-color:#e5e7eb;\"></div>";
+            filas.append("""
+                    <tr><td style="padding:8px 0;">
+                      <a href="%s" style="text-decoration:none;color:inherit;">
+                        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                          <td style="padding-right:14px;">%s</td>
+                          <td>
+                            <div style="font-size:15px;font-weight:600;color:#111827;">%s</div>
+                            <div style="font-size:14px;color:#2563eb;margin-top:2px;">%s</div>
+                          </td>
+                        </tr></table>
+                      </a>
+                    </td></tr>
+                    """.formatted(HtmlUtils.htmlEscape(p.link()), imagen,
+                    HtmlUtils.htmlEscape(p.nombre()), formatoPrecio(p.precio())));
+        }
+        if (totalNuevos > productos.size()) {
+            filas.append("<tr><td style=\"padding:8px 0 0;font-size:14px;color:#6b7280;\">...y %d más</td></tr>"
+                    .formatted(totalNuevos - productos.size()));
+        }
+
+        String titulo = "¡Hola, " + HtmlUtils.htmlEscape(username) + "! 🛍️";
+        String subtitulo = totalNuevos == 1
+                ? "Se publicó 1 producto nuevo en MarketS:"
+                : "Se publicaron " + totalNuevos + " productos nuevos en MarketS:";
+        String nota = "Recibís este resumen porque estás suscrito/a a las novedades de MarketS. "
+                + "<a href=\"" + HtmlUtils.htmlEscape(linkBaja) + "\" style=\"color:#9ca3af;\">No quiero recibir estos correos</a>";
+
+        return htmlCard(titulo, subtitulo, filas.toString(), linkVerTodos, "Ver productos nuevos", nota);
+    }
+
     // Estructura visual común a todos los correos "de tarjeta" (bienvenida, guía de
     // MercadoPago): header con la marca, título + bajada, bloque de pasos y botón CTA.
     private String htmlCard(String h1, String subtitulo, String bloqueInteriorFilasTabla,
@@ -300,6 +411,11 @@ public class EmailService {
     }
 
     private void enviarViaResend(String to, String subject, String text, String html) {
+        enviarViaResend(to, subject, text, html, null);
+    }
+
+    private void enviarViaResend(String to, String subject, String text, String html,
+                                 Map<String, String> headersCorreo) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(resendApiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -313,6 +429,9 @@ public class EmailService {
         ));
         if (html != null) {
             body.put("html", html);
+        }
+        if (headersCorreo != null) {
+            body.put("headers", headersCorreo);
         }
 
         String response = restTemplate.postForObject(

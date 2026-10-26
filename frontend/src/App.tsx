@@ -54,6 +54,7 @@ const VendedorPerfilPage = lazy(() => import('./pages/VendedorPerfilPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const NotificacionesPage = lazy(() => import('./pages/NotificacionesPage'))
+const NovedadesBajaPage = lazy(() => import('./pages/NovedadesBajaPage'))
 
 function CargandoPagina() {
   return (
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/pagos/fallo" element={<PagoFallidoPage />} />
           <Route path="/soporte" element={<ServicioClientePage />} />
           <Route path="/terminos" element={<TerminosPage />} />
+          <Route path="/novedades/baja" element={<NovedadesBajaPage />} />
           <Route
             path="/favoritos"
             element={

@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -231,4 +233,14 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
                OR p.imagen3 = :url OR p.video = :url
             """)
     boolean existsArchivoEnUso(@Param("url") String url);
+
+    // Resumen "Novedades del día" (ver NovedadesDiariasService): productos activos que todavía
+    // no salieron en ningún resumen, los más nuevos primero.
+    @Query("SELECT p FROM Producto p WHERE p.activo = true AND p.novedadNotificada = false ORDER BY p.id DESC")
+    List<Producto> findNovedadesPendientes();
+
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Producto p SET p.novedadNotificada = true WHERE p.id IN :ids")
+    int marcarNovedadesNotificadas(@Param("ids") Collection<Long> ids);
 }

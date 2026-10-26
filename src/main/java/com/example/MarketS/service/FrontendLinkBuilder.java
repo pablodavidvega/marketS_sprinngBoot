@@ -48,6 +48,21 @@ public class FrontendLinkBuilder {
         return frontendUrl + ruta;
     }
 
+    // Links del resumen "Novedades del día" (ver NovedadesDiariasService)
+    public String detalleProducto(Long productoId) {
+        return frontendUrl + "/productos/" + productoId;
+    }
+
+    public String productosRecientes() {
+        return frontendUrl + "/productos/recientes";
+    }
+
+    // Página pública con botón de confirmación: el link no da de baja por sí solo porque los
+    // antivirus de correo abren los links para revisarlos y darían de baja sin que nadie quiera.
+    public String bajaNovedades(String token) {
+        return frontendUrl + "/novedades/baja?token=" + token;
+    }
+
     private String rutaPedidos(boolean esVendedor) {
         return esVendedor ? "/vendedor/pedidos" : "/cliente/mis-pedidos";
     }

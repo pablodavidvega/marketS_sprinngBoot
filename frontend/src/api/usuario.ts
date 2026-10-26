@@ -14,6 +14,9 @@ export const actualizarPerfil = (data: {
   address: string
 }) => api.put<PerfilUsuario>('/api/me', data)
 
+export const actualizarNovedades = (recibir: boolean) =>
+  api.put<PerfilUsuario>('/api/me/novedades', { recibir })
+
 export const cambiarPassword = (data: {
   currentPassword?: string
   newPassword: string

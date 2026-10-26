@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getMiPerfil, actualizarPerfil, cambiarPassword, getMisEnlaces, actualizarEnlaces } from '../api/usuario'
+import { getMiPerfil, actualizarPerfil, actualizarNovedades, cambiarPassword, getMisEnlaces, actualizarEnlaces } from '../api/usuario'
 import PasswordInput from '../components/PasswordInput'
 import IconoRedSocial, { REDES_BASICAS, matchRedBasica, type PlataformaBasica } from '../components/IconoRedSocial'
 import type { PerfilUsuario, EnlaceSocial } from '../types'
@@ -47,6 +47,9 @@ export default function EditarPerfilPage() {
   const [otros, setOtros] = useState<EnlaceSocial[]>([])
   const [enlacesMsg, setEnlacesMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [enlacesCargando, setEnlacesCargando] = useState(false)
+
+  const [novedadesCargando, setNovedadesCargando] = useState(false)
+  const [novedadesError, setNovedadesError] = useState('')
 
   useEffect(() => {
     getMiPerfil()
@@ -134,6 +137,19 @@ export default function EditarPerfilPage() {
       setDatosMsg({ tipo: 'error', texto: msg })
     } finally {
       setDatosCargando(false)
+    }
+  }
+
+  async function handleNovedades(recibir: boolean) {
+    setNovedadesError('')
+    setNovedadesCargando(true)
+    try {
+      const r = await actualizarNovedades(recibir)
+      setPerfil(r.data)
+    } catch {
+      setNovedadesError('No se pudo guardar la preferencia. Intenta de nuevo.')
+    } finally {
+      setNovedadesCargando(false)
     }
   }
 
@@ -334,6 +350,29 @@ export default function EditarPerfilPage() {
           </form>
         </div>
       )}
+
+      {/* Resumen diario de productos nuevos */}
+      <div className="card mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-1">Correos de novedades</h2>
+        {novedadesError && (
+          <div className="text-sm rounded-lg px-4 py-3 my-3 bg-red-50 border border-red-200 text-red-700">
+            {novedadesError}
+          </div>
+        )}
+        <label className="flex items-start gap-3 mt-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={perfil.recibirNovedades !== false}
+            disabled={novedadesCargando}
+            onChange={e => handleNovedades(e.target.checked)}
+          />
+          <span className="text-sm text-gray-600">
+            Recibir un resumen diario con los productos nuevos de MarketS (máximo un correo al día).
+            Los correos de tus pedidos y de tu cuenta llegan siempre.
+          </span>
+        </label>
+      </div>
 
       {/* Cambiar / crear contraseña */}
       <div className="card">

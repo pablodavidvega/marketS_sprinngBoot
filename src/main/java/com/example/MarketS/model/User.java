@@ -69,6 +69,16 @@ public class User {
     @Column(name = "debe_cambiar_password", nullable = false, columnDefinition = "boolean default false")
     private boolean debeCambiarPassword = false;
 
+    // Resumen diario de productos nuevos (ver NovedadesDiariasService). Se apaga desde el
+    // perfil o con el link de baja del propio correo, que usa tokenBajaNovedades para no
+    // exigir sesión.
+    @Column(name = "recibir_novedades", nullable = false, columnDefinition = "boolean default true")
+    private boolean recibirNovedades = true;
+
+    @JsonIgnore
+    @Column(name = "token_baja_novedades", unique = true, length = 64)
+    private String tokenBajaNovedades;
+
     @ManyToOne
     @JoinColumn(name="rol_id")
     private Rol rol;

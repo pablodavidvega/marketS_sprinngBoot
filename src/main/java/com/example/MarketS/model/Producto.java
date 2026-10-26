@@ -50,6 +50,11 @@ public class Producto {
     @Column(name = "activo", nullable = false)
     private boolean activo = true;
 
+    // true cuando el producto ya salió en un resumen de "Novedades del día" (ver
+    // NovedadesDiariasService) — así cada producto se anuncia una sola vez.
+    @Column(name = "novedad_notificada", nullable = false)
+    private boolean novedadNotificada = false;
+
     public boolean getActivo() {
         return activo;
     }

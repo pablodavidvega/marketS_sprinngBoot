@@ -36,6 +36,7 @@ export interface PerfilUsuario {
   city?: string
   createdAt: string
   passwordEstablecida?: boolean
+  recibirNovedades?: boolean
 }
 
 export interface TallaStock {

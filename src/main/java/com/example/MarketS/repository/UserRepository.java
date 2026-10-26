@@ -4,6 +4,8 @@ import com.example.MarketS.model.Rol;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.example.MarketS.model.User;
@@ -137,4 +139,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
         ORDER BY semana
     """)
     List<Object[]> countRegistrosPorSemana(@Param("desde") LocalDateTime desde);
+
+    // Destinatarios del resumen "Novedades del día": filas escalares (id, username, email,
+    // tokenBajaNovedades) en vez de entidades, para no disparar la consulta extra a
+    // "vendedores" por cada User (ver comentario en User.vendedor).
+    @Query("SELECT u.id, u.username, u.email, u.tokenBajaNovedades FROM User u WHERE u.active = true AND u.recibirNovedades = true")
+    List<Object[]> findSuscritosNovedades();
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE User u SET u.tokenBajaNovedades = :token WHERE u.id = :id")
+    int asignarTokenBajaNovedades(@Param("id") Long id, @Param("token") String token);
+
+    Optional<User> findByTokenBajaNovedades(String tokenBajaNovedades);
 }
