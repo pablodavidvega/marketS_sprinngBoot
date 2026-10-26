@@ -48,6 +48,8 @@ function validarFila(f: FilaGrilla): string | null {
   if (!f.marca.trim())       faltantes.push('marca')
   if (!f.imagen)             faltantes.push('imagen principal')
   if (faltantes.length > 0) return `Faltan campos obligatorios: ${faltantes.join(', ')}`
+  // Lo pegado desde una hoja de cálculo no pasa por el maxLength del input
+  if (f.descripcion.trim().length > 2000) return 'La descripción no puede superar los 2000 caracteres'
 
   const errorVideo = errorTamanoVideo(f.video)
   if (errorVideo) return errorVideo
@@ -386,6 +388,7 @@ export default function CargaMasivaPage() {
                       disabled={bloqueada}
                       onChange={e => actualizarFila(fila.id, { descripcion: e.target.value })}
                       placeholder="Descripción"
+                      maxLength={2000}
                     />
                   </td>
                   <td className="px-1 py-1.5 align-top">

@@ -436,7 +436,9 @@ export default function VendedorProductosPage() {
                       value={form.descripcion}
                       onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
                       placeholder="Descripción del producto"
+                      maxLength={2000}
                     />
+                    <p className="text-[10px] text-gray-400 text-right">{form.descripcion.length}/2000</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

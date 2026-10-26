@@ -34,6 +34,8 @@ public class Producto {
     @Column(name = "fecha_agregacion")
     private Date fechaAgregacion;
     private String estadoProducto;
+    // Mismo largo que V7__amplia_descripcion_producto.sql y que el maxLength de los formularios
+    @Column(length = 2000)
     private String descripcion;
     private String imagen;
     @Column(name = "imagen_thumb")
