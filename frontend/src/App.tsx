@@ -49,6 +49,7 @@ const ModeradorProductosPage = lazy(() => import('./pages/moderador/ProductosPag
 const ModeradorPedidosPage = lazy(() => import('./pages/moderador/PedidosPage'))
 const ServicioClientePage = lazy(() => import('./pages/ServicioClientePage'))
 const TerminosPage = lazy(() => import('./pages/TerminosPage'))
+const PlanesPage = lazy(() => import('./pages/PlanesPage'))
 const MisFavoritosPage = lazy(() => import('./pages/MisFavoritosPage'))
 const VendedorPerfilPage = lazy(() => import('./pages/VendedorPerfilPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/pagos/fallo" element={<PagoFallidoPage />} />
           <Route path="/soporte" element={<ServicioClientePage />} />
           <Route path="/terminos" element={<TerminosPage />} />
+          <Route path="/planes" element={<PlanesPage />} />
           <Route path="/novedades/baja" element={<NovedadesBajaPage />} />
           <Route
             path="/favoritos"
