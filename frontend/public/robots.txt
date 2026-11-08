@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /vendedor/
+Disallow: /cliente/
+Disallow: /moderador/
+Disallow: /carrito
+Disallow: /login
+Disallow: /registro
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /mi-perfil
+Disallow: /notificaciones
+Disallow: /favoritos
+
+Sitemap: https://www.marketsmart.com.co/sitemap.xml
