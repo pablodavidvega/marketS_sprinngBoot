@@ -112,9 +112,9 @@ export default function ServicioClientePage() {
       {/* Cards de contacto */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
         {[
-          { icon: '📞', titulo: 'Teléfono', detalle: '+57 300 000 0000', sub: 'Lun–Vie 8am–6pm' },
-          { icon: '✉️', titulo: 'Email', detalle: 'soporte@markets.com', sub: 'Respuesta en 24h' },
-          { icon: '🕐', titulo: 'Horarios', detalle: 'Lun–Vie 8am–6pm', sub: 'Sáb 9am–1pm' },
+          { icon: '�Y"z', titulo: 'TelǸfono', detalle: '3102140519', sub: 'Lun�?"Vie 8am�?"6pm' },
+          { icon: '�o%��?', titulo: 'Email', detalle: 'pablo.david.vega1@gmail.com', sub: 'Respuesta en 24h' },
+          { icon: '�Y?', titulo: 'Horarios', detalle: 'Lun�?"Vie 8am�?"6pm', sub: 'Sǭb 9am�?"1pm' },
         ].map(c => (
           <div key={c.titulo} className="card text-center">
             <span className="text-3xl">{c.icon}</span>
